@@ -85,5 +85,5 @@ environment:
 
 ## signatures
 
-Nelson Alfaro
-Eduardo Kusar
+- Nelson Alfaro
+- Eduardo Kusar
