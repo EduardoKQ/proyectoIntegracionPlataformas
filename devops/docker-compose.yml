@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: integracion_plataformas_mysql_db_container
+    restart: always
+    environment:
+      MYSQL_DATABASE: webapp_db
+      MYSQL_USER: webapp_user
+      MYSQL_PASSWORD: webapp_password
+      MYSQL_ROOT_PASSWORD: 'root123123' # testing only
+    ports:
+      # Map host port 3307 to container port 3306 to avoid conflicts with other MySQL instances.
+      # Adjust the host port (3307) if needed.
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    # Use the dev.env file for environment variables !!! TODO
+
+    # Backend Service (Django)
+  backend:
+    build: ../backend # Path to the directory containing the Dockerfile
+    container_name: integracion_plataformas_django_backend
+    volumes:
+      - ../backend:/app # Mount the backend directory to the container for hot reloading
+    ports:
+      - "8100:8000" # Map host port 8000 to container port 8100 to avoid conflicts with other services.
+    env_file:
+      - ../backend/dev.env # Load environment variables from .env file
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    # Define the named volume for database persistence
+
+
+
