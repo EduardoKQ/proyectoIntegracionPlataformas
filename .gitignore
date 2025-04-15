@@ -1,0 +1,47 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+*~
+*.swp
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.env
+db.sqlite3*
+*.sqlite3*
+*.pid
+*.seed
+celerybeat-schedule.*
+
+# Node / Angular
+node_modules/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.angular/cache
+
+# Docker
+mysql_data/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sublime-*
+
+# OS generated files
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
