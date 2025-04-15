@@ -30,6 +30,21 @@ services:
       - db
     restart: unless-stopped
 
+  frontend:
+    build: ../frontend
+    container_name: integracion_plataformas_angular_frontend
+    volumes:
+      # Mount local frontend code into the container for hot-reloading
+      # :delegated for potentially better performance on macOS/Windows
+      - ./frontend:/app:delegated
+      # IMPORTANT: Mount an anonymous volume for node_modules
+      # This prevents the node_modules from the host (potentially wrong OS/arch)
+      # from overwriting the ones installed inside the container during the build.
+      - /app/node_modules
+    ports:
+      - "4200:4200" # Map host port 4200 to container port 4200
+    restart: unless-stopped
+
 volumes:
   db_data:
     # Define the named volume for database persistence
