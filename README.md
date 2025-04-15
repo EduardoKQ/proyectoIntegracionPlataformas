@@ -82,3 +82,8 @@ environment:
 ## Dev notes
 
 - **Hot Reloading**: The local deployment structure supports hot reloading for both frontend and backend code. Changes saved in the frontend or backend directories on your machine will automatically trigger a reload or restart within the respective container, speeding up development. You usually just need to refresh your browser to see frontend changes.
+
+## signatures
+
+Nelson Alfaro
+Eduardo Kusar
