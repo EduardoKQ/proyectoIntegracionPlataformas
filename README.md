@@ -87,3 +87,4 @@ environment:
 
 - Nelson Alfaro
 - Eduardo Kusar
+- Kevin Soto
