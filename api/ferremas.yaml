@@ -1,0 +1,73 @@
+# openapi/openapi.yaml
+openapi: 3.0.0
+info:
+  title: "Ferremas APIs" 
+  version: "0.1"
+  description: 
+    '
+    Here you can find all the APIs for the Ferremas project.
+
+
+    System roles: cliente, encargado, bodeguero, contador, administrador tienda, administrador web
+    '
+# Define reusable components
+components:
+
+# API Paths
+paths:
+
+  # System Health Check Endpoint
+  /system/health/:
+    get:
+      summary: Check system health
+      description: Returns the health status of the system.
+      tags: [System]
+      responses:
+        '200':
+          description: System is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'healthy'
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: 'healthy'
+                      external_apis:
+                        type: string
+                        example: 'healthy'
+
+        '503':
+          description: System is unhealthy or unavailable.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'unhealthy'
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: 'unhealthy'
+                          error:
+                            type: string
+                            example: 'Database connection failed'
+                      external_apis:
+                        type: string
+                        example: 'healthy'
+
+  # --- Authentication Endpoints ---
+  
