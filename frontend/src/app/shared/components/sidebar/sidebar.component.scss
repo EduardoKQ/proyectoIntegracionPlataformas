@@ -1,0 +1,182 @@
+$sidebar-bg: #37516b;
+$primary-color: #F57C00;
+$text-color: #ECF0F1;
+$icon-color: #ECF0F1;
+$link-hover-bg: lighten($sidebar-bg, 5%);
+$link-hover-icon-color: $primary-color;
+$link-active-bg: $primary-color;
+$link-active-text: #FFFFFF;
+$separator-color: rgba(255, 255, 255, 0.1);
+
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 80px;
+$transition-speed: 0.3s;
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
+  vertical-align: middle;
+}
+
+.sidebar {
+  font-family: 'Lato', sans-serif;
+  background-color: $sidebar-bg;
+  color: $text-color;
+  height: 100vh;
+  width: $sidebar-width;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width $transition-speed ease-in-out;
+  z-index: 1000;
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid $separator-color;
+    min-height: 60px;
+
+    .sidebar-title {
+      font-size: 1.4em;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      opacity: 1;
+      transition: opacity $transition-speed ease-in-out;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: $text-color;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .material-symbols-outlined {
+        font-size: 1.8rem;
+        transition: color $transition-speed ease;
+      }
+
+      &:hover .material-symbols-outlined {
+        color: $primary-color;
+      }
+    }
+  }
+
+  .nav-links,
+  .bottom-actions {
+    list-style: none;
+    padding: 15px 0;
+    margin: 0;
+    overflow-x: hidden;
+
+    li a {
+      display: flex;
+      align-items: center;
+      padding: 12px 25px;
+      color: $text-color;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background-color $transition-speed ease, color $transition-speed ease;
+      overflow: hidden;
+
+      .material-symbols-outlined {
+        font-size: 1.5rem;
+        color: $icon-color;
+        margin-right: 15px;
+        min-width: 30px;
+        text-align: center;
+        transition: margin-right $transition-speed ease-in-out, color $transition-speed ease;
+      }
+
+      .link-text {
+        opacity: 1;
+        transition: opacity $transition-speed ease-in-out;
+      }
+
+      &:hover {
+        background-color: $link-hover-bg;
+        color: $text-color;
+
+        .material-symbols-outlined {
+          color: $link-hover-icon-color;
+        }
+      }
+
+      &.active {
+        background-color: $link-active-bg;
+        color: $link-active-text;
+        font-weight: 500;
+
+        .material-symbols-outlined {
+          color: $link-active-text;
+        }
+      }
+    }
+  }
+
+  .nav-links {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+
+  .bottom-actions {
+    border-top: 1px solid $separator-color;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+  }
+
+  &.collapsed {
+    width: $sidebar-collapsed-width;
+
+    .sidebar-header {
+      padding-left: 0;
+      padding-right: 0;
+      justify-content: center;
+
+      .sidebar-title {
+        opacity: 0;
+        width: 0;
+      }
+    }
+
+    .nav-links li a,
+    .bottom-actions li a {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+
+      .material-symbols-outlined {
+        margin-right: 0;
+      }
+
+      .link-text {
+        opacity: 0;
+        width: 0;
+      }
+    }
+  }
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}

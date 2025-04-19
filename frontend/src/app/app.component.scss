@@ -1,0 +1,11 @@
+.main-content {
+  margin-left: 260px;
+  padding: 20px;
+  transition: margin-left 0.3s ease-in-out;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.app-container.sidebar-collapsed .main-content {
+  margin-left: 80px;
+}
