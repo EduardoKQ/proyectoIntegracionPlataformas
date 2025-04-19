@@ -1,90 +1,38 @@
-# Local Deployment (development)
+# Ferremas Project
 
+This repository contains the source code for the Ferremas application, including the frontend, backend, API definitions, and deployment configurations.
 
-This document describes how to set up and run the project locally for development purposes using Docker Desktop on a Windows machine.
+Authors:
+- Nelson Alfaro
+- Kevin Soto
+- Eduardo Kusar
 
-Project structure
+## Project Structure
 
-```
-- backend: Django REST Framework APIs
-- devops: Deployment and utility scripts (CI/CD pipeline in the future)
-- frontend: Angular app
-- tests (to implement)
-```
+The repository is organized into the following main directories:
 
-## Prerequisites
+*   [`api/`](api/): Contains the OpenAPI specification ([`api/ferremas.yaml`](api/ferremas.yaml)) and related files like the Swagger UI ([`api/swagger/index.html`](api/swagger/index.html)). See [`api/README.md`](api/README.md).
+*   [`backend/`](backend/): Contains the Python/Django backend application. See [`backend/README.md`](backend/README.md) for setup and execution details.
+*   `db/`: Intended for database-related files
+*   [`devops/`](devops/): Contains Docker configurations ([`devops/docker-compose.yml`](devops/docker-compose.yml)) and other deployment-related files.
+*   [`docs/`](docs/): Contains project documentation and guides
+*   [`frontend/`](frontend/): Contains the Angular frontend application. See [`frontend/README.md`](frontend/README.md) for setup and execution details.
+*   [`tests/`](tests/): Contains acceptance and unit tests for the project.
 
-Before you begin, ensure you have the following installed and running on your Windows system:
+## Development Workflow
 
-1.  **Git:** For cloning the repository. ([Download Git](https://git-scm.com/download/win))
-2.  **Docker Desktop for Windows:** Ensure it is running and configured to use the Linux container backend (this is usually the default). ([Download Docker Desktop](https://www.docker.com/products/docker-desktop/))
+The typical development workflow follows these steps:
+
+1.  Select an User Story to develop.
+2.  Make a new branch, for example "feature/login"
+3.  Develop!
+    1.  Define or update the API contract in [`api/ferremas.yaml`](api/ferremas.yaml).
+    2.  Verify the API docs changes using the Swagger UI ([`api/swagger/index.html`](api/swagger/index.html)) (open it using Live Server)
+    3.  (Optional) Use Prism or similar tools to mock the new API endpoints for frontend development. You can create manual mockups as .json files instead
+    4.  Implement the corresponding frontend logic in the [`frontend/`](frontend/) application.
+    5.  Implement the required server-side logic for the API in the [`backend/`](backend/) application.
+4.  Commit the changes
 
 ## Getting Started
 
-Follow these steps to get your local development environment running:
-
-**1. Clone the Repository:**
-
-Open Git Bash, PowerShell, or Command Prompt and clone the project:
-
-```bash
-git clone https://github.com/EduardoKQ/proyectoIntegracionPlataformas.git
-cd proyectoIntegracionPlataformas
-```
-
-**2. Change Backend secret key**
-
-Optional, but good practice. Open dev.env file inside backend folder and change the secret key. The longer the secret key, more secure it is.
-
-```
-# Django setting
-SECRET_KEY='use_another_key_please_its_good_practice'
-DEBUG=True
-...
-...
-...
-```
-
-**3. Build and Start Containers**
-
-From the root folder you need to execute docker compose that's inside devops folder. You can execute it like this:
-```
-docker compose up --build -d 
-```
-
-This command builds and deploys frontend, backend and db containers. Each container installs all its dependencies and runs all the code they need, so we don't need to install anything.
-
-To apply changes made to Dockerfiles or some other configuration, or to rebuild after errors, simply run the docker compose up --build -d command again.
-
-**4. Verify the Setup**
-
-All containers should be running without errors. Check Docker Desktop to see all running containers (frontend, backend and db)
-
-- Verify the frontend is accessible at http://localhost:4200
-- Verify the backend health check responds at http://localhost:8100
-
-## Links
-Once the setup is complete, the services are accessible via:
-
-- frontend: http://localhost:4200
-- backend: http://localhost:8100
-- db: http://localhost:3307
-
-We can connect to the MySQL database using a tool like MySQL Workbench or DBeaver on port 3307. These are the testing credentials:
-```
-environment:
-      MYSQL_DATABASE: webapp_db
-      MYSQL_USER: webapp_user
-      MYSQL_PASSWORD: webapp_password
-      MYSQL_ROOT_PASSWORD: 'root123123' # testing only
-```
-
-## Dev notes
-
-- **Hot Reloading**: The local deployment structure supports hot reloading for both frontend and backend code. Changes saved in the frontend or backend directories on your machine will automatically trigger a reload or restart within the respective container, speeding up development. You usually just need to refresh your browser to see frontend changes.
-
-## signatures
-
-- Nelson Alfaro
-- Eduardo Kusar
-- Kevin Soto
+1.  **Local Setup:** Follow the instructions in the [Local Development Deployment Guide](docs/local_dev_deploy.md).

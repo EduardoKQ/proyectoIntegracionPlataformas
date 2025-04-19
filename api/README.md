@@ -1,0 +1,1 @@
+Open [this index.html](swagger/index.html) with Live Server or similar to see all APIs
