@@ -6,8 +6,8 @@ import { ProductService } from '../../services/product.service';
 import { CategoryService } from '../../services/category.service';
 import { Product } from '../../../models/product.model';
 import { Category, Subcategory } from '../../../models/categories.model';
-import { of } from 'rxjs';
-import { tap,take, finalize, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { finalize, catchError, take, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-edit',
@@ -34,6 +34,7 @@ export class ProductEditComponent implements OnInit {
   productNotFound = false;
   actionError: string | null = null;
   isSaving = false;
+  isDeleting = false;
 
   allCategories: Category[] = [];
   filteredSubcategories: Subcategory[] = [];
@@ -55,10 +56,10 @@ export class ProductEditComponent implements OnInit {
     });
 
     this.productForm.get('categoria')?.valueChanges.subscribe(selectedCategoryName => {
-        this.updateSubcategoryOptions(selectedCategoryName);
-        if (this.productForm.get('categoria')?.dirty) {
-            this.productForm.get('subcategoria')?.setValue('');
-        }
+      this.updateSubcategoryOptions(selectedCategoryName);
+      if (this.productForm.get('categoria')?.dirty) {
+        this.productForm.get('subcategoria')?.setValue('');
+      }
     });
   }
 
@@ -116,38 +117,23 @@ export class ProductEditComponent implements OnInit {
     }
     const selectedCategory = this.allCategories.find(cat => cat.name === selectedCategoryName);
     this.filteredSubcategories = selectedCategory ? selectedCategory.subcategories : [];
-
   }
 
   saveProduct(): void {
     this.actionError = null;
-
     if (this.productForm.invalid) {
-      console.log('Formulario inválido. No se guarda. Errors:', this.productForm.errors);
-       Object.keys(this.productForm.controls).forEach(key => {
-            const control = this.productForm.get(key);
-            if (control && control.errors != null) {
-                console.log('Control:', key, 'Errors:', control.errors);
-            }
-       });
       this.productForm.markAllAsTouched();
       return;
     }
+    if (this.isSaving || this.isDeleting) return;
 
-    if (this.isSaving) {
-       console.log('Guardado ya en progreso...');
-       return;
-    }
     this.isSaving = true;
     const updatedProductData = this.productForm.getRawValue() as Product;
 
     this.productService.updateProduct(updatedProductData)
-      .pipe(finalize(() => {
-          this.isSaving = false;
-        }))
+      .pipe(finalize(() => this.isSaving = false))
       .subscribe({
-        next: (response) => {
-          console.log('Guardado exitoso');
+        next: () => {
           this.router.navigate(['/product']);
         },
         error: (err) => {
@@ -155,6 +141,33 @@ export class ProductEditComponent implements OnInit {
           this.actionError = err?.message || 'Error desconocido al guardar los cambios.';
         }
     });
+  }
+
+  deleteProduct(): void {
+    if (!this.productCodigo) {
+      this.actionError = "No se puede eliminar: Código de producto no encontrado.";
+      return;
+    }
+    if (this.isDeleting || this.isSaving) return;
+
+    const productName = this.productForm.get('nombre')?.value || 'este producto';
+    if (confirm(`¿Estás seguro de eliminar "${productName}" (${this.productCodigo})? Esta acción no se puede deshacer.`)) {
+      this.isDeleting = true;
+      this.actionError = null;
+
+      this.productService.deleteProduct(this.productCodigo)
+        .pipe(finalize(() => this.isDeleting = false))
+        .subscribe({
+          next: () => {
+            console.log(`Producto ${this.productCodigo} eliminado.`);
+            this.router.navigate(['/product']);
+          },
+          error: (err) => {
+            console.error('Error al eliminar producto:', err);
+            this.actionError = err?.message || 'Error desconocido al eliminar el producto.';
+          }
+        });
+    }
   }
 
   cancel(): void {

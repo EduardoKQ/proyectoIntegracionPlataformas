@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { map, tap, catchError, first } from 'rxjs/operators';
 import { Product } from '../../models/product.model';
 
 @Injectable({
@@ -17,7 +17,6 @@ export class ProductService {
   clearLocalProductStorage(): void {
     try {
       localStorage.removeItem(this.LOCAL_STORAGE_KEY);
-      console.log('Product data cleared from localStorage.');
     } catch (e) {
       console.error('Error clearing localStorage:', e);
     }
@@ -54,14 +53,66 @@ export class ProductService {
     }
   }
 
+  addProduct(productData: Omit<Product, 'id'>): Observable<Product> {
+    let products = this._loadProductsFromLocalStorage() ?? [];
+    const codeExists = products.some(p => p.codigo_producto === productData.codigo_producto);
+    if (codeExists) {
+      const errorMsg = `Error: El código de producto "${productData.codigo_producto}" ya existe.`;
+      return throwError(() => new Error(errorMsg));
+    }
+    const newId = Date.now();
+    const newProduct: Product = {
+      ...productData,
+      id: newId
+    };
+    const updatedProducts = [...products, newProduct];
+    this._saveProductsToLocalStorage(updatedProducts);
+    return of(newProduct);
+  }
+
+  getNextProductCode(): Observable<string> {
+    return this.getProducts().pipe(
+      first(),
+      map(products => {
+        let maxCode = 1000;
+        if (products && products.length > 0) {
+          const numericCodes = products
+             .map(p => parseInt(p.codigo_producto, 10))
+             .filter(num => !isNaN(num));
+          if (numericCodes.length > 0) {
+             maxCode = Math.max(...numericCodes);
+          }
+        }
+        const nextCode = (maxCode + 1).toString();
+        return nextCode;
+      }),
+      catchError(err => {
+         console.error("Error al generar el siguiente código de producto:", err);
+         return of('1001');
+      })
+    );
+  }
+
+  deleteProduct(codigoProductoToDelete: string): Observable<void> {
+    let products = this._loadProductsFromLocalStorage();
+    if (!products) {
+      return throwError(() => new Error('No hay productos en el almacenamiento local para eliminar.'));
+    }
+    const initialLength = products.length;
+    const updatedProducts = products.filter(p => p.codigo_producto !== codigoProductoToDelete);
+    if (updatedProducts.length === initialLength) {
+      return throwError(() => new Error(`Producto con código "${codigoProductoToDelete}" no encontrado para eliminar.`));
+    }
+    this._saveProductsToLocalStorage(updatedProducts);
+    console.log(`Producto eliminado de localStorage: ${codigoProductoToDelete}`);
+    return of(undefined);
+  }
+
   updateCategoryNameInProducts(oldCategoryName: string, newCategoryName: string): Observable<void> {
     let products = this._loadProductsFromLocalStorage();
     if (!products) return of(undefined);
-
     const productsToUpdate = products.filter(p => p.categoria === oldCategoryName);
-
     if (productsToUpdate.length > 0) {
-        console.log(`Actualizando nombre de categoría '${oldCategoryName}' a '${newCategoryName}' en ${productsToUpdate.length} productos.`);
         const updatedProducts = products.map(p =>
             p.categoria === oldCategoryName ? { ...p, categoria: newCategoryName } : p
         );
@@ -73,11 +124,8 @@ export class ProductService {
  updateSubcategoryNameInProducts(categoryName: string, oldSubcategoryName: string, newSubcategoryName: string): Observable<void> {
     let products = this._loadProductsFromLocalStorage();
     if (!products) return of(undefined);
-
     const productsToUpdate = products.filter(p => p.categoria === categoryName && p.subcategoria === oldSubcategoryName);
-
      if (productsToUpdate.length > 0) {
-        console.log(`Actualizando nombre de subcategoría '${oldSubcategoryName}' a '${newSubcategoryName}' en ${productsToUpdate.length} productos de la categoría '${categoryName}'.`);
         const updatedProducts = products.map(p =>
           (p.categoria === categoryName && p.subcategoria === oldSubcategoryName)
             ? { ...p, subcategoria: newSubcategoryName }
@@ -105,7 +153,6 @@ export class ProductService {
       const jsonData = localStorage.getItem(this.LOCAL_STORAGE_KEY);
       return jsonData ? JSON.parse(jsonData) : null;
     } catch (e) {
-      console.error('Error reading products from localStorage:', e);
       localStorage.removeItem(this.LOCAL_STORAGE_KEY);
       return null;
     }
@@ -123,7 +170,6 @@ export class ProductService {
     return this.http.get<Product[]>(this.productsUrl).pipe(
       tap(products => {
         this._saveProductsToLocalStorage(products);
-        console.log(`Workspaceed ${products.length} products from ${this.productsUrl} and saved to localStorage.`);
       }),
       catchError(this._handleHttpError)
     );

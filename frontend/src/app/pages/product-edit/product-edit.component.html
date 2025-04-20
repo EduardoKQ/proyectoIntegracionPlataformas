@@ -46,12 +46,12 @@
     </div>
   </div>
 
-   <div class="form-field">
+  <div class="form-field">
     <label for="marca">Marca:</label>
     <input id="marca" type="text" formControlName="marca">
   </div>
 
-   <div class="form-field">
+  <div class="form-field">
     <label for="codigoM">Código M (Ref):</label>
     <input id="codigoM" type="text" formControlName="codigoM">
   </div>
@@ -60,14 +60,14 @@
     <label for="categoria">Categoría:</label>
     <div class="select-wrapper">
       <select id="categoria" formControlName="categoria">
-        <option value="" disabled>-- Selecciona Categoría --</option>
-        <option *ngFor="let cat of allCategories" [value]="cat.name">
-          {{ cat.name }}
-        </option>
+         <option value="" disabled>-- Selecciona Categoría --</option>
+         <option *ngFor="let cat of allCategories" [value]="cat.name">
+           {{ cat.name }}
+         </option>
       </select>
       <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
     </div>
-    <div *ngIf="productForm.get('categoria')?.invalid && (productForm.get('categoria')?.dirty || productForm.get('categoria')?.touched)" class="validation-error">
+     <div *ngIf="productForm.get('categoria')?.invalid && (productForm.get('categoria')?.dirty || productForm.get('categoria')?.touched)" class="validation-error">
       <small *ngIf="productForm.get('categoria')?.errors?.['required']">La categoría es requerida.</small>
     </div>
   </div>
@@ -77,10 +77,10 @@
      <div class="select-wrapper">
       <select id="subcategoria" formControlName="subcategoria"
               [disabled]="filteredSubcategories.length === 0">
-        <option value="">-- Selecciona Subcategoría (si aplica) --</option>
-        <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
-          {{ subcat.name }}
-        </option>
+         <option value="">-- Selecciona Subcategoría (si aplica) --</option>
+         <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
+           {{ subcat.name }}
+         </option>
       </select>
        <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
      </div>
@@ -97,10 +97,17 @@
   </div>
 
   <div class="form-actions">
-    <button type="submit" [disabled]="productForm.invalid || isSaving">
-       {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+    <button type="button" class="btn btn-delete"
+            (click)="deleteProduct()"
+            [disabled]="isSaving || isDeleting">
+       {{ isDeleting ? 'Eliminando...' : 'Eliminar Producto' }}
     </button>
-    <button type="button" (click)="cancel()" [disabled]="isSaving">Cancelar</button>
+    <div class="actions-right">
+       <button type="submit" [disabled]="productForm.invalid || isSaving || isDeleting">
+         {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+       </button>
+       <button type="button" (click)="cancel()" [disabled]="isSaving || isDeleting">Cancelar</button>
+    </div>
   </div>
 
 </form>

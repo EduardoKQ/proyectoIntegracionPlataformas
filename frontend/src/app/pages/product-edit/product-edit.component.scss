@@ -1,7 +1,9 @@
 @use 'sass:color';
+@use "sass:string";
 
 $primary-color: #fd8206;
-$secondary-color: #2c3e50;
+$secondary-color: #6c757d;
+$danger-color: #dc3545;
 $accent-color: #e74c3c;
 $success-color: #2ecc71;
 $light-gray: #f9f9f9;
@@ -21,6 +23,7 @@ $shadow: 0 2px 5px rgba(0,0,0,0.1);
 $border-radius: 4px;
 $transition-speed: 0.25s;
 $neon-orange: #ff7700;
+$encoded-dark-gray: string.quote(str-replace(#{$dark-gray}, '#', '%23'));
 
 :host {
   display: block;
@@ -70,9 +73,10 @@ h2 {
     -moz-appearance: none;
 
     &:read-only {
-      background-color: white;
+      background-color: $readonly-bg;
       cursor: not-allowed;
-      color: $text-color;
+      opacity: 0.7;
+      color: $dark-gray;
     }
 
     &:focus {
@@ -99,6 +103,7 @@ h2 {
 
   select {
     padding-right: 35px;
+    background-image: none;
 
     &::-ms-expand {
        display: none;
@@ -138,8 +143,14 @@ h2 {
 .form-actions {
   margin-top: 30px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
+
+  .actions-right {
+     display: flex;
+     gap: 12px;
+  }
 
   button, a {
     padding: 10px 22px;
@@ -165,6 +176,7 @@ h2 {
         background-color: $button-save-disabled-bg;
         cursor: not-allowed;
         box-shadow: none;
+         transform: none;
       }
       &:not(:disabled):hover {
         background-color: $button-save-hover-bg;
@@ -174,9 +186,25 @@ h2 {
     &[type="button"], &:not([type="submit"]) {
       background-color: $button-cancel-bg;
       color: white;
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: $button-cancel-hover-bg;
       }
+       &:disabled {
+         background-color: lighten($button-cancel-bg, 20%);
+         cursor: not-allowed;
+         box-shadow: none;
+         transform: none;
+       }
+    }
+
+    &.btn-delete {
+       background-color: $danger-color;
+       &:hover:not(:disabled) {
+          background-color: color.adjust($danger-color, $lightness: -10%);
+       }
+       &:disabled {
+          background-color: lighten($danger-color, 25%);
+       }
     }
   }
 }
