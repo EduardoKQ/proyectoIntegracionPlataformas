@@ -14,15 +14,21 @@ export class ProductService {
 
   constructor(private http: HttpClient) { }
 
-  getProducts(): Observable<Product[]> {
-    const localProducts = this._loadFromLocalStorage();
+  clearLocalProductStorage(): void {
+    try {
+      localStorage.removeItem(this.LOCAL_STORAGE_KEY);
+      console.log('Product data cleared from localStorage.');
+    } catch (e) {
+      console.error('Error clearing localStorage:', e);
+    }
+  }
 
-    if (localProducts) {
-      console.log('Productos cargados desde localStorage');
-      return of(localProducts);
+  getProducts(): Observable<Product[]> {
+    const localData = this._loadProductsFromLocalStorage();
+    if (localData) {
+      return of(localData);
     } else {
-      console.log('Productos no encontrados en localStorage. Cargando desde JSON y guardando...');
-      return this._fetchFromHttpAndSave();
+      return this._fetchProductsFromHttpAndSave();
     }
   }
 
@@ -33,73 +39,98 @@ export class ProductService {
   }
 
   updateProduct(productToUpdate: Product): Observable<Product> {
-    let currentProducts = this._loadFromLocalStorage();
-
-    if (!currentProducts) {
-        const errorMsg = 'Error: No se encontraron datos locales para actualizar.';
-        console.error(errorMsg);
-        return throwError(() => new Error(errorMsg));
+    let products = this._loadProductsFromLocalStorage();
+    if (!products) {
+      return throwError(() => new Error('Cannot update: No product data found in localStorage.'));
     }
-
-    const productIndex = currentProducts.findIndex(p => p.codigo_producto === productToUpdate.codigo_producto);
-
+    const productIndex = products.findIndex(p => p.id === productToUpdate.id);
     if (productIndex > -1) {
-      const updatedProducts = [
-        ...currentProducts.slice(0, productIndex),
-        productToUpdate,
-        ...currentProducts.slice(productIndex + 1)
-      ];
-
-      this._saveToLocalStorage(updatedProducts);
-      console.log('Producto actualizado en localStorage:', productToUpdate.codigo_producto);
+      const updatedProducts = [...products];
+      updatedProducts[productIndex] = productToUpdate;
+      this._saveProductsToLocalStorage(updatedProducts);
       return of(productToUpdate);
     } else {
-      const errorMsg = `Error: Producto con código ${productToUpdate.codigo_producto} no encontrado para actualizar.`;
-      console.error(errorMsg);
-      return throwError(() => new Error(errorMsg));
+      return throwError(() => new Error(`Product with code ${productToUpdate.codigo_producto} not found for update.`));
     }
   }
 
-  private _loadFromLocalStorage(): Product[] | null {
+  updateCategoryNameInProducts(oldCategoryName: string, newCategoryName: string): Observable<void> {
+    let products = this._loadProductsFromLocalStorage();
+    if (!products) return of(undefined);
+
+    const productsToUpdate = products.filter(p => p.categoria === oldCategoryName);
+
+    if (productsToUpdate.length > 0) {
+        console.log(`Actualizando nombre de categoría '${oldCategoryName}' a '${newCategoryName}' en ${productsToUpdate.length} productos.`);
+        const updatedProducts = products.map(p =>
+            p.categoria === oldCategoryName ? { ...p, categoria: newCategoryName } : p
+        );
+        this._saveProductsToLocalStorage(updatedProducts);
+    }
+    return of(undefined);
+  }
+
+ updateSubcategoryNameInProducts(categoryName: string, oldSubcategoryName: string, newSubcategoryName: string): Observable<void> {
+    let products = this._loadProductsFromLocalStorage();
+    if (!products) return of(undefined);
+
+    const productsToUpdate = products.filter(p => p.categoria === categoryName && p.subcategoria === oldSubcategoryName);
+
+     if (productsToUpdate.length > 0) {
+        console.log(`Actualizando nombre de subcategoría '${oldSubcategoryName}' a '${newSubcategoryName}' en ${productsToUpdate.length} productos de la categoría '${categoryName}'.`);
+        const updatedProducts = products.map(p =>
+          (p.categoria === categoryName && p.subcategoria === oldSubcategoryName)
+            ? { ...p, subcategoria: newSubcategoryName }
+            : p
+        );
+        this._saveProductsToLocalStorage(updatedProducts);
+    }
+    return of(undefined);
+  }
+
+  isCategoryInUse(categoryName: string): Observable<boolean> {
+     const products = this._loadProductsFromLocalStorage() ?? [];
+     const isInUse = products.some(p => p.categoria === categoryName);
+     return of(isInUse);
+  }
+
+  isSubcategoryInUse(categoryName: string, subcategoryName: string): Observable<boolean> {
+     const products = this._loadProductsFromLocalStorage() ?? [];
+     const isInUse = products.some(p => p.categoria === categoryName && p.subcategoria === subcategoryName);
+     return of(isInUse);
+  }
+
+  private _loadProductsFromLocalStorage(): Product[] | null {
     try {
       const jsonData = localStorage.getItem(this.LOCAL_STORAGE_KEY);
-      if (jsonData) {
-        return JSON.parse(jsonData) as Product[];
-      }
-      return null;
+      return jsonData ? JSON.parse(jsonData) : null;
     } catch (e) {
-      console.error('Error al leer o parsear localStorage:', e);
+      console.error('Error reading products from localStorage:', e);
       localStorage.removeItem(this.LOCAL_STORAGE_KEY);
       return null;
     }
   }
 
-  private _saveToLocalStorage(products: Product[]): void {
+  private _saveProductsToLocalStorage(data: Product[]): void {
     try {
-      localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(products));
+      localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
-      console.error('Error al guardar en localStorage:', e);
+      console.error('Error saving products to localStorage:', e);
     }
   }
 
-  private _fetchFromHttpAndSave(): Observable<Product[]> {
+  private _fetchProductsFromHttpAndSave(): Observable<Product[]> {
     return this.http.get<Product[]>(this.productsUrl).pipe(
-      tap(fetchedProducts => {
-        this._saveToLocalStorage(fetchedProducts);
-        console.log(`Leídos ${fetchedProducts.length} productos de ${this.productsUrl} y guardados en localStorage.`);
+      tap(products => {
+        this._saveProductsToLocalStorage(products);
+        console.log(`Workspaceed ${products.length} products from ${this.productsUrl} and saved to localStorage.`);
       }),
       catchError(this._handleHttpError)
     );
   }
-  private _handleHttpError(error: HttpErrorResponse) {
-    let errorMessage = 'Ocurrió un error desconocido al cargar los datos iniciales.';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      errorMessage = `Error del servidor: Código ${error.status}, Mensaje: ${error.message}`;
-    }
-    console.error(errorMessage);
-    return throwError(() => new Error('No se pudieron cargar los datos iniciales de productos. Verifica que el archivo JSON exista y sea accesible.'));
-  }
 
+   private _handleHttpError(error: HttpErrorResponse) {
+    console.error('Error loading products.json:', error.message);
+    return throwError(() => new Error('Could not load initial product data.'));
+  }
 }

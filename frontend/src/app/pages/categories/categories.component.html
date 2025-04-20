@@ -1,1 +1,76 @@
-<p>categories works!</p>
+<h2>Gestión de Categorías</h2>
+
+<div *ngIf="errorOcurred && !isLoading" class="error-message">
+  <p>Lo sentimos, ocurrió un error al cargar la lista de categorías.</p>
+  <button (click)="loadCategories()" class="btn btn-secondary btn-sm">Reintentar</button>
+</div>
+<div *ngIf="actionError" class="error-message">
+  <p>{{ actionError }}</p>
+</div>
+
+<div *ngIf="showAddCategoryForm && !editingCategoryId" class="add-form category-add-form">
+  <input type="text" [(ngModel)]="newCategoryName" placeholder="Nombre nueva categoría" required #newCatInput>
+  <button class="btn btn-success btn-sm" (click)="saveNewCategory()" [disabled]="!newCatInput.value.trim() || isSaving">Guardar</button>
+  <button class="btn btn-secondary btn-sm" type="button" (click)="cancelAddCategory()">Cancelar</button>
+</div>
+
+<div class="actions-bar" *ngIf="!showAddCategoryForm && !editingCategoryId && !addingSubcategoryTo">
+  <button class="btn btn-primary" (click)="showAddCategory()">+ Añadir Categoría</button>
+</div>
+
+<div class="category-list-container" *ngIf="categories$ | async as categories; else loading">
+  <div *ngIf="categories.length > 0; else noCategories">
+    <ul>
+      <li *ngFor="let category of categories" class="category-item">
+
+        <div *ngIf="editingCategoryId !== category.id" class="category-header">
+          <span class="category-name">{{ category.name }}</span>
+          <div class="category-actions">
+            <button class="btn btn-secondary btn-sm" (click)="editCategory(category)" [disabled]="isSaving">Editar</button>
+            <button class="btn btn-danger btn-sm" (click)="deleteCategory(category)" [disabled]="isSaving">Eliminar</button>
+            <button class="btn btn-success btn-sm" (click)="showAddSubcategory(category)" [disabled]="isSaving">+ Subcategoría</button>
+          </div>
+        </div>
+        <div *ngIf="editingCategoryId === category.id" class="edit-form category-edit-form">
+          <input type="text" [(ngModel)]="editedName" required #editCatInput>
+          <button class="btn btn-success btn-sm" (click)="saveEditedCategory(category.id)" [disabled]="!editCatInput.value.trim() || isSaving">Guardar</button>
+          <button class="btn btn-secondary btn-sm" type="button" (click)="cancelEditCategory()">Cancelar</button>
+        </div>
+        <ul *ngIf="category.subcategories && category.subcategories.length > 0" class="subcategory-list">
+          <li *ngFor="let subcategory of category.subcategories" class="subcategory-item">
+
+             <ng-container *ngIf="editingSubcategoryId !== subcategory.id">
+                <span class="subcategory-name">{{ subcategory.name }}</span>
+                <div class="subcategory-actions">
+                    <button class="btn btn-secondary btn-sm" (click)="editSubcategory(category, subcategory)" [disabled]="isSaving">Editar</button>
+                    <button class="btn btn-danger btn-sm" (click)="deleteSubcategory(category, subcategory)" [disabled]="isSaving">Eliminar</button>
+                </div>
+             </ng-container>
+             <div *ngIf="editingSubcategoryId === subcategory.id && editingCategoryId === category.id" class="edit-form subcategory-edit-form">
+                <input type="text" [(ngModel)]="editedName" required #editSubInput>
+                <button class="btn btn-success btn-sm" (click)="saveEditedSubcategory(category.id, subcategory.id)" [disabled]="!editSubInput.value.trim() || isSaving">Guardar</button>
+                <button class="btn btn-secondary btn-sm" type="button" (click)="cancelEditSubcategory()">Cancelar</button>
+             </div>
+             </li>
+        </ul>
+        <p *ngIf="!category.subcategories || category.subcategories.length === 0" class="no-subcategories">
+          (Sin subcategorías)
+        </p>
+
+        <div *ngIf="addingSubcategoryTo === category.id" class="add-form subcategory-add-form">
+           <input type="text" [(ngModel)]="newSubcategoryName" placeholder="Nombre nueva subcategoría" required #newSubInput>
+           <button class="btn btn-success btn-sm" (click)="saveNewSubcategory(category)" [disabled]="!newSubInput.value.trim() || isSaving">Guardar Sub</button>
+           <button class="btn btn-secondary btn-sm" type="button" (click)="cancelAddSubcategory()">Cancelar</button>
+        </div>
+
+      </li>
+    </ul>
+  </div>
+  <ng-template #noCategories>
+    <p>No hay categorías para mostrar. Puedes añadir una nueva.</p>
+  </ng-template>
+</div>
+
+<ng-template #loading>
+  <p *ngIf="isLoading">Cargando categorías...</p>
+</ng-template>

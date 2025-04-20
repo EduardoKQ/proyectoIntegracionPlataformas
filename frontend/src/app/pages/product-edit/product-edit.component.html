@@ -9,6 +9,10 @@
   <a routerLink="/products">Volver a la lista</a>
 </div>
 
+<div *ngIf="actionError" class="error-message">
+   <p>{{ actionError }}</p>
+</div>
+
 <form *ngIf="!isLoading && !productNotFound && productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
 
   <div class="form-field">
@@ -52,15 +56,35 @@
     <input id="codigoM" type="text" formControlName="codigoM">
   </div>
 
-   <div class="form-field">
+  <div class="form-field">
     <label for="categoria">Categoría:</label>
-    <input id="categoria" type="text" formControlName="categoria">
+    <div class="select-wrapper">
+      <select id="categoria" formControlName="categoria">
+        <option value="" disabled>-- Selecciona Categoría --</option>
+        <option *ngFor="let cat of allCategories" [value]="cat.name">
+          {{ cat.name }}
+        </option>
+      </select>
+      <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
+    </div>
+    <div *ngIf="productForm.get('categoria')?.invalid && (productForm.get('categoria')?.dirty || productForm.get('categoria')?.touched)" class="validation-error">
+      <small *ngIf="productForm.get('categoria')?.errors?.['required']">La categoría es requerida.</small>
+    </div>
   </div>
 
   <div class="form-field">
     <label for="subcategoria">Subcategoría:</label>
-    <input id="subcategoria" type="text" formControlName="subcategoria">
-  </div>
+     <div class="select-wrapper">
+      <select id="subcategoria" formControlName="subcategoria"
+              [disabled]="filteredSubcategories.length === 0">
+        <option value="">-- Selecciona Subcategoría (si aplica) --</option>
+        <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
+          {{ subcat.name }}
+        </option>
+      </select>
+       <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
+     </div>
+   </div>
 
   <div class="form-field">
     <label for="descripcion">Descripción:</label>
@@ -72,10 +96,11 @@
     <input id="imageUrl" type="url" formControlName="imageUrl">
   </div>
 
-
   <div class="form-actions">
-    <button type="submit" [disabled]="productForm.invalid">Guardar Cambios</button>
-    <button type="button" (click)="cancel()">Cancelar</button>
-    </div>
+    <button type="submit" [disabled]="productForm.invalid || isSaving">
+       {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+    </button>
+    <button type="button" (click)="cancel()" [disabled]="isSaving">Cancelar</button>
+  </div>
 
 </form>
