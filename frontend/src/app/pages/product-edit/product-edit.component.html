@@ -1,0 +1,81 @@
+<h2>Editar Producto</h2>
+
+<div *ngIf="isLoading">
+  <p>Cargando datos del producto...</p>
+</div>
+
+<div *ngIf="productNotFound" class="error-message">
+  <p>Producto no encontrado o código inválido.</p>
+  <a routerLink="/products">Volver a la lista</a>
+</div>
+
+<form *ngIf="!isLoading && !productNotFound && productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
+
+  <div class="form-field">
+    <label for="codigo_producto">Código Producto:</label>
+    <input id="codigo_producto" type="text" formControlName="codigo_producto" readonly>
+  </div>
+
+  <div class="form-field">
+    <label for="nombre">Nombre:</label>
+    <input id="nombre" type="text" formControlName="nombre">
+    <div *ngIf="productForm.get('nombre')?.invalid && (productForm.get('nombre')?.dirty || productForm.get('nombre')?.touched)" class="validation-error">
+      <small *ngIf="productForm.get('nombre')?.errors?.['required']">El nombre es requerido.</small>
+    </div>
+  </div>
+
+  <div class="form-field">
+    <label for="precio">Precio:</label>
+    <input id="precio" type="number" formControlName="precio">
+     <div *ngIf="productForm.get('precio')?.invalid && (productForm.get('precio')?.dirty || productForm.get('precio')?.touched)" class="validation-error">
+      <small *ngIf="productForm.get('precio')?.errors?.['required']">El precio es requerido.</small>
+      <small *ngIf="productForm.get('precio')?.errors?.['min']">El precio debe ser positivo.</small>
+    </div>
+  </div>
+
+  <div class="form-field">
+    <label for="stock">Stock:</label>
+    <input id="stock" type="number" formControlName="stock">
+     <div *ngIf="productForm.get('stock')?.invalid && (productForm.get('stock')?.dirty || productForm.get('stock')?.touched)" class="validation-error">
+      <small *ngIf="productForm.get('stock')?.errors?.['required']">El stock es requerido.</small>
+      <small *ngIf="productForm.get('stock')?.errors?.['min']">El stock debe ser positivo.</small>
+    </div>
+  </div>
+
+   <div class="form-field">
+    <label for="marca">Marca:</label>
+    <input id="marca" type="text" formControlName="marca">
+  </div>
+
+   <div class="form-field">
+    <label for="codigoM">Código M (Ref):</label>
+    <input id="codigoM" type="text" formControlName="codigoM">
+  </div>
+
+   <div class="form-field">
+    <label for="categoria">Categoría:</label>
+    <input id="categoria" type="text" formControlName="categoria">
+  </div>
+
+  <div class="form-field">
+    <label for="subcategoria">Subcategoría:</label>
+    <input id="subcategoria" type="text" formControlName="subcategoria">
+  </div>
+
+  <div class="form-field">
+    <label for="descripcion">Descripción:</label>
+    <textarea id="descripcion" formControlName="descripcion" rows="3"></textarea>
+  </div>
+
+   <div class="form-field">
+    <label for="imageUrl">URL Imagen:</label>
+    <input id="imageUrl" type="url" formControlName="imageUrl">
+  </div>
+
+
+  <div class="form-actions">
+    <button type="submit" [disabled]="productForm.invalid">Guardar Cambios</button>
+    <button type="button" (click)="cancel()">Cancelar</button>
+    </div>
+
+</form>

@@ -1,8 +1,10 @@
+@use 'sass:color';
+
 $sidebar-bg: #37516b;
 $primary-color: #F57C00;
 $text-color: #ECF0F1;
 $icon-color: #ECF0F1;
-$link-hover-bg: lighten($sidebar-bg, 5%);
+$link-hover-bg: color.adjust($sidebar-bg, $lightness: 5%);
 $link-hover-icon-color: $primary-color;
 $link-active-bg: $primary-color;
 $link-active-text: #FFFFFF;

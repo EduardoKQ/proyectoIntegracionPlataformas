@@ -4,6 +4,7 @@ import { ProductListComponent } from './pages/product-list/product-list.componen
 import { CategoriesComponent} from './pages/categories/categories.component';
 import { ProductComponent } from './pages/product/product.component';
 import { OrdersComponent } from './pages/orders/orders.component';
+import { ProductEditComponent } from './pages/product-edit/product-edit.component';
 
 export const routes: Routes = [
 
@@ -12,6 +13,7 @@ export const routes: Routes = [
   { path: 'categories', component: CategoriesComponent },
   { path: 'product', component: ProductComponent },
   { path: 'orders', component: OrdersComponent },
+  { path: 'products/edit/:codigo', component: ProductEditComponent },
   { path : '', redirectTo: 'product', pathMatch: 'full' },
 ];
 
