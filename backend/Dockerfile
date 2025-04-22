@@ -26,5 +26,4 @@ COPY . .
 EXPOSE 8000
 
 # Run Django development server
-# Use 0.0.0.0 to make it accessible outside the container
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "django-local-deploy.sh"]

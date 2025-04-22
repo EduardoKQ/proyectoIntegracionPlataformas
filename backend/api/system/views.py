@@ -7,7 +7,7 @@ from django.db import connection
 def health(request):
     response = {}
     # add backend status
-    response["backend-status"] = "ok :)"
+    response["backend-status"] = "ok"
     # add database status
     response["database-status"] = check_database()
     return JsonResponse(response)
