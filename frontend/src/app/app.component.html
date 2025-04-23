@@ -1,6 +1,6 @@
-<div class="app-container" [class.sidebar-collapsed]="isCollapsed">
-  <app-sidebar (collapsedStateChanged)="onSidebarToggle($event)"></app-sidebar>
-  <main class="main-content">
+<div class="app-container">
+  <app-sidebar *ngIf="showSidebar"></app-sidebar>
+  <main class="content-area">
     <router-outlet></router-outlet>
   </main>
 </div>

@@ -43,6 +43,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   goToStore(): void {
+    this.router.navigate(['/login']).then(() => {
+      window.location.reload();
+    });
   }
 
   logout(): void {
