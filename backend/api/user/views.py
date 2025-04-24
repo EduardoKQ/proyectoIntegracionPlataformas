@@ -52,6 +52,15 @@ def login(request):
             return JsonResponse(
                 {"status": "error", "message": "Invalid email or password."}, status=401
             )
+        
+        # process if the user is first time login
+        if user.is_first_time_login:
+            is_first_time_login = True
+            # update the user to not first time login
+            user.is_first_time_login = False
+            user.save()
+        else:
+            is_first_time_login = False
 
         # if the user is authenticated, generate JWT tokens
         user_tokens = get_user_tokens(user)
@@ -59,10 +68,11 @@ def login(request):
         return JsonResponse(
             {
                 "status": "success",
-                "message": "User logged in successfully.",
+                "message": "Inicio de sesión exitoso.",
                 "user_data": {
-                    "email": request.POST.get("email"),
-                    "password": request.POST.get("password"),
+                    "email": user.email,
+                    "role": user.role,
+                    "is_first_time_login": is_first_time_login,
                 },
                 "JWT_tokens": {
                     "access_token": user_tokens["access"],
