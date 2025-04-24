@@ -1,0 +1,42 @@
+[
+    {
+      "model": "api.webroles",
+      "pk": 1,
+      "fields": {
+        "role": "cliente",
+        "description": "cliente de la tienda"
+      }
+    },
+    {
+      "model": "api.webroles",
+      "pk": 2,
+      "fields": {
+        "role": "bodeguero",
+        "description": "bodeguero de al tienda"
+      }
+    },
+    {
+      "model": "api.webroles",
+      "pk": 3,
+      "fields": {
+        "role": "contador",
+        "description": "contador de la tienda"
+      }
+    },
+    {
+      "model": "api.webroles",
+      "pk": 4,
+      "fields": {
+        "role": "vendedor",
+        "description": "vendedor de la tienda"
+      }
+    },
+    {
+      "model": "api.webroles",
+      "pk": 5,
+      "fields": {
+        "role": "administrador_tienda",
+        "description": "supervisor de la tienda"
+      }
+    }
+  ]
