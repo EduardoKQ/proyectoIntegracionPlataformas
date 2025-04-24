@@ -26,6 +26,7 @@ $error-color: #dc3545;
   justify-content: flex-start;
   background-color: $white;
   overflow-y: auto;
+  order: 2;
 }
 
 .brand {
@@ -149,9 +150,10 @@ $error-color: #dc3545;
   flex: 1;
   position: relative;
   overflow: hidden;
+  order: 1;
 }
 
-.background-img {
+.img-register {
   position: absolute;
   width: 100%;
   height: 100%;
