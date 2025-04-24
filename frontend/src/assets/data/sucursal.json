@@ -1,0 +1,12 @@
+[
+  {
+  "id": "san",
+  "nombre": "Sucursal 1",
+  "direccion": "Santiago"
+  },
+  {
+    "id": "vin",
+    "nombre": "Sucursal 2",
+    "direccion": "viña"
+  }
+]
