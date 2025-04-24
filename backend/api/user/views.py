@@ -1,19 +1,60 @@
 from django.http import JsonResponse
-from .serializer import RegisterSerializer
+import json
+from api.models import WebUser
+from .serializer import RegisterSerializer, LoginSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from .customJWT import CustomJWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
+from django.contrib.auth.hashers import check_password
 
 
 # login
 @csrf_exempt
 def login(request):
     if request.method == "POST":
+        # parse the request body as JSON
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid JSON data."}, status=400
+            )
+        # then validate the data with serializer
+        serializer = LoginSerializer(data=data)
+        if not serializer.is_valid():
+            return JsonResponse(
+                {"status": "error", "message": serializer.errors}, status=400
+            )
 
-        # generate JWT tokens
-        user_data = "test_user_data"  # Placeholder for user data
-        user_tokens = get_user_tokens(user_data)
+        # if the data is valid, authenticate the user
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+
+        # try to login the user
+        try:
+            user = WebUser.objects.get(email=email)
+            print("user", user)
+            print("user.password", user.password)
+            print("password", password)
+
+            if not check_password(password, user.password):
+                raise AuthenticationFailed("Invalid password.")
+        except WebUser.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "User not found."}, status=404
+            )
+        except AuthenticationFailed:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid email or password."}, status=401
+            )
+        except Exception as e:
+            return JsonResponse(
+                {"status": "error", "message": "Invalid email or password."}, status=401
+            )
+
+        # if the user is authenticated, generate JWT tokens
+        user_tokens = get_user_tokens(user)
 
         return JsonResponse(
             {
@@ -105,7 +146,8 @@ def get_user_tokens(user_data):
 
     # crucially, the user_id is set to the refresh token payload
     # this is used to identify the user when the token is validated
-    refresh["user_id"] = "13"
+    refresh["user_id"] = user_data.email
+    refresh["role"] = user_data.role
 
     return {
         "refresh": str(refresh),

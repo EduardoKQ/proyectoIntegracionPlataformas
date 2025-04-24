@@ -62,3 +62,35 @@ class RegisterSerializer(serializers.Serializer):
             user.is_first_time_login,
         )
         return user
+
+
+"""
+Serializer for login requests. Validates email and password.
+"""
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+    )
+
+    def validate(self, data):
+        # email validation function
+        def validate_email(email):
+            if not email or "@" not in email:
+                return False
+            if not WebUser.objects.filter(email=email).exists():
+                return False
+            return True
+
+        # password validation function
+        def validate_password(password):
+            if password is None:
+                return False
+            return True
+
+        validate_email(data.get("email"))
+        validate_password(data.get("password"))
+        return data

@@ -14,8 +14,6 @@ def health(request):
     return JsonResponse(response)
 
 
-
-
 def check_database():
     try:
         with connection.cursor() as cursor:
@@ -29,7 +27,6 @@ def check_database():
         return "error: " + str(e)
 
 
-
 ### TESTING ONLY !!! later remove these endpoints
 def user_roles(request):
     # get all user roles
@@ -37,7 +34,7 @@ def user_roles(request):
         roles = WebRoles.objects.all().values()
         roles_list = list(roles)
         return JsonResponse({"roles": roles_list}, status=200)
-    
+
     except WebRoles.DoesNotExist:
         return JsonResponse({"error": "Roles not found"}, status=404)
     except Exception as e:

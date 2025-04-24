@@ -1,88 +1,87 @@
 [
-    {
-      "model": "api.webroles",
-      "pk": 1,
-      "fields": {
-        "role": "cliente",
-        "description": "cliente de la tienda"
-      }
-    },
-    {
-      "model": "api.webroles",
-      "pk": 2,
-      "fields": {
-        "role": "bodeguero",
-        "description": "bodeguero de al tienda"
-      }
-    },
-    {
-      "model": "api.webroles",
-      "pk": 3,
-      "fields": {
-        "role": "contador",
-        "description": "contador de la tienda"
-      }
-    },
-    {
-      "model": "api.webroles",
-      "pk": 4,
-      "fields": {
-        "role": "vendedor",
-        "description": "vendedor de la tienda"
-      }
-    },
-    {
-      "model": "api.webroles",
-      "pk": 5,
-      "fields": {
-        "role": "administrador_tienda",
-        "description": "supervisor de la tienda"
-      }
-    },
-    {
-      "model": "api.webuser",
-      "pk": "admin@ferremas.com",
-      "fields": {
-        "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-        "role": "administrador_tienda",
-        "is_first_time_login": true
-      }
-    },
-    {
-      "model": "api.webuser",
-      "pk": "vendedor@ferremas.com",
-      "fields": {
-        "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-        "role": "vendedor",
-        "is_first_time_login": true
-      }
-    },
-    {
-      "model": "api.webuser",
-      "pk": "bodeguero@ferremas.com",
-      "fields": {
-        "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-        "role": "bodeguero",
-        "is_first_time_login": true
-      }
-    },
-    {
-      "model": "api.webuser",
-      "pk": "contador@ferremas.com",
-      "fields": {
-        "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-        "role": "contador",
-        "is_first_time_login": true
-      }
-    },
-    {
-      "model": "api.webuser",
-      "pk": "cliente@gmail.com",
-      "fields": {
-        "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-        "role": "cliente",
-        "is_first_time_login": true
-      }
+  {
+    "model": "api.webroles",
+    "pk": 1,
+    "fields": {
+      "role": "cliente",
+      "description": "realiza compras por la web y puede gestionar su cuenta"
     }
-    
-  ]
+  },
+  {
+    "model": "api.webroles",
+    "pk": 2,
+    "fields": {
+      "role": "bodeguero",
+      "description": "prepara los pedidos aprobador por el vendedor y gestionar el inventario de su sucursal"
+    }
+  },
+  {
+    "model": "api.webroles",
+    "pk": 3,
+    "fields": {
+      "role": "contador",
+      "description": "valida pagos por transferencia y gestiona la contabilidad de la tienda"
+    }
+  },
+  {
+    "model": "api.webroles",
+    "pk": 4,
+    "fields": {
+      "role": "vendedor",
+      "description": "gestiona pedidos web y hace entrega o envio de productos a los clientes"
+    }
+  },
+  {
+    "model": "api.webroles",
+    "pk": 5,
+    "fields": {
+      "role": "administrador_tienda",
+      "description": "gestiona todos los productos y usuarios internos de la tienda. Tambien puede gestionar las ofertas y promociones de la tienda"
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": "admin@ferremas.com",
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": "administrador_tienda",
+      "is_first_time_login": true
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": "vendedor@ferremas.com",
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": "vendedor",
+      "is_first_time_login": true
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": "bodeguero@ferremas.com",
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": "bodeguero",
+      "is_first_time_login": true
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": "contador@ferremas.com",
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": "contador",
+      "is_first_time_login": true
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": "cliente@gmail.com",
+    "fields": {
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": "cliente",
+      "is_first_time_login": true
+    }
+  }
+]
