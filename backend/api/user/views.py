@@ -70,6 +70,7 @@ def login(request):
 
 
 # register
+@csrf_exempt
 def register(request):
     if request.method == "POST":
         # process the registration data with serializer
@@ -88,7 +89,6 @@ def register(request):
 
 
 # current user data
-@csrf_exempt
 def me(request):
     if request.method == "GET":
         try:
@@ -99,22 +99,15 @@ def me(request):
             if auth_result is None:
                 raise NotAuthenticated("Invalid or missing token.")
 
-            print("auth_result", auth_result)
             validated_token = auth_result[1]
-            print("validated_token", validated_token)
 
             user = validated_token.get("user_id")
             print("user", user)
 
             # Return user data
+            user = WebUser.objects.get(email=user)
             return JsonResponse(
-                {
-                    "status": "success",
-                    "message": "User data retrieved successfully.",
-                    "user_data": {
-                        "id": user,
-                    },
-                },
+                user_data(user),
                 status=200,
             )
         except NotAuthenticated as e:
@@ -151,51 +144,41 @@ def login_response(user):
     # generate JWT tokens for the user
     user_tokens = get_user_tokens(user)
 
-    user_role = user.role.role
+    response = JsonResponse(
+        {
+            "status": "success",
+            "message": "Login exitoso.",
+            "user_data": user_data(user),
+            "tokens": user_tokens,
+        },
+        status=200,
+    )
+    return response
 
+
+def user_data(user):
+    if not isinstance(user, WebUser):
+        return None
+    # get the user data from the database
+    user_role = user.role.role
     match user_role:
         case "administrador_tienda":
-            response = JsonResponse(
-                {
-                    "status": "success",
-                    "message": "Login exitoso.",
-                    "user_data": {
-                        "email": user.email,
-                        "role": user_role,
-                        "is_first_time_login": user.is_first_time_login,
-                    },
-                    "tokens": user_tokens,
-                },
-                status=200,
-            )
+            return {
+                "email": user.email,
+                "role": user_role,
+                "is_first_time_login": user.is_first_time_login,
+            }
 
         case "cliente":
             # get the client data to check if recieve_offers is true or false
             client = Client.objects.get(user_account=user)
-            response = JsonResponse(
-                {
-                    "status": "success",
-                    "message": "Login exitoso.",
-                    "user_data": {
-                        "email": user.email,
-                        "role": user_role,
-                        "recieve_offers": client.recieve_offers,
-                    },
-                    "tokens": user_tokens,
-                },
-                status=200,
-            )
+            return {
+                "email": user.email,
+                "role": user_role,
+                "recieve_offers": client.recieve_offers,
+            }
         case _:
-            response = JsonResponse(
-                {
-                    "status": "success",
-                    "message": "Login exitoso.",
-                    "user_data": {
-                        "email": user.email,
-                        "role": user_role,
-                    },
-                    "tokens": user_tokens,
-                },
-                status=200,
-            )
-    return response
+            return {
+                "email": user.email,
+                "role": user_role,
+            }
