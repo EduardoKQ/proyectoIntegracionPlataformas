@@ -1,0 +1,22 @@
+[
+  {
+    "model": "api.branch",
+    "pk": 1,
+    "fields": {
+      "branch_code": "san",
+      "name": "Casa Matriz",
+      "address": "calle X, Santiago",
+      "city": "Santiago"
+    }
+  },
+  {
+    "model": "api.branch",
+    "pk": 2,
+    "fields": {
+      "branch_code": "vin",
+      "name": "Sucursal Viña",
+      "address": "calle Y, Viña",
+      "city": "Viña"
+    }
+  }
+]

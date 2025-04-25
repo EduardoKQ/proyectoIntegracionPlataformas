@@ -1,0 +1,404 @@
+[
+  {
+    "model": "api.category",
+    "pk": 1,
+    "fields": {
+      "category_code": "cat-herr-man",
+      "name": "Herramientas Manuales"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 1,
+    "fields": {
+      "subcategory_code": "sub-hm-mar",
+      "name": "Martillos",
+      "category": 1
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 2,
+    "fields": {
+      "subcategory_code": "sub-hm-des",
+      "name": "Destornilladores",
+      "category": 1
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 2,
+    "fields": {
+      "category_code": "cat-mat-bas",
+      "name": "Materiales Básicos"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 3,
+    "fields": {
+      "subcategory_code": "sub-mb-cem",
+      "name": "Cemento",
+      "category": 2
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 4,
+    "fields": {
+      "subcategory_code": "sub-mb-pin",
+      "name": "Pinturas",
+      "category": 2
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 3,
+    "fields": {
+      "category_code": "cat-equ-seg",
+      "name": "Equipos de Seguridad"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 5,
+    "fields": {
+      "subcategory_code": "sub-es-cas",
+      "name": "Cascos",
+      "category": 3
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 6,
+    "fields": {
+      "subcategory_code": "sub-es-gua",
+      "name": "Guantes",
+      "category": 3
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 4,
+    "fields": {
+      "category_code": "cat-tor-anc",
+      "name": "Tornillos y Anclajes"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 7,
+    "fields": {
+      "subcategory_code": "sub-ta-anc",
+      "name": "anclajes",
+      "category": 4
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 8,
+    "fields": {
+      "subcategory_code": "sub-ta-tor",
+      "name": "tornillos",
+      "category": 4
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 5,
+    "fields": {
+      "category_code": "cat-fij-adh",
+      "name": "Fijaciones y Adhesivos"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 9,
+    "fields": {
+      "subcategory_code": "sub-fa-fij",
+      "name": "Fijaciones",
+      "category": 5
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 10,
+    "fields": {
+      "subcategory_code": "sub-fa-adh",
+      "name": "Adhesivos",
+      "category": 5
+    }
+  },
+  {
+    "model": "api.category",
+    "pk": 6,
+    "fields": {
+      "category_code": "cat-equ-med",
+      "name": "Equipos de Medición"
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 11,
+    "fields": {
+      "subcategory_code": "sub-em-hui",
+      "name": "Huincha",
+      "category": 6
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 1,
+    "fields": {
+      "product_code": "1231",
+      "brand": "MAKAWA",
+      "brand_code": "127293727",
+      "name": "Martillo Carpintero 20oz Makawa Mk-3083",
+      "description": "Martillo carpintero 20oz",
+      "image_url": "https://media.falabella.com/falabellaCL/127293727_01/w=800,h=800,fit=pad",
+      "current_price": "4990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 1
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 2,
+    "fields": {
+      "product_code": "1232",
+      "brand": "DEWALT",
+      "brand_code": "128835754",
+      "name": "Martillo De Carpintero De 22 Onzas Dewalt Dwht51008",
+      "description": "Martillo de carpintero de 22 onzas",
+      "image_url": "https://media.falabella.com/falabellaCL/128835754_01/w=800,h=800,fit=pad",
+      "current_price": "39490.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 1
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 3,
+    "fields": {
+      "product_code": "1233",
+      "brand": "BAHCO",
+      "brand_code": "138852952",
+      "name": "Set destornilladores aislado 7 piezas",
+      "description": "Destornilladores aislados 7 piezas",
+      "image_url": "https://media.falabella.com/falabellaCL/138852952_01/w=800,h=800,fit=pad",
+      "current_price": "23990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 2
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 4,
+    "fields": {
+      "product_code": "1234",
+      "brand": "UBERMANN",
+      "brand_code": "11023931",
+      "name": "Desatornillador Paleta 5,5x125 mm",
+      "description": " Desatornillador Paleta 5,5x125 mm",
+      "image_url": "https://media.falabella.com/sodimacCL/235547_17/w=800,h=800,fit=pad",
+      "current_price": "3690.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 2
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 5,
+    "fields": {
+      "product_code": "1235",
+      "brand": "POLPAICO",
+      "brand_code": "110309919",
+      "name": "Cemento Polpaico 25 kilos",
+      "description": " Cemento Polpaico 25 kilos",
+      "image_url": "https://media.falabella.com/sodimacCL/338845X_01/w=800,h=800,fit=pad",
+      "current_price": "3990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 3
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 6,
+    "fields": {
+      "product_code": "1236",
+      "brand": "BIO BIO",
+      "brand_code": "110308931",
+      "name": "Cementos Cbb 25 Kilos",
+      "description": " Cementos Cbb 25 Kilos",
+      "image_url": "https://media.falabella.com/sodimacCL/3316939_01/w=800,h=800,fit=pad",
+      "current_price": "3990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 3
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 7,
+    "fields": {
+      "product_code": "1237",
+      "brand": "KOLOR",
+      "brand_code": "140324995",
+      "name": "Esmalte al Agua para Interior Blanco",
+      "description": " Esmalte al Agua para Interior Tecnología Photio Satinado 1 galón(es) Blanco",
+      "image_url": "https://media.falabella.com/sodimacCL/7682425_01/w=800,h=800,fit=pad",
+      "current_price": "39990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 4
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 8,
+    "fields": {
+      "product_code": "1238",
+      "brand": "KOLOR",
+      "brand_code": "110265190",
+      "name": "Pintura para techos negro",
+      "description": "Pintura para techos negro 1 galón",
+      "image_url": "https://media.falabella.com/sodimacCL/5937833_12/w=800,h=800,fit=pad",
+      "current_price": "32490.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 4
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 9,
+    "fields": {
+      "product_code": "1239",
+      "brand": "STEELPRO",
+      "brand_code": "113666528",
+      "name": "Casco Yako Steelpro Negro",
+      "description": "Casco Yako Steelpro Negro",
+      "image_url": "https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/113666528_01/w=800,h=800,fit=pad",
+      "current_price": "24590.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 5
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 10,
+    "fields": {
+      "product_code": "1240",
+      "brand": "MSA",
+      "brand_code": "110317063",
+      "name": "Casco de seguridad blanco",
+      "description": " Casco de seguridad blanco",
+      "image_url": "https://media.falabella.com/sodimacCL/1280848_01/w=800,h=800,fit=pad",
+      "current_price": "11990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 5
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 11,
+    "fields": {
+      "product_code": "1240UM",
+      "brand": "UBERMANN",
+      "brand_code": "117037996",
+      "name": "Guante de trabajo max impact",
+      "description": " Guante de trabajo max impact",
+      "image_url": "https://media.falabella.com/sodimacCL/8832080_01/w=1004,h=1500,fit=cover",
+      "current_price": "8590.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 6
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 12,
+    "fields": {
+      "product_code": "1241",
+      "brand": "REDLINE",
+      "brand_code": "110312422",
+      "name": "Guante multiuso tejido y palma anticorte grado 5 profesional",
+      "description": " Guante multiuso tejido y palma anticorte grado 5 profesional",
+      "image_url": "https://media.falabella.com/sodimacCL/2899272_01/w=1004,h=1500,fit=cover",
+      "current_price": "4990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 6
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 13,
+    "fields": {
+      "product_code": "1242",
+      "brand": "FIXSER",
+      "brand_code": "110282182",
+      "name": "Taco anclaje 3/8 x 1 5/8 25 unidades",
+      "description": " Taco anclaje 3/8 x 1 5/8 25 unidades",
+      "image_url": "https://media.falabella.com/sodimacCL/808512_01/w=800,h=800,fit=pad",
+      "current_price": "8890.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 7
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 14,
+    "fields": {
+      "product_code": "1243",
+      "brand": "MAMUT",
+      "brand_code": "110328939",
+      "name": "Tornillo Turbo screw Madera Cabeza Phillips Madera 35 mm 4.5 mm 144 Unidades",
+      "description": "",
+      "image_url": "https://media.falabella.com/sodimacCL/472913_01/w=800,h=800,fit=pad",
+      "current_price": "8590.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 8
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 15,
+    "fields": {
+      "product_code": "1244",
+      "brand": "MAMUT",
+      "brand_code": "110281053",
+      "name": "Tornillo Autoperforante Cabeza Lenteja Metal 1/2 8 mm 1000 Unidades",
+      "description": " Tornillo Autoperforante Cabeza Lenteja Metal 1/2 8 mm 1000 Unidades",
+      "image_url": "https://media.falabella.com/sodimacCL/472174_01/w=800,h=800,fit=pad",
+      "current_price": "6380.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 9
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 16,
+    "fields": {
+      "product_code": "1245",
+      "brand": "LANCO",
+      "brand_code": "110272589",
+      "name": "Silicona para altas temperaturas 300 ml",
+      "description": "Silicona para altas temperaturas 300 ml",
+      "image_url": "https://media.falabella.com/sodimacCL/1074407_001/w=800,h=800,fit=pad",
+      "current_price": "9790.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 10
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 17,
+    "fields": {
+      "product_code": "1246",
+      "brand": "STANLEY",
+      "brand_code": "110036411",
+      "name": "Huincha de medir 8 metros metal",
+      "description": "Huincha de medir 8 metros metal",
+      "image_url": "https://media.falabella.com/sodimacCL/686069_001/w=800,h=800,fit=pad",
+      "current_price": "14290.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 11
+    }
+  }
+]

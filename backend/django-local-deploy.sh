@@ -4,19 +4,15 @@
 echo "Running 'python manage.py makemigrations'..."
 python manage.py makemigrations
 
-# reset the database and start the Django development server
-echo "Unapplying api migrations (dropping tables)..."
-python manage.py migrate api zero --no-input
-echo "resetting database..."
-python manage.py flush --no-input
-
 # Run Django migrate
 echo "Running 'python manage.py migrate'..."
 python manage.py migrate
 
-# load initial data
+# load initial data (order of fixtures matters)
 echo "Loading initial data..."
-python manage.py loaddata initial_data.json
+python manage.py loaddata users.json
+python manage.py loaddata inventory.json
+python manage.py loaddata products.json
 
 # Run Django development server
 echo "Starting Django development server on 0.0.0.0..."

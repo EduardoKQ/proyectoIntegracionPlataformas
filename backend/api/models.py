@@ -83,6 +83,7 @@ class Client(models.Model):
 
 class Branch(models.Model):
     branch_id = models.AutoField(primary_key=True)
+    branch_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100, unique=True)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
@@ -90,8 +91,8 @@ class Branch(models.Model):
 
 class Worker(models.Model):
     worker_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-    surname = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
     user_account = models.ForeignKey(
         WebUser, on_delete=models.DO_NOTHING, related_name="workers"
     )
@@ -104,8 +105,10 @@ class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     product_code = models.CharField(max_length=50, unique=True)
     brand = models.CharField(max_length=100)
+    brand_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
     description = models.TextField()
+    image_url = models.URLField()
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
     current_price_date = models.DateField()
     subcategory = models.ForeignKey(
@@ -124,6 +127,7 @@ class PriceHistory(models.Model):
 
 class Subcategory(models.Model):
     subcategory_id = models.AutoField(primary_key=True)
+    subcategory_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100, unique=True)
     category = models.ForeignKey(
         "Category", on_delete=models.DO_NOTHING, related_name="subcategories"
@@ -132,15 +136,24 @@ class Subcategory(models.Model):
 
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
+    category_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100, unique=True)
 
 
 class Inventory(models.Model):
     inventory_id = models.AutoField(primary_key=True)
     branch = models.ForeignKey(
-        Branch, on_delete=models.DO_NOTHING, related_name="inventories"
+        Branch,
+        on_delete=models.DO_NOTHING,
+        related_name="inventories",
     )
     product = models.ForeignKey(
-        Product, on_delete=models.DO_NOTHING, related_name="inventories"
+        Product,
+        on_delete=models.DO_NOTHING,
+        related_name="inventories",
     )
     quantity = models.PositiveIntegerField()
+
+    class Meta:
+        # Enforce that the combination of branch and product is unique
+        unique_together = ("branch", "product")
