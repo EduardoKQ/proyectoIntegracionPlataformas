@@ -13,7 +13,9 @@ class CustomJWTAuthentication(JWTAuthentication):
                 )
 
             # Retrieve the user from the database
-            user = WebUser.objects.get(email=user_id)
+            user = WebUser.objects.get(id=user_id)
+            if not user.is_active:
+                raise AuthenticationFailed("User is inactive.")
             return user
         except WebUser.DoesNotExist:
             raise AuthenticationFailed("User not found.")

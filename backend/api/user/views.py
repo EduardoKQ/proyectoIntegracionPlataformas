@@ -1,12 +1,12 @@
 from django.http import JsonResponse
 import json
-from api.models import WebUser, Client, WebRoles
+from api.models import WebUserManager, WebUser, Client, WebRoles
 from .serializer import RegisterClientSerializer, LoginSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from .customJWT import CustomJWTAuthentication
+from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
-from django.contrib.auth.hashers import check_password, make_password
 
 
 # login
@@ -33,25 +33,17 @@ def login(request):
 
         # try to login the user
         try:
-            user = WebUser.objects.get(email=email)
-            print("user", user)
-            print("user.password", user.password)
-            print("password", password)
-
-            if not check_password(password, user.password):
-                raise AuthenticationFailed("Invalid password.")
+            user = authenticate(email=email, password=password)
+            if user is None:
+                return JsonResponse(
+                    {"status": "error", "message": "Invalid credentials."}, status=401
+                )
         except WebUser.DoesNotExist:
             return JsonResponse(
-                {"status": "error", "message": "User not found."}, status=404
-            )
-        except AuthenticationFailed:
-            return JsonResponse(
-                {"status": "error", "message": "Invalid email or password."}, status=401
+                {"status": "error", "message": "User does not exist."}, status=404
             )
         except Exception as e:
-            return JsonResponse(
-                {"status": "error", "message": "Invalid email or password."}, status=401
-            )
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
         # process if the user is first time login
         if user.is_first_time_login:
@@ -80,7 +72,12 @@ def register_client(request):
             return JsonResponse(
                 {"status": "error", "message": serializer.errors}, status=400
             )
-        # if the data is valid, save the user to the database
+        # if the data is valid, check if the user already exists
+        if WebUser.objects.filter(email=serializer.validated_data["email"]).exists():
+            return JsonResponse(
+                {"status": "error", "message": "User already exists."}, status=400
+            )
+        # if the user does not exist, create a new user
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
         user = register_new_client(email, password)
@@ -110,13 +107,7 @@ def me(request):
             if auth_result is None:
                 raise NotAuthenticated("Invalid or missing token.")
 
-            validated_token = auth_result[1]
-
-            user = validated_token.get("user_id")
-            print("user", user)
-
-            # Return user data
-            user = WebUser.objects.get(email=user)
+            user = auth_result[0]
             return JsonResponse(
                 user_data(user),
                 status=200,
@@ -142,7 +133,7 @@ def get_user_tokens(user_data):
 
     # crucially, the user_id is set to the refresh token payload
     # this is used to identify the user when the token is validated
-    refresh["user_id"] = user_data.email
+    refresh["user_id"] = user_data.id
     refresh["role"] = user_data.role.role
 
     return {
@@ -198,15 +189,12 @@ def user_data(user):
 
 
 def register_new_client(email, password, recieve_offers=False):
-    # hash the password
-    secure_password = make_password(password)
     # create a new user with the given email and password
-    user = WebUser(
+    user = WebUser.objects.create_user(
         email=email,
-        password=secure_password,
+        password=password,
         role=WebRoles.objects.get(role="cliente"),
     )
-    user.is_first_time_login = True
     # create a new client with the given user
     client = Client(user_account=user, recieve_offers=recieve_offers)
     user.save()

@@ -40,55 +40,96 @@
     }
   },
   {
-    "model": "api.webuser",
-    "pk": "admin@ferremas.com",
+    "model": "api.webroles",
+    "pk": 6,
     "fields": {
+      "role": "superuser",
+      "description": "django superuser"
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": 1,
+    "fields": {
+      "email": "admin@ferremas.com",
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
       "role": 5,
-      "is_first_time_login": true
+      "is_first_time_login": true,
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": false
     }
   },
   {
     "model": "api.webuser",
-    "pk": "vendedor@ferremas.com",
+    "pk": 2,
     "fields": {
+      "email": "vendedor@ferremas.com",
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
       "role": 4,
-      "is_first_time_login": true
+      "is_first_time_login": true,
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false
     }
   },
   {
     "model": "api.webuser",
-    "pk": "bodeguero@ferremas.com",
+    "pk": 3,
     "fields": {
+      "email": "bodeguero@ferremas.com",
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
       "role": 2,
-      "is_first_time_login": true
+      "is_first_time_login": true,
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false
     }
   },
   {
     "model": "api.webuser",
-    "pk": "contador@ferremas.com",
+    "pk": 4,
     "fields": {
+      "email": "contador@ferremas.com",
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
       "role": 3,
-      "is_first_time_login": true
+      "is_first_time_login": true,
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false
     }
   },
   {
     "model": "api.webuser",
-    "pk": "cliente@gmail.com",
+    "pk": 5,
     "fields": {
+      "email": "cliente@gmail.com",
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
       "role": 1,
-      "is_first_time_login": true
+      "is_first_time_login": true,
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": 6,
+    "fields": {
+      "email": "superuser@example.com",
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": 6,
+      "is_first_time_login": false,
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true
     }
   },
   {
     "model": "api.client",
     "pk": 1,
     "fields": {
-      "user_account": "cliente@gmail.com",
+      "user_account": 5,
       "recieve_offers": false
     }
   }

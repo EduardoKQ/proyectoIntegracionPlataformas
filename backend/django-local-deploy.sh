@@ -1,13 +1,14 @@
 #!/bin/bash
+
+# Run Django make migrations
+echo "Running 'python manage.py makemigrations'..."
+python manage.py makemigrations
+
 # reset the database and start the Django development server
 echo "Unapplying api migrations (dropping tables)..."
 python manage.py migrate api zero --no-input
 echo "resetting database..."
 python manage.py flush --no-input
-
-# Run Django make migrations
-echo "Running 'python manage.py makemigrations'..."
-python manage.py makemigrations
 
 # Run Django migrate
 echo "Running 'python manage.py migrate'..."

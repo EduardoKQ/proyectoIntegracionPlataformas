@@ -76,10 +76,14 @@ REST_FRAMEWORK = {
     # ]
 }
 
+AUTH_USER_MODEL = "api.WebUser"
+
 # JWT token lifetimes
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "USER_ID_CLAIM": "user_id",
 }
 
 ROOT_URLCONF = "backend_project.urls"
