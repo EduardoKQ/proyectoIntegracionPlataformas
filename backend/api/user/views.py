@@ -1,12 +1,12 @@
 from django.http import JsonResponse
 import json
-from api.models import WebUser, Client
-from .serializer import RegisterSerializer, LoginSerializer
+from api.models import WebUser, Client, WebRoles
+from .serializer import RegisterClientSerializer, LoginSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
 from .customJWT import CustomJWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 
 
 # login
@@ -71,21 +71,32 @@ def login(request):
 
 # register
 @csrf_exempt
-def register(request):
+def register_client(request):
     if request.method == "POST":
         # process the registration data with serializer
-        serializer = RegisterSerializer(data=request.POST)
-        if serializer.is_valid():
-            # save the user to the database
-            serializer.save()
-            return JsonResponse(
-                {"status": "success", "message": "User registered successfully."},
-                status=201,
-            )
-        else:
+        data = json.loads(request.body)
+        serializer = RegisterClientSerializer(data=data)
+        if not serializer.is_valid():
             return JsonResponse(
                 {"status": "error", "message": serializer.errors}, status=400
             )
+        # if the data is valid, save the user to the database
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+        user = register_new_client(email, password)
+        # return the response
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "Usuario registrado con exito.",
+                "user_data": user_data(user),
+            },
+            status=201,
+        )
+    else:
+        return JsonResponse(
+            {"status": "error", "message": "Invalid request method."}, status=400
+        )
 
 
 # current user data
@@ -171,6 +182,8 @@ def user_data(user):
 
         case "cliente":
             # get the client data to check if recieve_offers is true or false
+            if not Client.objects.filter(user_account=user).exists():
+                return None
             client = Client.objects.get(user_account=user)
             return {
                 "email": user.email,
@@ -182,3 +195,20 @@ def user_data(user):
                 "email": user.email,
                 "role": user_role,
             }
+
+
+def register_new_client(email, password, recieve_offers=False):
+    # hash the password
+    secure_password = make_password(password)
+    # create a new user with the given email and password
+    user = WebUser(
+        email=email,
+        password=secure_password,
+        role=WebRoles.objects.get(role="cliente"),
+    )
+    user.is_first_time_login = True
+    # create a new client with the given user
+    client = Client(user_account=user, recieve_offers=recieve_offers)
+    user.save()
+    client.save()
+    return user
