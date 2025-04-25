@@ -1,47 +1,40 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { filter, map, mergeMap } from 'rxjs/operators';
+import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    SidebarComponent
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   title = 'frontend';
-  backendStatus = "loading...";
-  databaseStatus = "loading...";
+  showSidebar: boolean = false;
 
-  // ngOnInit is called after Angular initializes the component
-  async ngOnInit() {
-    try {
-      const healthData = await backendHealthCheck();
-      // Update properties once data is fetched
-      this.backendStatus = healthData['backend-status'];
-      this.databaseStatus = healthData['database-status'];
-      console.log('Health Check Data:', healthData); // For testing
-    } catch (error) {
-      console.error('Error fetching health check:', error);
-      this.backendStatus = 'error';
-      this.databaseStatus = 'error';
-    }
+  constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
+
+  ngOnInit() {
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map(() => {
+        let route = this.activatedRoute;
+        while (route.firstChild) {
+          route = route.firstChild;
+        }
+        return route;
+      }),
+      filter((route) => route.outlet === 'primary'),
+      mergeMap((route) => route.data)
+    ).subscribe((data) => {
+      this.showSidebar = data?.['showSidebar'] === true;
+    });
   }
-
-}
-
-async function backendHealthCheck(): Promise<any> {
-  // Use the correct health check endpoint URL if needed (e.g., /api/health/)
-  const response = await fetch('http://localhost:8100/', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    // Throw an error with more context if possible
-    const errorText = await response.text();
-    throw new Error(`Network response was not ok (${response.status}): ${errorText}`);
-  }
-  return response.json(); // Parse the JSON response
 }

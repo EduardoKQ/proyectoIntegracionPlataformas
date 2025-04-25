@@ -1,0 +1,62 @@
+<nav class="sidebar" [class.collapsed]="isCollapsed">
+  <header class="sidebar-header">
+    <span class="sidebar-title">Ferremas</span>
+    <button class="toggle-btn" title="Colapsar/Expandir Sidebar" (click)="toggleSidebar()">
+      <span class="material-symbols-outlined">
+        {{ isCollapsed ? 'chevron_right' : 'chevron_left' }}
+      </span>
+    </button>
+  </header>
+
+  <ul class="nav-links">
+    <li>
+      <a routerLink="/product" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" title="Listado Productos">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span class="link-text">Listado productos</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/product/list" routerLinkActive="active" title="Productos">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span class="link-text">Productos</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/product/add" routerLinkActive="active" title="Agregar Productos">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span class="link-text">Agregar Productos</span>
+      </a>
+    </li>
+    <li>
+      <a routerLink="/product/orders" routerLinkActive="active" title="Pedidos">
+        <span class="material-symbols-outlined">list</span>
+        <span class="link-text">Pedidos</span>
+      </a>
+    </li>
+    <li>
+        <a routerLink="/product/categories" routerLinkActive="active" title="Categorías">
+          <span class="material-symbols-outlined">category</span>
+        <span class="link-text">Categorias</span>
+      </a>
+    </li>
+  </ul>
+
+  <ul class="bottom-actions">
+    <li>
+      <a title="Volver a la Tienda" (click)="goToStore()">
+        <span class="material-symbols-outlined">storefront</span>
+        <span class="link-text">Volver a la Tienda</span>
+      </a>
+    </li>
+    <li>
+      <a href="#" title="Cerrar Sesión" (click)="logout()">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="link-text">Cerrar Sesión</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="sidebar-backdrop"
+     *ngIf="!isCollapsed && isSmallScreen"
+     (click)="collapseSidebar()"></div>

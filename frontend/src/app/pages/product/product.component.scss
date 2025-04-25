@@ -1,0 +1,230 @@
+@use 'sass:color';
+
+$primary-color: #F57C00;
+$secondary-color: #2c3e50;
+$accent-color: #e74c3c;
+$light-gray: #ffffff;
+$medium-gray: #e0e0e0;
+$dark-gray: #777;
+$text-color: #333;
+$shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+$border-radius: 6px;
+$transition: all 0.3s ease;
+
+$list-max-width: 1000px;
+$card-height: 130px;
+$image-width: 100px;
+$font-size-title: 16px;
+$font-size-text: 13px;
+$font-size-price: 16px;
+$spacing: 12px;
+
+:host {
+  font-family: 'Roboto', sans-serif;
+}
+
+
+h1 {
+  text-align: center;
+  color: $secondary-color;
+  margin: 1.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  position: relative;
+
+  &:after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: $primary-color;
+    margin: 8px auto 0;
+    border-radius: 2px;
+  }
+}
+
+.product-list-container {
+  max-width: $list-max-width;
+  margin: 0 auto;
+  padding: 0 $spacing;
+}
+
+.error-message {
+  background-color: rgba($accent-color, 0.1);
+  border-left: 3px solid $accent-color;
+  color: color.adjust($accent-color, $lightness: -10%);
+  padding: $spacing;
+  border-radius: $border-radius;
+  margin-bottom: $spacing;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-weight: 500;
+    font-size: $font-size-text;
+  }
+}
+
+ng-template p {
+  text-align: center;
+  color: $dark-gray;
+  padding: $spacing 0;
+  font-size: $font-size-text;
+}
+
+.product-card {
+  display: flex;
+  background: white;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  margin-bottom: $spacing;
+  overflow: hidden;
+  transition: $transition;
+  height: $card-height;
+  border-bottom: 1px solid $medium-gray;
+
+  &:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+}
+
+.product-image-container {
+  flex: 0 0 auto;
+  width: $image-width;
+  height: $card-height;
+  background: $light-gray;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  transition: $transition;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.product-info {
+  padding: $spacing;
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  h3 {
+    margin: 0 0 4px 0;
+    color: $secondary-color;
+    font-size: $font-size-title;
+    font-weight: 600;
+    padding-right: 100px;
+  }
+
+  p {
+    margin: 3px 0;
+    font-size: $font-size-text;
+    color: $text-color;
+
+    &.description {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+      color: $dark-gray;
+      margin-bottom: 5px;
+    }
+
+    &.price {
+      color: $accent-color;
+      font-size: $font-size-price;
+      font-weight: 700;
+      position: absolute;
+      top: $spacing;
+      right: $spacing;
+    }
+
+    strong {
+      color: $secondary-color;
+      display: inline-block;
+      min-width: 70px;
+    }
+
+    small {
+      color: $dark-gray;
+      font-size: $font-size-text - 2px;
+    }
+  }
+}
+
+p.stock-info {
+  font-weight: 500;
+  margin-top: 5px !important;
+
+  strong {
+    color: $secondary-color;
+  }
+
+  span.stock-value {
+    font-weight: 600;
+    color: green;
+
+    &.low {
+      color: $accent-color;
+    }
+  }
+}
+
+.product-code {
+  position: absolute;
+  bottom: $spacing;
+  left: $spacing;
+  font-size: $font-size-text - 2px;
+  color: $dark-gray;
+}
+
+a {
+  color: $primary-color;
+  text-decoration: none;
+  transition: $transition;
+
+  &:hover {
+    text-decoration: underline;
+    color: color.adjust($primary-color, $lightness: -10%);
+  }
+}
+
+@media (max-width: 600px) {
+  .product-card {
+    height: auto;
+    min-height: $card-height + 20px;
+  }
+
+  .product-image-container {
+    height: 100px;
+    width: 100px;
+  }
+
+  .product-info {
+    p.price {
+      position: relative;
+      top: auto;
+      right: auto;
+      margin-top: 8px;
+    }
+
+    .product-code {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      margin-top: 5px;
+    }
+  }
+}

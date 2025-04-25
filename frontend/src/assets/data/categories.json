@@ -1,0 +1,49 @@
+[
+  {
+    "id": "cat-herr-man",
+    "name": "Herramientas Manuales",
+    "subcategories": [
+      { "id": "sub-hm-mar", "name": "Martillos" },
+      { "id": "sub-hm-des", "name": "Destornilladores" }
+    ]
+  },
+  {
+    "id": "cat-mat-bas",
+    "name": "Materiales Básicos",
+    "subcategories": [
+      { "id": "sub-mb-cem", "name": "Cemento" },
+      { "id": "sub-mb-pin", "name": "Pinturas" }
+    ]
+  },
+  {
+    "id": "cat-equ-seg",
+    "name": "Equipos de Seguridad",
+    "subcategories": [
+      { "id": "sub-es-cas", "name": "Cascos" },
+      { "id": "sub-es-gua", "name": "Guantes" }
+    ]
+  },
+  {
+    "id": "cat-tor-anc",
+    "name": "Tornillos y Anclajes",
+    "subcategories": [
+       { "id": "sub-ta-anc", "name": "anclajes" },
+       { "id": "sub-ta-tor", "name": "tornillos" }
+    ]
+  },
+  {
+    "id": "cat-fij-adh",
+    "name": "Fijaciones y Adhesivos",
+    "subcategories": [
+        { "id": "sub-fa-fij", "name": "Fijaciones" },
+        { "id": "sub-fa-adh", "name": "Adhesivos" }
+    ]
+  },
+  {
+    "id": "cat-equ-med",
+    "name": "Equipos de Medición",
+    "subcategories": [
+        { "id": "sub-em-hui", "name": "Huincha" }
+    ]
+  }
+]
