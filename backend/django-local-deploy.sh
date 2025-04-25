@@ -1,4 +1,9 @@
 #!/bin/bash
+# reset the database and start the Django development server
+echo "Unapplying api migrations (dropping tables)..."
+python manage.py migrate api zero --no-input
+echo "resetting database..."
+python manage.py flush --no-input
 
 # Run Django make migrations
 echo "Running 'python manage.py makemigrations'..."
@@ -9,8 +14,6 @@ echo "Running 'python manage.py migrate'..."
 python manage.py migrate
 
 # load initial data
-echo "resetting database..."
-python manage.py flush --no-input
 echo "Loading initial data..."
 python manage.py loaddata initial_data.json
 

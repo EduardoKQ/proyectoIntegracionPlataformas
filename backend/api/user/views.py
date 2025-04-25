@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 import json
-from api.models import WebUser
+from api.models import WebUser, Client
 from .serializer import RegisterSerializer, LoginSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -52,7 +52,7 @@ def login(request):
             return JsonResponse(
                 {"status": "error", "message": "Invalid email or password."}, status=401
             )
-        
+
         # process if the user is first time login
         if user.is_first_time_login:
             is_first_time_login = True
@@ -62,25 +62,7 @@ def login(request):
         else:
             is_first_time_login = False
 
-        # if the user is authenticated, generate JWT tokens
-        user_tokens = get_user_tokens(user)
-
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": "Inicio de sesión exitoso.",
-                "user_data": {
-                    "email": user.email,
-                    "role": user.role,
-                    "is_first_time_login": is_first_time_login,
-                },
-                "JWT_tokens": {
-                    "access_token": user_tokens["access"],
-                    "refresh_token": user_tokens["refresh"],
-                },
-            },
-            status=200,
-        )
+        return login_response(user)
     else:
         return JsonResponse(
             {"status": "error", "message": "Invalid request method."}, status=400
@@ -157,9 +139,63 @@ def get_user_tokens(user_data):
     # crucially, the user_id is set to the refresh token payload
     # this is used to identify the user when the token is validated
     refresh["user_id"] = user_data.email
-    refresh["role"] = user_data.role
+    refresh["role"] = user_data.role.role
 
     return {
         "refresh": str(refresh),
         "access": str(refresh.access_token),
     }
+
+
+def login_response(user):
+    # generate JWT tokens for the user
+    user_tokens = get_user_tokens(user)
+
+    user_role = user.role.role
+
+    match user_role:
+        case "administrador_tienda":
+            response = JsonResponse(
+                {
+                    "status": "success",
+                    "message": "Login exitoso.",
+                    "user_data": {
+                        "email": user.email,
+                        "role": user_role,
+                        "is_first_time_login": user.is_first_time_login,
+                    },
+                    "tokens": user_tokens,
+                },
+                status=200,
+            )
+
+        case "cliente":
+            # get the client data to check if recieve_offers is true or false
+            client = Client.objects.get(user_account=user)
+            response = JsonResponse(
+                {
+                    "status": "success",
+                    "message": "Login exitoso.",
+                    "user_data": {
+                        "email": user.email,
+                        "role": user_role,
+                        "recieve_offers": client.recieve_offers,
+                    },
+                    "tokens": user_tokens,
+                },
+                status=200,
+            )
+        case _:
+            response = JsonResponse(
+                {
+                    "status": "success",
+                    "message": "Login exitoso.",
+                    "user_data": {
+                        "email": user.email,
+                        "role": user_role,
+                    },
+                    "tokens": user_tokens,
+                },
+                status=200,
+            )
+    return response

@@ -44,7 +44,7 @@
     "pk": "admin@ferremas.com",
     "fields": {
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-      "role": "administrador_tienda",
+      "role": 5,
       "is_first_time_login": true
     }
   },
@@ -53,7 +53,7 @@
     "pk": "vendedor@ferremas.com",
     "fields": {
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-      "role": "vendedor",
+      "role": 4,
       "is_first_time_login": true
     }
   },
@@ -62,7 +62,7 @@
     "pk": "bodeguero@ferremas.com",
     "fields": {
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-      "role": "bodeguero",
+      "role": 2,
       "is_first_time_login": true
     }
   },
@@ -71,7 +71,7 @@
     "pk": "contador@ferremas.com",
     "fields": {
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-      "role": "contador",
+      "role": 3,
       "is_first_time_login": true
     }
   },
@@ -80,8 +80,16 @@
     "pk": "cliente@gmail.com",
     "fields": {
       "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
-      "role": "cliente",
+      "role": 1,
       "is_first_time_login": true
+    }
+  },
+  {
+    "model": "api.client",
+    "pk": 1,
+    "fields": {
+      "user_account": "cliente@gmail.com",
+      "recieve_offers": false
     }
   }
 ]
