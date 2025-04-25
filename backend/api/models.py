@@ -79,3 +79,68 @@ class Client(models.Model):
         WebUser, on_delete=models.CASCADE, related_name="clients"
     )
     recieve_offers = models.BooleanField(default=False)
+
+
+class Branch(models.Model):
+    branch_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+
+
+class Worker(models.Model):
+    worker_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    surname = models.CharField(max_length=100)
+    user_account = models.ForeignKey(
+        WebUser, on_delete=models.DO_NOTHING, related_name="workers"
+    )
+    branch = models.ForeignKey(
+        Branch, on_delete=models.DO_NOTHING, related_name="workers"
+    )
+
+
+class Product(models.Model):
+    product_id = models.AutoField(primary_key=True)
+    product_code = models.CharField(max_length=50, unique=True)
+    brand = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    current_price = models.DecimalField(max_digits=10, decimal_places=2)
+    current_price_date = models.DateField()
+    subcategory = models.ForeignKey(
+        "Subcategory", on_delete=models.DO_NOTHING, related_name="products"
+    )
+
+
+class PriceHistory(models.Model):
+    price_history_id = models.AutoField(primary_key=True)
+    product = models.ForeignKey(
+        Product, on_delete=models.DO_NOTHING, related_name="price_history"
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+
+
+class Subcategory(models.Model):
+    subcategory_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
+    category = models.ForeignKey(
+        "Category", on_delete=models.DO_NOTHING, related_name="subcategories"
+    )
+
+
+class Category(models.Model):
+    category_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
+
+
+class Inventory(models.Model):
+    inventory_id = models.AutoField(primary_key=True)
+    branch = models.ForeignKey(
+        Branch, on_delete=models.DO_NOTHING, related_name="inventories"
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.DO_NOTHING, related_name="inventories"
+    )
+    quantity = models.PositiveIntegerField()
