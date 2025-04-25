@@ -2,22 +2,28 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
+import { AuthService, AuthResponse, LoginCredentials, StoredUser } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  standalone: true,
   imports: [
-    ReactiveFormsModule,CommonModule
+    ReactiveFormsModule, CommonModule
   ],
 })
 export class LoginComponent implements OnInit {
-  loginForm: FormGroup | undefined;
-  rememberMe: boolean = false;
+  loginForm!: FormGroup;
+  isLoading = false;
+  errorMessage = '';
 
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -27,24 +33,64 @@ export class LoginComponent implements OnInit {
   initForm(): void {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required]],
       rememberMe: [false]
     });
   }
 
   onSubmit(): void {
-    if (this.loginForm && this.loginForm.valid) {
-      this.router.navigate(['/product']);
-    } else if (this.loginForm) {
-      Object.keys(this.loginForm.controls).forEach(key => {
-        const control = this.loginForm!.get(key);
-        if (control) {
-          control.markAsTouched();
+    this.errorMessage = '';
+    this.loginForm.markAllAsTouched();
+    if (this.loginForm.invalid) {
+      return;
+    }
+
+    this.isLoading = true;
+
+    const credentials: LoginCredentials = {
+      email: this.loginForm.get('email')?.value,
+      password: this.loginForm.get('password')?.value
+    };
+
+    this.authService.login(credentials)
+      .pipe(
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (response: AuthResponse) => {
+          if (response.status === 'success' && response.tokens && response.user_data) {
+            this.authService.storeTokens(response.tokens.access, response.tokens.refresh);
+            this.authService.storeUserData(response.user_data as StoredUser);
+            this.router.navigate(['/product']);
+          } else {
+            this.errorMessage = response.message || 'Respuesta inesperada del servidor.';
+          }
+        },
+        error: (errorResponse: HttpErrorResponse) => {
+          let messageForUser = 'No se pudo iniciar sesión. Intente más tarde.';
+          let backendErrorDetail = '';
+
+          if (errorResponse.error) {
+            if (typeof errorResponse.error === 'object') {
+              backendErrorDetail = errorResponse.error.detail || errorResponse.error.error || errorResponse.error.message || (errorResponse.error.non_field_errors ? errorResponse.error.non_field_errors.join(' ') : '');
+            } else if (typeof errorResponse.error === 'string') {
+              backendErrorDetail = errorResponse.error;
+            }
+          }
+          if (!backendErrorDetail && errorResponse.statusText) {
+              backendErrorDetail = errorResponse.statusText;
+          }
+
+          const lowerCaseErrorDetail = backendErrorDetail.toLowerCase();
+
+          if (lowerCaseErrorDetail.includes('invalid credentials')) {
+             messageForUser = 'Correo electrónico o contraseña incorrectos.';
+          } else {
+             messageForUser = 'Error de conexión o respuesta inválida del servidor.';
+          }
+
+          this.errorMessage = messageForUser;
         }
       });
-    }
-  }
-
-  forgotPassword(): void {
   }
 }
