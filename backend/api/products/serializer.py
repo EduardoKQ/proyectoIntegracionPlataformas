@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from api.models import Product
+from api.models import Product, Subcategory, Category
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -32,3 +32,31 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "precio_actual": round(obj.current_price),
             "fecha_precio": obj.current_price_date,
         }
+
+
+class CategoriesDetailSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="category_code")
+    subcategories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+            "subcategories",
+        ]
+
+    def get_subcategories(self, obj):
+        subcategories = Subcategory.objects.filter(category=obj)
+        return SubcategorySerializer(subcategories, many=True).data
+
+
+class SubcategorySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="subcategory_code")
+
+    class Meta:
+        model = Subcategory
+        fields = [
+            "id",
+            "name",
+        ]

@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from api.user.role_permision import require_roles
 from api.user.web_role_names import WebRoleNames
-from .serializer import ProductDetailSerializer
+from .serializer import ProductDetailSerializer, CategoriesDetailSerializer
 from api.models import Product, Category
 
 
@@ -26,4 +26,12 @@ def all(request):
 @api_view(["GET"])
 def category_all(request):
     # get all categories
-    return JsonResponse({"message": "funciona 2"})
+    try:
+        categories = Category.objects.all()
+        categories_serializer = CategoriesDetailSerializer(categories, many=True)
+        return JsonResponse(categories_serializer.data, safe=False, status=200)
+
+    except Category.DoesNotExist:
+        return JsonResponse({"error": "Categories not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
