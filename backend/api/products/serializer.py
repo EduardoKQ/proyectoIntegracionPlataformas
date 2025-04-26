@@ -62,7 +62,7 @@ class SubcategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class NewCategorySerializer(serializers.ModelSerializer):
+class CategoryAddSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="category_code")
 
     class Meta:
@@ -82,3 +82,22 @@ class NewCategorySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return Category.objects.create(**validated_data)
+
+
+class CategoryUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(required=True)
+    name = serializers.CharField(required=True)
+
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+        ]
+
+    def validate_name(self, value):
+        if value is None or len(value) < 3:
+            raise serializers.ValidationError(
+                "New name must be at least 3 characters long."
+            )
+        return value

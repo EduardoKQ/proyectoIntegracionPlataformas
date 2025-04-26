@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view
 from api.user.role_permision import require_roles, check_auth_allowed_role
 from api.user.web_role_names import WebRoleNames
 from .serializer import (
     ProductDetailSerializer,
     CategoriesDetailSerializer,
-    NewCategorySerializer,
+    CategoryAddSerializer,
+    CategoryUpdateSerializer,
 )
 from api.models import Product, Category
 
@@ -91,7 +91,7 @@ def process_category_list_create_get(request):
 def process_category_list_create_post(request):
     # create a new category
     try:
-        serializer = NewCategorySerializer(data=request.data)
+        serializer = CategoryAddSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=201)
@@ -115,11 +115,49 @@ def process_category_get(request, category_code):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-#!!!
 def process_category_update(request, category_code):
-    return JsonResponse({"update": category_code})
+    # update a category by code
+    try:
+        categories = Category.objects.filter(category_code=category_code)
+        if not categories.exists():
+            return JsonResponse({"error": "Category not found"}, status=404)
+        # parse using serializer
+        categories_serializer = CategoryUpdateSerializer(data=request.data)
+        if not categories_serializer.is_valid():
+            return JsonResponse(categories_serializer.errors, status=400)
+        # update the category
+        new_category_code = categories_serializer.validated_data.get("id")
+        new_name = categories_serializer.validated_data.get("name")
+        # if the new category code is the same as the old one, update the name only
+        if new_category_code == category_code:
+            categories.update(name=new_name)
+            return JsonResponse(categories_serializer.data, status=200)
+
+        # check if the new category code already exists
+        if Category.objects.filter(category_code=new_category_code).exists():
+            return JsonResponse({"error": "Category code already exists"}, status=400)
+
+        # update the category code and name
+        categories.update(category_code=new_category_code, name=new_name)
+        return JsonResponse(categories_serializer.data, safe=False, status=200)
+
+    except Category.DoesNotExist:
+        return JsonResponse({"error": "Categories not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
-#!!!
 def process_category_delete(request, category_code):
-    return JsonResponse({"delete": category_code})
+    # delete a category by code
+    try:
+        categories = Category.objects.filter(category_code=category_code)
+        if not categories.exists():
+            return JsonResponse({"error": "Category not found"}, status=404)
+        # delete the category
+        categories.delete()
+        return JsonResponse({"message": "Category deleted successfully"}, status=200)
+
+    except Category.DoesNotExist:
+        return JsonResponse({"error": "Categories not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
