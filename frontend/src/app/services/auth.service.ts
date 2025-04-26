@@ -85,9 +85,7 @@ export class AuthService {
   }
 
   clearAuthData(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_DATA_KEY);
+    localStorage.clear();
   }
 
   logout(): void {

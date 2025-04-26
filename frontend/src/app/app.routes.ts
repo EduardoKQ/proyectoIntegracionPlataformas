@@ -8,16 +8,25 @@ import { ProductEditComponent } from './pages/product-edit/product-edit.componen
 import { LoginComponent } from './client/login/login.component';
 import { RegisterComponent } from './client/register/register.component';
 import { HomeComponent } from './store/home/home.component';
+import { rolesGuard } from './guards/rol.guard';
+
+///Roles con acceso al inventario
+const PRODUCT_ACCESS_ROLES = ['vendedor', 'bodeguero', 'contador', 'administrador_tienda'];
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'home', component: HomeComponent },
+
+  { path: 'login', component: LoginComponent,canActivate: [rolesGuard] },
+  { path: 'register', component: RegisterComponent,canActivate: [rolesGuard] },
+  { path: 'home', component: HomeComponent},
   { path : '', redirectTo: 'home', pathMatch: 'full' },
 
   {
     path: 'product',
-    data: { showSidebar: true },
+    canActivate: [rolesGuard],
+    data: {
+      roles: PRODUCT_ACCESS_ROLES,
+      showSidebar: true
+    },
     children: [
       { path: '', component: ProductComponent, pathMatch: 'full' },
       { path: 'list', component: ProductListComponent },
