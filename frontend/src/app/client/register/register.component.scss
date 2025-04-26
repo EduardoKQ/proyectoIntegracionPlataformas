@@ -5,6 +5,7 @@ $link-color: #E86C3A;
 $border-color: #ddd;
 $white: #fff;
 $error-color: #dc3545;
+$success-color: #28a745;
 
 :host {
   display: block;
@@ -101,8 +102,35 @@ $error-color: #dc3545;
     &:focus {
       border-color: $primary-color;
     }
+     &:disabled {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
   }
 }
+
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+
+  .form-check-input {
+    margin-right: 0.5rem;
+    width: 1em;
+    height: 1em;
+     &:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+
+  .form-check-label {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+  }
+}
+
 
 .register-button {
   width: 100%;
@@ -116,14 +144,23 @@ $error-color: #dc3545;
   cursor: pointer;
   transition: background-color 0.3s ease;
   margin-top: 10px;
+  position: relative;
 
   &:hover {
     background-color: $primary-hover;
+  }
+   &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    &:hover {
+       background-color: #cccccc;
+    }
   }
 }
 
 .footer {
   margin-top: auto;
+  padding-top: 20px;
   font-size: 0.8rem;
   color: #666;
   text-align: center;
@@ -164,11 +201,49 @@ $error-color: #dc3545;
   color: $error-color;
   font-size: 0.8rem;
   margin-top: 5px;
+   display: block;
+}
+
+.general-register-error {
+   padding: 10px;
+   border: 1px solid $error-color;
+   border-radius: 4px;
+   margin-bottom: 20px;
+   background-color: #f8d7da;
+   text-align: center;
+   color: #721c24;
+}
+
+.success-message {
+    padding: 10px;
+   border: 1px solid $success-color;
+   border-radius: 4px;
+   margin-bottom: 20px;
+   background-color: #d4edda;
+   text-align: center;
+   color: #155724;
 }
 
 .form-control.ng-invalid.ng-touched {
   border-color: $error-color;
 }
+
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: -0.125em;
+  border: .2em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border .75s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spinner-border {
+  to { transform: rotate(360deg); }
+}
+
 
 @media (max-width: 992px) {
   .register-container {
@@ -194,9 +269,14 @@ $error-color: #dc3545;
 
   .brand {
     margin-bottom: 20px;
+    margin-left: 0;
+    justify-content: center;
   }
 
   .illustration-container {
     min-height: 200px;
+  }
+   .register-form {
+    max-width: 100%;
   }
 }
