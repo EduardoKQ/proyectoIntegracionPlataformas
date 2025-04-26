@@ -15,7 +15,12 @@ urlpatterns = [
     # products related endpoints
     path("products", product_views.all, name="all"),
     # categories endpoints
-    path("categories/", product_views.category_all, name="category_all"),
+    path("categories", product_views.category_list_create, name="category_list_create"),
+    path(
+        "categories/<str:category_code>",
+        product_views.category_get_update_delete,
+        name="category_get_update_delete",
+    ),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

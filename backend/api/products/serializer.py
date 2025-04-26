@@ -60,3 +60,25 @@ class SubcategorySerializer(serializers.ModelSerializer):
             "id",
             "name",
         ]
+
+
+class NewCategorySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="category_code")
+
+    class Meta:
+        model = Category
+        fields = [
+            "id",
+            "name",
+        ]
+
+    def validate(self, data):
+        # Validate that the category code is unique
+        if Category.objects.filter(category_code=data["category_code"]).exists():
+            raise serializers.ValidationError(
+                "Category code already exists. Please choose a different one."
+            )
+        return data
+
+    def create(self, validated_data):
+        return Category.objects.create(**validated_data)
