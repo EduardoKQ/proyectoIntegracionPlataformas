@@ -32,9 +32,11 @@ export class LoginComponent implements OnInit {
 
   initForm(): void {
     this.loginForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [
+        Validators.required,
+        Validators.email
+      ]],
       password: ['', [Validators.required]],
-      rememberMe: [false]
     });
   }
 
@@ -67,29 +69,14 @@ export class LoginComponent implements OnInit {
           }
         },
         error: (errorResponse: HttpErrorResponse) => {
-          let messageForUser = 'No se pudo iniciar sesión. Intente más tarde.';
-          let backendErrorDetail = '';
-
-          if (errorResponse.error) {
-            if (typeof errorResponse.error === 'object') {
-              backendErrorDetail = errorResponse.error.detail || errorResponse.error.error || errorResponse.error.message || (errorResponse.error.non_field_errors ? errorResponse.error.non_field_errors.join(' ') : '');
-            } else if (typeof errorResponse.error === 'string') {
-              backendErrorDetail = errorResponse.error;
-            }
-          }
-          if (!backendErrorDetail && errorResponse.statusText) {
-              backendErrorDetail = errorResponse.statusText;
-          }
-
-          const lowerCaseErrorDetail = backendErrorDetail.toLowerCase();
-
-          if (lowerCaseErrorDetail.includes('invalid credentials')) {
+           let messageForUser = 'No se pudo iniciar sesión. Intente más tarde.';
+           let backendErrorDetail = '';
+           if (errorResponse.error) { if (typeof errorResponse.error === 'object') { backendErrorDetail = errorResponse.error.detail || errorResponse.error.error || errorResponse.error.message || (errorResponse.error.non_field_errors ? errorResponse.error.non_field_errors.join(' ') : ''); } else if (typeof errorResponse.error === 'string') { backendErrorDetail = errorResponse.error; } } if (!backendErrorDetail && errorResponse.statusText) { backendErrorDetail = errorResponse.statusText; }
+           const lowerCaseErrorDetail = backendErrorDetail.toLowerCase();
+           if (lowerCaseErrorDetail.includes('invalid credentials')) {
              messageForUser = 'Correo electrónico o contraseña incorrectos.';
-          } else {
-             messageForUser = 'Error de conexión o respuesta inválida del servidor.';
-          }
-
-          this.errorMessage = messageForUser;
+           }
+           this.errorMessage = messageForUser;
         }
       });
   }
