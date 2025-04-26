@@ -12,9 +12,10 @@ urlpatterns = [
     path("user/login", user_views.login, name="login"),
     path("user/me", user_views.me, name="me"),
     path("user/register-client", user_views.register_client, name="register_client"),
-    # products endpoints
-    path("product/category/all", product_views.category_all, name="category_all"),
-    path("products/all", product_views.all, name="all"),
+    # products related endpoints
+    path("products", product_views.all, name="all"),
+    # categories endpoints
+    path("categories/", product_views.category_all, name="category_all"),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

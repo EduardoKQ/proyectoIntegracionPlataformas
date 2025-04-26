@@ -26,12 +26,26 @@ def all(request):
 @api_view(["GET"])
 def category_all(request):
     # get all categories
-    try:
-        categories = Category.objects.all()
-        categories_serializer = CategoriesDetailSerializer(categories, many=True)
-        return JsonResponse(categories_serializer.data, safe=False, status=200)
+    category_code_filter = request.query_params.get("id", None)
+    if category_code_filter:
+        try:
+            categories = Category.objects.filter(category_code=category_code_filter)
+            if not categories.exists():
+                return JsonResponse({"error": "Category not found"}, status=404)
+            categories_serializer = CategoriesDetailSerializer(categories, many=True)
+            return JsonResponse(categories_serializer.data, safe=False, status=200)
 
-    except Category.DoesNotExist:
-        return JsonResponse({"error": "Categories not found"}, status=404)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        except Category.DoesNotExist:
+            return JsonResponse({"error": "Categories not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    else:
+        try:
+            categories = Category.objects.all()
+            categories_serializer = CategoriesDetailSerializer(categories, many=True)
+            return JsonResponse(categories_serializer.data, safe=False, status=200)
+
+        except Category.DoesNotExist:
+            return JsonResponse({"error": "Categories not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
