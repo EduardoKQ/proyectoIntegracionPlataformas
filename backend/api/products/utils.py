@@ -258,6 +258,17 @@ def process_subcategory_update(request, subcategory_code):
         )
 
 
-#!!!
 def process_subcategory_delete(request, subcategory_code):
-    return JsonResponse({"error": "Not implemented"}, status=501)
+    # delete a subcategory by code
+    try:
+        subcategory = Subcategory.objects.filter(subcategory_code=subcategory_code)
+        if not subcategory.exists():
+            return JsonResponse({"error": "Subcategory not found"}, status=404)
+        # delete the subcategory
+        subcategory.delete()
+        return JsonResponse({"message": "Subcategory deleted successfully"}, status=200)
+
+    except Subcategory.DoesNotExist:
+        return JsonResponse({"error": "Subcategory not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
