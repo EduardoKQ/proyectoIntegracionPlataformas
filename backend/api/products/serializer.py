@@ -8,8 +8,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     precio = serializers.SerializerMethodField()  #
     marca = serializers.CharField(source="brand")
     codigo_marca = serializers.CharField(source="brand_code")
-    categoria = serializers.CharField(source="subcategory.category.name")
-    subcategoria = serializers.CharField(source="subcategory.name")
+    categoria = serializers.SerializerMethodField()
+    subcategoria = serializers.SerializerMethodField()
     imageUrl = serializers.CharField(source="image_url")
     descripcion = serializers.CharField(source="description")
 
@@ -32,6 +32,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "precio_actual": round(obj.current_price),
             "fecha_precio": obj.current_price_date,
         }
+
+    def get_categoria(self, obj):
+        if obj.subcategory and obj.subcategory.category:
+            return obj.subcategory.category.name
+        return "Ninguna"
+
+    def get_subcategoria(self, obj):
+        if obj.subcategory:
+            return obj.subcategory.name
+        return "Ninguna"
 
 
 class CategoriesDetailSerializer(serializers.ModelSerializer):

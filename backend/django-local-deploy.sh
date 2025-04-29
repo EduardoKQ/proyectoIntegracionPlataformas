@@ -1,4 +1,14 @@
 #!/bin/bash
+# wait until we can connect to the database
+echo "waiting database connection..."
+python wait_for_db.py
+# Check if the script exited successfully
+if [ $db_status -ne 0 ]; then
+  echo "Database connection check failed. Exiting."
+  exit $db_status
+fi
+
+echo "Database is up, running migrations..."
 
 # Run Django make migrations
 echo "Running 'python manage.py makemigrations'..."
