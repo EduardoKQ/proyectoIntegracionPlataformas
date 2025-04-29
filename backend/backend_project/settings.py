@@ -81,7 +81,9 @@ AUTH_USER_MODEL = "api.WebUser"
 # JWT token lifetimes
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=60
+    ),  #!!! change to 5 minutes for production
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "USER_ID_CLAIM": "user_id",
 }

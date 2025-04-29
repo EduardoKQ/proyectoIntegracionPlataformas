@@ -51,17 +51,6 @@ class CategoriesDetailSerializer(serializers.ModelSerializer):
         return SubcategorySerializer(subcategories, many=True).data
 
 
-class SubcategorySerializer(serializers.ModelSerializer):
-    id = serializers.CharField(source="subcategory_code")
-
-    class Meta:
-        model = Subcategory
-        fields = [
-            "id",
-            "name",
-        ]
-
-
 class CategoryAddSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="category_code")
 
@@ -101,3 +90,91 @@ class CategoryUpdateSerializer(serializers.ModelSerializer):
                 "New name must be at least 3 characters long."
             )
         return value
+
+
+class SubcategoryAddSerializer(serializers.ModelSerializer):
+    # These fields map the incoming JSON keys to the serializer
+    id = serializers.CharField(source="subcategory_code", required=True)
+    name = serializers.CharField(required=True)
+    relatedCategoryId = serializers.CharField(required=True)
+
+    class Meta:
+        model = Subcategory
+        fields = [
+            "id",
+            "name",
+            "relatedCategoryId",
+        ]
+
+    def validate(self, data):
+        # 'data' dictionary initially has keys: 'subcategoryId', 'subcategoryName', 'relatedCategoryId'
+        subcategory_code = data.get("subcategory_code")
+        name = data.get("name")
+        related_category_id = data.get("relatedCategoryId")
+        print(f"data: {data}")
+        print(
+            f"subcategory_code: {subcategory_code}, name: {name}, related_category_id: {related_category_id}"
+        )
+
+        # --- Validation Checks ---
+        if subcategory_code is None or len(subcategory_code) < 3:
+            raise serializers.ValidationError(
+                "Subcategory code must be at least 3 characters long."
+            )
+        if name is None or len(name) < 3:
+            raise serializers.ValidationError(
+                "Subcategory name must be at least 3 characters long."
+            )
+        if related_category_id is None or len(related_category_id) < 3:
+            raise serializers.ValidationError(
+                "Related category code must be at least 3 characters long."
+            )
+
+        return data
+
+
+class SubcategorySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="subcategory_code")
+
+    class Meta:
+        model = Subcategory
+        fields = [
+            "id",
+            "name",
+        ]
+
+    def validate(self, data):
+        # Validate that the subcategory code is unique
+        if Subcategory.objects.filter(
+            subcategory_code=data["subcategory_code"]
+        ).exists():
+            raise serializers.ValidationError(
+                "Subcategory code already exists. Please choose a different one."
+            )
+        return data
+
+    def create(self, validated_data):
+        return Subcategory.objects.create(**validated_data)
+
+
+class SubcategoryGetSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="subcategory_code")
+    relatedCategoryId = serializers.CharField(source="category.category_code")
+
+    class Meta:
+        model = Subcategory
+        fields = [
+            "id",
+            "name",
+            "relatedCategoryId",
+        ]
+
+    def validate(self, data):
+        # Validate that the subcategory code is unique
+        if Subcategory.objects.filter(
+            subcategory_code=data["subcategory_code"]
+        ).exists():
+            raise serializers.ValidationError(
+                "Subcategory code already exists. Please choose a different one."
+            )
+        return data
