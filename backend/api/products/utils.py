@@ -172,9 +172,90 @@ def process_subcategory_get(request, subcategory_code):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-#!!!
 def process_subcategory_update(request, subcategory_code):
-    return JsonResponse({"error": "Not implemented"}, status=501)
+    def validate_new_subcategory_code(new_subcategory_code):
+        # if the subcategory code is the same as the old one, we are good
+        if new_subcategory_code == subcategory_code:
+            return True
+        # if not, check if the subcategory code already exists
+        elif Subcategory.objects.filter(subcategory_code=new_subcategory_code).exists():
+            raise Exception(
+                "Subcategory code already exists. Please choose a different one."
+            )
+        return True
+
+    def validate_new_subcategory_name(new_subcategory_name):
+        # if the subcategory name is the same as the old one, we are good
+        if new_subcategory_name == subcategory_code:
+            return True
+        # check if the subcategory name is unique
+        if Subcategory.objects.filter(name=new_subcategory_name).exists():
+            raise Exception(
+                "Subcategory name already exists. Please choose a different one."
+            )
+        return True
+
+    def validate_new_related_category_code(new_related_category_code):
+        # check if the related category code is the same as the old one, we are good
+        current_category_code = Subcategory.objects.get(
+            subcategory_code=subcategory_code
+        ).category.category_code
+        if new_related_category_code == current_category_code:
+            return True
+        # check if the new category code is available
+        if not Category.objects.filter(
+            category_code=new_related_category_code
+        ).exists():
+            raise Exception("Related category code does not exist.")
+        return True
+
+    # serialize the request data
+    subcategory_serializer = SubcategoryAddSerializer(data=request.data)
+    if not subcategory_serializer.is_valid():
+        return JsonResponse(subcategory_serializer.errors, status=400)
+    # valid data
+    new_subcategory_code = subcategory_serializer.validated_data.get("subcategory_code")
+    new_subcategory_name = subcategory_serializer.validated_data.get("name")
+    new_related_category_code = subcategory_serializer.validated_data.get(
+        "relatedCategoryId"
+    )
+    try:
+        new_subcategory_code_is_valid = validate_new_subcategory_code(
+            new_subcategory_code
+        )
+        new_subcategory_name_is_valid = validate_new_subcategory_name(
+            new_subcategory_name
+        )
+        new_related_category_code_is_valid = validate_new_related_category_code(
+            new_related_category_code
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    if (
+        new_subcategory_code_is_valid
+        and new_subcategory_name_is_valid
+        and new_related_category_code_is_valid
+    ):
+        # update the subcategory
+        subcategory = Subcategory.objects.get(subcategory_code=subcategory_code)
+        subcategory.subcategory_code = new_subcategory_code
+        subcategory.name = new_subcategory_name
+        subcategory.category = Category.objects.get(
+            category_code=new_related_category_code
+        )
+        subcategory.save()
+        return JsonResponse(subcategory_serializer.data, status=200)
+    else:
+        return JsonResponse(
+            {
+                "error": "something went wrong",
+                "subcategory_code_is_valid": new_subcategory_code_is_valid,
+                "subcategory_name_is_valid": new_subcategory_name_is_valid,
+                "related_category_code_is_valid": new_related_category_code_is_valid,
+            },
+            status=500,
+        )
 
 
 #!!!
