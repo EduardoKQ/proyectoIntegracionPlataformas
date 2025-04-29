@@ -9,11 +9,28 @@ urlpatterns = [
     path("health", system_views.health, name="health"),
     path("user/token-refresh", TokenRefreshView.as_view(), name="token_refresh"),
     # user endpoints
-    # user endpoints
     path("user/login", user_views.login, name="login"),
     path("user/me", user_views.me, name="me"),
     path("user/register-client", user_views.register_client, name="register_client"),
-    path("products/all", product_views.all, name="all"),
+    # products related endpoints
+    path("products", product_views.all, name="all"),
+    # categories and subcategories endpoints
+    path("categories", product_views.category_list_create, name="category_list_create"),
+    path(
+        "categories/<str:category_code>",
+        product_views.category_get_update_delete,
+        name="category_get_update_delete",
+    ),
+    path(
+        "subcategories",
+        product_views.subcategory_list_create,
+        name="subcategory_list_create",
+    ),
+    path(
+        "subcategories/<str:subcategory_code>",
+        product_views.subcategory_get_update_delete,
+        name="subcategory_get_update_delete",
+    ),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

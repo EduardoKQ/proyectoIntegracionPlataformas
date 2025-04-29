@@ -112,7 +112,11 @@ class Product(models.Model):
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
     current_price_date = models.DateField()
     subcategory = models.ForeignKey(
-        "Subcategory", on_delete=models.DO_NOTHING, related_name="products"
+        "Subcategory",
+        on_delete=models.SET_NULL,
+        related_name="products",
+        null=True,
+        blank=True,
     )
 
 
@@ -130,7 +134,7 @@ class Subcategory(models.Model):
     subcategory_code = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100, unique=True)
     category = models.ForeignKey(
-        "Category", on_delete=models.DO_NOTHING, related_name="subcategories"
+        "Category", on_delete=models.CASCADE, related_name="subcategories"
     )
 
 

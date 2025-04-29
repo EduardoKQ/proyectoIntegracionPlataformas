@@ -46,5 +46,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  db_data:
-    # Define the named volume for database persistence
+  db_data: # Define the named volume for database persistence
