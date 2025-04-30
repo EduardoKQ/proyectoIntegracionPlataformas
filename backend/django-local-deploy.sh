@@ -21,8 +21,9 @@ python manage.py migrate
 # load initial data (order of fixtures matters)
 echo "Loading initial data..."
 python manage.py loaddata users.json
-python manage.py loaddata inventory.json
 python manage.py loaddata products.json
+python manage.py loaddata inventory.json
+
 
 # Run Django development server
 echo "Starting Django development server on 0.0.0.0..."

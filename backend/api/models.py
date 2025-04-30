@@ -156,7 +156,7 @@ class Inventory(models.Model):
         on_delete=models.DO_NOTHING,
         related_name="inventories",
     )
-    quantity = models.PositiveIntegerField()
+    quantity = models.IntegerField(default=0)
 
     class Meta:
         # Enforce that the combination of branch and product is unique

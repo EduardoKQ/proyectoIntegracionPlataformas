@@ -20,7 +20,7 @@ db_alias = "default"  # Use the database alias defined in your settings
 print(f"Waiting for database '{db_alias}'...")
 
 attempts = 0
-max_attempts = 30  # Wait for max 30 seconds (adjust as needed)
+max_attempts = 120  # Wait for max 30 seconds (adjust as needed)
 
 while attempts < max_attempts:
     attempts += 1
@@ -35,7 +35,7 @@ while attempts < max_attempts:
         if attempts == max_attempts:
             print("Max attempts reached. Exiting.")
             sys.exit(1)  # Exit with error
-        time.sleep(1)  # Wait for 1 second before retrying
+        time.sleep(2)  # Wait for 2 second before retrying
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         sys.exit(1)  # Exit with error

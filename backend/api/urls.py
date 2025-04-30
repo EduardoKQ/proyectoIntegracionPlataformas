@@ -2,6 +2,7 @@ from django.urls import path, include
 from .system import views as system_views
 from .user import views as user_views
 from .products import views as product_views
+from .inventory import views as inventory_views
 from rest_framework_simplejwt.views import TokenRefreshView
 
 # all API endpoints
@@ -31,6 +32,10 @@ urlpatterns = [
         product_views.subcategory_get_update_delete,
         name="subcategory_get_update_delete",
     ),
+    # branches endpoints
+    path("branches", inventory_views.branch_list_create, name="branch_list_create"),
+    # inventory endpoints
+    path("inventory", inventory_views.inventory_list, name="inventory_list"),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [
