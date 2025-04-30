@@ -34,6 +34,11 @@ urlpatterns = [
     ),
     # branches endpoints
     path("branches", inventory_views.branch_list_create, name="branch_list_create"),
+    path(
+        "branches/<str:branch_code>",
+        inventory_views.branch_get_update_delete,
+        name="branch_get_update_delete",
+    ),
     # inventory endpoints
     path("inventory", inventory_views.inventory_list, name="inventory_list"),
 ]

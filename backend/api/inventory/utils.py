@@ -8,8 +8,7 @@ from .serializer import (
 from api.models import Product, Branch, Inventory
 
 
-### helpers
-# helpers
+### BRANCHES HELPERS ###
 def process_branches_list(request):
     try:
         # Get all branches
@@ -26,9 +25,6 @@ def process_branches_list(request):
 
 
 def process_branches_create(request):
-    """
-    Process the request to create a new branch.
-    """
     try:
         # Get the data from the request
         branch_serializer = BranchAddSerializer(data=request.data)
@@ -53,6 +49,29 @@ def process_branches_create(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+def process_branches_get(branch_code):
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Serialize the data
+        branch_serializer = BranchGetAllSerializer(branch)
+        return JsonResponse(branch_serializer.data, status=200)
+
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "Branch not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def process_branches_update(branch_code):
+    return JsonResponse({"error": "Not implemented update"}, status=501)
+
+
+def process_branches_delete(branch_code):
+    return JsonResponse({"error": "Not implemented delete"}, status=501)
+
+
+### INVENTORY HELPERS ###
 def process_inventory_list(request):
     """
     Process the request to get the inventory list.
