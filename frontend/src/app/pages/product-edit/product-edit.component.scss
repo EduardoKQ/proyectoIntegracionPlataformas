@@ -190,7 +190,7 @@ h2 {
         background-color: $button-cancel-hover-bg;
       }
        &:disabled {
-         background-color: lighten($button-cancel-bg, 20%);
+        background-color: color.adjust($button-cancel-bg, $lightness: 20%);
          cursor: not-allowed;
          box-shadow: none;
          transform: none;
@@ -203,7 +203,7 @@ h2 {
           background-color: color.adjust($danger-color, $lightness: -10%);
        }
        &:disabled {
-          background-color: lighten($danger-color, 25%);
+        background-color: color.adjust($danger-color, $lightness: 25%);
        }
     }
   }

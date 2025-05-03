@@ -107,7 +107,7 @@ h2 {
     input[type="text"] {
       flex-grow: 1;
       padding: 8px 12px;
-      border: 1px solid darken($border-color, 5%);
+      border: 1px solid color.adjust($border-color, $lightness: -5%);
       border-radius: $border-radius;
       font-size: 0.95em;
       color: $text-color;
@@ -143,7 +143,7 @@ h2 {
      margin-right: $spacing * 1.5;
      padding-left: 0;
      padding-right: 0;
-     border-top: 1px dashed lighten($border-color, 5%);
+     border-top: 1px dashed color.adjust($border-color, $lightness: 5%);
      background-color: transparent;
   }
 
@@ -165,7 +165,7 @@ h2 {
     input[type="text"] {
       flex-grow: 1;
       padding: 8px 12px;
-      border: 1px solid darken($border-color, 5%);
+      border: 1px solid color.adjust($border-color, $lightness: -5%);
       border-radius: $border-radius;
       font-size: 1em;
       color: $text-color;

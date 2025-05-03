@@ -231,10 +231,10 @@ h2 {
     &.btn-secondary {
         background-color: $secondary-color;
          &:hover:not(:disabled) {
-            background-color: darken($secondary-color, 10%);
+          background-color: color.adjust($secondary-color, $lightness: -10%);
          }
          &:disabled {
-             background-color: lighten($secondary-color, 20%);
+          background-color: color.adjust($secondary-color, $lightness: 20%);
              cursor: not-allowed;
              box-shadow: none;
          }
