@@ -1,0 +1,55 @@
+<div class="story-wrapper-container">
+
+  <div *ngIf="isLoading" class="loading-overlay">
+    Cargando historia...
+  </div>
+
+  <div *ngIf="storyNotFound" class="not-found-overlay">
+    <p>Historia no encontrada.</p>
+    <button (click)="closeStory()">Volver a Home</button>
+  </div>
+
+  <ng-container *ngIf="!isLoading && !storyNotFound">
+    <div class="top-section">
+      <div class="progress-bar-container">
+        <div *ngFor="let imgSrc of imageSources; let i = index" class="progress-segment">
+          <div class="progress-segment-inner"
+               [style.width.%]="i < currentImageIndex ? 100 : (i === currentImageIndex ? currentProgress : 0)">
+          </div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+          <div class="header-center">
+             <img [src]="logoSrc" alt="Logo" class="logo">
+             <span class="header-title">{{ headerText }}</span>
+          </div>
+          <div class="header-buttons">
+             <button class="control-button pause-play-button" (click)="togglePause()" title="{{ isPaused ? 'Reanudar' : 'Pausar' }}">
+               <span *ngIf="!isPaused"><span class="material-symbols-outlined">pause</span></span>
+               <span *ngIf="isPaused"><span class="material-symbols-outlined">play_arrow</span></span>
+             </button>
+             <button class="control-button close-button" (click)="closeStory()" title="Cerrar">
+              <span class="material-symbols-outlined">close</span>
+             </button>
+          </div>
+      </div>
+      <div class="story-view-content-area">
+        <img *ngIf="getCurrentImageSrc()"
+             [src]="getCurrentImageSrc()"
+             alt="Story content"
+             class="story-image">
+        <div *ngIf="!getCurrentImageSrc() && imageSources.length > 0">Cargando imagen...</div>
+      </div>
+      <button class="nav-button prev" (click)="clickPrevious()" [disabled]="currentImageIndex === 0">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+      <button class="nav-button next" (click)="clickNext()" [disabled]="currentImageIndex >= imageSources.length - 1">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+    <div class="bottom-section" style="display: none;">
+    </div>
+  </ng-container>
+
+</div>
