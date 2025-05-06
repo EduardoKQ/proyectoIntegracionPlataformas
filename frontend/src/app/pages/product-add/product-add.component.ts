@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
-import { CategoryService } from '../../services/category.service';
+import { CategorySubcategoryService } from '../../services/category.service';
 import { Product } from '../../../models/product.model';
 import { Category, Subcategory } from '../../../models/categories.model';
 import { Observable, of } from 'rxjs';
@@ -23,7 +23,7 @@ export class ProductAddComponent implements OnInit {
 
   private router = inject(Router);
   private productService = inject(ProductService);
-  private categoryService = inject(CategoryService);
+  private categoryService = inject(CategorySubcategoryService);
   private fb = inject(FormBuilder);
 
   productForm!: FormGroup;
@@ -43,7 +43,7 @@ export class ProductAddComponent implements OnInit {
       finalize(() => this.isLoadingCategories = false)
     ).subscribe({
       next: categories => {
-        this.allCategories = categories;
+        categories;
       },
       error: err => {
         console.error("Error loading categories for add form:", err);

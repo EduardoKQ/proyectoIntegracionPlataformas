@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
-import { CategoryService } from '../../services/category.service';
+import { CategorySubcategoryService } from '../../services/category.service';
 import { Product } from '../../../models/product.model';
 import { Category, Subcategory } from '../../../models/categories.model';
 import { Observable, of } from 'rxjs';
@@ -25,7 +25,7 @@ export class ProductEditComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private productService = inject(ProductService);
-  private categoryService = inject(CategoryService);
+  private categoryService = inject(CategorySubcategoryService);
   private fb = inject(FormBuilder);
 
   productCodigo: string | null = null;
@@ -44,7 +44,6 @@ export class ProductEditComponent implements OnInit {
 
     this.categoryService.getCategories().pipe(take(1)).subscribe({
         next: categories => {
-            this.allCategories = categories;
             this.loadProductData();
         },
         error: err => {
