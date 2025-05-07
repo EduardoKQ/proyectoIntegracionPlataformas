@@ -4,7 +4,10 @@
     <aside class="filters-sidebar">
       <!-- Buscador  -->
       <div class="filter-section">
-        <h3 class="filter-title">Buscar</h3>
+        <div class="filter-header">
+          <h3 class="filter-title">Buscar</h3>
+          <button class="reset-filters-link" (click)="limpiarFiltros()">Borrar filtros</button>
+        </div>
         <div class="search-box-sidebar">
           <input type="text" placeholder="Buscar productos...">
           <span class="material-symbols-outlined">search</span>
@@ -39,6 +42,7 @@
           </div>
         </div>
       </div>
+
       <!-- Filtros de categorías -->
       <div class="filter-section">
         <h3 class="filter-title">Categorías</h3>
@@ -75,11 +79,6 @@
             <label for="categoria3">Subcategorias 3</label>
           </div>
         </div>
-      </div>
-
-      <div class="filters-actions">
-        <button class="apply-filters-btn">Aplicar filtros</button>
-        <button class="clear-filters-btn" (click)="limpiarFiltros()">Limpiar filtros</button>
       </div>
     </aside>
 
