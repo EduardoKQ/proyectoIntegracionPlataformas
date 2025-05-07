@@ -173,7 +173,17 @@ def process_inventory_get_quantity(branch_code, product_code):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-def process_inventory_update_quantity(branch_code, product_code, quantity):
+def process_inventory_update_quantity(branch_code, product_code, request_data):
+    def get_quantity(request_data):
+        # Get the quantity from the request data
+        quantity = request_data.get("quantity")
+        if quantity is None:
+            raise ValueError("Quantity not provided")
+        quantity = int(quantity)
+        if quantity < 0:
+            raise ValueError("Invalid quantity")
+        return quantity
+    
     try:
         # Get the branch by code
         branch = Branch.objects.get(branch_code=branch_code)
@@ -181,6 +191,8 @@ def process_inventory_update_quantity(branch_code, product_code, quantity):
         product = Product.objects.get(product_code=product_code)
         # Get the inventory for the branch and product
         inventory = Inventory.objects.get(branch=branch, product=product)
+        # Check if the quantity is valid
+        quantity = get_quantity(request_data)
         # Update the quantity
         inventory.quantity = quantity
         inventory.save()

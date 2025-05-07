@@ -73,5 +73,5 @@ def inventory_get_update_quantity(request, branch_code, product_code):
         return auth_response
     # process the request to update inventory quantity
     if request.method == "PUT":
-        return process_inventory_update_quantity(branch_code, product_code, 0)
+        return process_inventory_update_quantity(branch_code, product_code, request.data)
 
