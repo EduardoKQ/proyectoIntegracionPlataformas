@@ -4,6 +4,7 @@ from .serializer import (
     InventoryGetAllSerializer,
     BranchGetAllSerializer,
     BranchAddSerializer,
+    BranchUpdateSerializer,
 )
 from api.models import Product, Branch, Inventory
 
@@ -62,13 +63,57 @@ def process_branches_get(branch_code):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+def process_branches_update(request_data, branch_code):
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Get the data from the request
+        branch_serializer = BranchUpdateSerializer(data=request_data)
+        # Check if the data is valid
+        if not branch_serializer.is_valid():
+            return JsonResponse(
+                {"error": "Invalid data", "details": branch_serializer.errors},
+                status=400,
+            )
+        # Check if the branch code is being updated
+        if "branch_code" in branch_serializer.validated_data:
+            new_branch_code = branch_serializer.validated_data["branch_code"]
+            if new_branch_code != branch.branch_code:
+                if Branch.objects.filter(branch_code=new_branch_code).exists():
+                    return JsonResponse(
+                        {"error": "Branch code already exists."}, status=400
+                    )
+        # Update the branch with the new data
+        for attr, value in branch_serializer.validated_data.items():
+            setattr(branch, attr, value)
+        branch.save()
+        return JsonResponse(branch_serializer.data, status=200)
 
-def process_branches_update(branch_code):
-    return JsonResponse({"error": "Not implemented update"}, status=501)
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "Branch not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 def process_branches_delete(branch_code):
-    return JsonResponse({"error": "Not implemented delete"}, status=501)
+    def delete_brach(branch):
+        # Delete the branch and all related inventories
+        inventories = Inventory.objects.filter(branch=branch)
+        inventories.delete()
+        branch.delete()
+    
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Delete the branch
+        delete_brach(branch)
+        return JsonResponse({"message": "Sucursal eliminada con exito"}, status=200)
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "No se encontro la Sucursal"}, status=404)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "No se encontro el inventario"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 ### INVENTORY HELPERS ###

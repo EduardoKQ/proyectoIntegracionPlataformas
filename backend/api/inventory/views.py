@@ -42,7 +42,7 @@ def branch_get_update_delete(request, branch_code):
             return auth_response
     # edit or delete the branch
     if request.method == "PUT":
-        return process_branches_update(branch_code)
+        return process_branches_update(request.data, branch_code)
     if request.method == "DELETE":
         return process_branches_delete(branch_code)
 
