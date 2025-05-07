@@ -5,6 +5,7 @@ from api.user.role_permision import require_roles, check_auth_allowed_role
 from api.user.web_role_names import WebRoleNames
 from .utils import (
     process_inventory_list,
+    process_inventory_by_branch,
     process_branches_list,
     process_branches_create,
     process_branches_get,
@@ -53,3 +54,7 @@ def branch_get_update_delete(request, branch_code):
 @api_view(["GET"])
 def inventory_list(request):
     return process_inventory_list(request)
+
+@api_view(["GET"])
+def inventory_by_branch(request, branch_code):
+    return process_inventory_by_branch(branch_code)

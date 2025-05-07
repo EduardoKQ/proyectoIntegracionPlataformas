@@ -134,3 +134,22 @@ def process_inventory_list(request):
         return JsonResponse({"error": "Inventory not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+def process_inventory_by_branch(branch_code):
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Get all inventories for the branch
+        inventories = Inventory.objects.filter(branch=branch)
+        if not inventories:
+            return JsonResponse({"error": "No hay datos de inventario"}, status=404)
+        # Serialize the data
+        inventories_serializer = InventoryGetAllSerializer(inventories, many=True)
+        return JsonResponse(inventories_serializer.data, safe=False, status=200)
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "Branch not found"}, status=404)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "Inventory not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+        
