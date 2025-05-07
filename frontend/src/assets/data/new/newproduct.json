@@ -168,15 +168,165 @@
     "model": "api.product",
     "pk": 28,
     "fields": {
-      "product_code": "110289975",
+      "product_code": "1258",
       "brand": "GENERICO",
-      "brand_code": "",
+      "brand_code": "110289975",
       "name": "Perfil Rectangular",
       "description": "Perfil Rectangular Acero 30x20x2 mm 6 m",
       "image_url": "https://media.falabella.com/sodimacCL/166251_01/w=800,h=800,fit=pad",
       "current_price": "9760.00",
       "current_price_date": "2025-04-25",
       "subcategory": 17
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 29,
+    "fields": {
+      "product_code": "1259",
+      "brand": "RIO MAIPO",
+      "brand_code": "SACO0010",
+      "name": "ARENA GRUESA",
+      "description": "ARENA GRUESA SACO 25 KG",
+      "image_url": "https://puntomaestro.cl/media/catalog/product/s/a/saco0010_evz6w6eihiyiahkp.jpg?optimize=medium&bg-color=255,255,255&fit=bounds&height=700&width=700&canvas=700:700",
+      "current_price": "940.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 18
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 30,
+    "fields": {
+      "product_code": "1260",
+      "brand": "GENERICO",
+      "brand_code": "110276939",
+      "name": "arena gruesa",
+      "description": "arena gruesa 25 kilos",
+      "image_url": "https://media.falabella.com/sodimacCL/3385310_01/w=1500,h=1500,fit=pad",
+      "current_price": "940.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 18
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 31,
+    "fields": {
+      "product_code": "1261",
+      "brand": "GENERICO",
+      "brand_code": "110278357",
+      "name": "Ladrillo Fiscal",
+      "description": "28.5x14x4.5 cm Ladrillo Fiscal Especial",
+      "image_url": "https://media.falabella.com/sodimacCL/11457X_01/w=1500,h=1500,fit=pad",
+      "current_price": "310.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 19
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 32,
+    "fields": {
+      "product_code": "1262",
+      "brand": "Ceramica Santiago",
+      "brand_code": "PLTA1104",
+      "name": "LADRILLO",
+      "description": "LADRILLO SANTIAGO S11 29X14X11,3 CM 248xpallet",
+      "image_url": "https://www.triplee.cl/13739-medium_default/ladrillo-santiago-s11-29x14x113-cm-.jpg",
+      "current_price": "854.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 19
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 33,
+    "fields": {
+      "product_code": "1263",
+      "brand": "LA PAJARITA",
+      "brand_code": "114433577",
+      "name": "Barniz",
+      "description": "Barniz Acabado Brillante 75 ml",
+      "image_url": "https://media.falabella.com/falabellaCL/114433577_01/w=1500,h=1500,fit=pad",
+      "current_price": "4490.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 20
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 34,
+    "fields": {
+      "product_code": "1264",
+      "brand": "CODELPA CHILE S.A.",
+      "brand_code": "M000008591",
+      "name": "Laca Madera",
+      "description": "Laca Madera Transparente Brillante 1 Lt Sipa",
+      "image_url": "https://dimacocl.vtexassets.com/arquivos/ids/159543-1200-auto?v=638790360981330000&width=1200&height=auto&aspect=true",
+      "current_price": "6990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 20
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 35,
+    "fields": {
+      "product_code": "1265",
+      "brand": "Sipa",
+      "brand_code": "691480",
+      "name": "Barniz al agua",
+      "description": "Barniz al agua 3 litros Poliuretano transparente semi brillante Sipa",
+      "image_url": "https://www.easy.cl/_next/image?url=https%3A%2F%2Feasycl.vteximg.com.br%2Farquivos%2Fids%2F4812138%2F691480-0000-001.jpg%3Fv%3D638811975825670000&w=750&q=75",
+      "current_price": "48990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 21
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 36,
+    "fields": {
+      "product_code": "1266",
+      "brand": "Sipa",
+      "brand_code": "14790",
+      "name": "Barniz vitrificante",
+      "description": "Barniz vitrificante poliuretano brillante 1/4 gal",
+      "image_url": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQ3IMT6Pobmx5YkaC-qvfCrAwUfdbNTV8uaV9gR7mjDaCQHuvi3tQ-ss45mo9rptB0SGk6X3ZxmKlVfpSFkeBA8tnSCqTyKagw-koFDdJLY3LOznMoVwPQlR4c",
+      "current_price": "19630.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 21
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 37,
+    "fields": {
+      "product_code": "1267",
+      "brand": "KARSON",
+      "brand_code": "110152829",
+      "name": "Cerámica Muro",
+      "description": "Cerámica Muro 20x30 cm Engobe Blanco. 1.5 m2",
+      "image_url": "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSo76-hH_mF77GLi7Inebp0APJrfXDAEb5CkS1NmnSCkQfD4uuFgEor5S0dGh0engVfAl3n6NfYYuFb_Fo0c5OwczGCjInxkFU-KnboXQdZ99ZE0cxYqpSPFg",
+      "current_price": "4990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 22
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 38,
+    "fields": {
+      "product_code": "1268",
+      "brand": "HOLZTEK",
+      "brand_code": "110627693",
+      "name": "Cerámica",
+      "description": "Cerámica 20x60 cm 9300 Gris 1.7 m2",
+      "image_url": "https://media.falabella.com/sodimacCL/8727708_01/w=1500,h=1500,fit=pad",
+      "current_price": "8290.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 22
     }
   }
 ]
