@@ -1,0 +1,182 @@
+[
+  {
+    "model": "api.product",
+    "pk": 17,
+    "fields": {
+      "product_code": "1247",
+      "brand": "STANLEY",
+      "brand_code": "52128",
+      "name": "Llave combinada",
+      "description": "Llave combinada 3/8 - 4-86-833",
+      "image_url": "https://herramientas.cl/media/catalog/product/cache/542bd4cf85d11a7099313156ce7c3054/1/0/1006435006_77.jpg",
+      "current_price": "1910.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 12
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 18,
+    "fields": {
+      "product_code": "1248",
+      "brand": "STANLEY",
+      "brand_code": "136703095",
+      "name": "Llave Combinada",
+      "description": "Llave Combinada Punta Corona de 8mm Herramienta Profesional",
+      "image_url": "https://media.falabella.com/falabellaCL/136703095_01/w=800,h=800,fit=pad",
+      "current_price": "3490.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 12
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 19,
+    "fields": {
+      "product_code": "1249",
+      "brand": "STANLEY",
+      "brand_code": "SBW920B",
+      "name": "Llave De Impacto",
+      "description": "Llave De Impacto 1/2 20v Stanley Sbw920-b2 Sin Baterias",
+      "image_url": "https://cdnx.jumpseller.com/my-toolbox-chile/image/43996982/resize/610/610?1732309133",
+      "current_price": "109990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 13
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 20,
+    "fields": {
+      "product_code": "1250",
+      "brand": "BAUKER",
+      "brand_code": "110477583",
+      "name": "Taladro Percutor",
+      "description": "Taladro Percutor Eléctrico 13 mm 650 W 220 V",
+      "image_url": "https://media.falabella.com/sodimacCL/8738947_04/w=1500,h=1500,fit=pad",
+      "current_price": "30290.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 14
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 21,
+    "fields": {
+      "product_code": "1251",
+      "brand": "Makita",
+      "brand_code": "RECMAKM3700B",
+      "name": "RECORTADORA ",
+      "description": "RECORTADORA 1/4(6MM) 530W-35000 RPM MAKITA M3700B",
+      "image_url": "https://construplaza.cl/media/catalog/product/R/E/RECMAKM3700B_20230517090835.jpg?optimize=medium&bg-color=255,255,255&fit=bounds&height=420&width=600&canvas=600:420",
+      "current_price": "62990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 13
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 22,
+    "fields": {
+      "product_code": "1252",
+      "brand": "STANLEY",
+      "brand_code": "1208391",
+      "name": "Taladro percutor",
+      "description": "Taladro percutor 600W 13mm SDH600-B2C Stanley",
+      "image_url": "https://www.easy.cl/_next/image?url=https%3A%2F%2Feasycl.vteximg.com.br%2Farquivos%2Fids%2F5079119%2F1208391-0000-002.jpg%3Fv%3D638744073696070000&w=640&q=75",
+      "current_price": "46990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 14
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 23,
+    "fields": {
+      "product_code": "1253",
+      "brand": "Makita",
+      "brand_code": "MK1YN12JSJ",
+      "name": "Sierra Circular ",
+      "description": "Sierra Circular 185mm (7-1/4) Makita 1050W M5801B",
+      "image_url": "https://cl-cenco-pim-resizer.ecomm.cencosud.com/unsafe/adaptive-fit-in/474x712/prd-cl/product-medias/0b027bdd-a67b-41bf-86bc-4b025a619410/MK1YN12JSJ/MK1YN12JSJ-1/1730831889654-MK1YN12JSJ-1-1.jpg",
+      "current_price": "102190.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 15
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 24,
+    "fields": {
+      "product_code": "1254",
+      "brand": "BOSCH",
+      "brand_code": "128394279",
+      "name": "Sierra Circular",
+      "description": "Sierra Circular BOSCH GKS 150 1500W + 2 Discos",
+      "image_url": "https://media.falabella.com/falabellaCL/128394279_04/w=800,h=800,fit=pad",
+      "current_price": "11990.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 15
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 25,
+    "fields": {
+      "product_code": "1255",
+      "brand": "ISESA",
+      "brand_code": "110265155",
+      "name": "Lija",
+      "description": "Lija para madera 9x11 grano 100",
+      "image_url": "https://media.falabella.com/sodimacCL/759643_01/w=800,h=800,fit=pad",
+      "current_price": "230.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 16
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 26,
+    "fields": {
+      "product_code": "1256",
+      "brand": "ISESA",
+      "brand_code": "119569",
+      "name": "Lija ",
+      "description": "Lija para metal grano 40 Isesa",
+      "image_url": "https://www.easy.cl/_next/image?url=https%3A%2F%2Feasycl.vteximg.com.br%2Farquivos%2Fids%2F5045806%2F119569-0001-002.jpg%3Fv%3D638743248833570000&w=640&q=75",
+      "current_price": "400.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 16
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 27,
+    "fields": {
+      "product_code": "1257",
+      "brand": "Prodalam",
+      "brand_code": "85318",
+      "name": "Tablero Terciado",
+      "description": "Tablero Terciado Estructural 1,22m ancho x 2,44m largo x 9mm espesor",
+      "image_url": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQJKoKIUdyp2rlg7-_weDTXdKlvlk4gRItVTD-I_Pri2iGG8WxZJX2tZDyg9Fhv5l-sk-y1_W73RwTg949CGmFr0R7g6QQ3BcGPWsjJnKP0NnN7IMRVh-zD-g",
+      "current_price": "160055.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 17
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 28,
+    "fields": {
+      "product_code": "110289975",
+      "brand": "GENERICO",
+      "brand_code": "",
+      "name": "Perfil Rectangular",
+      "description": "Perfil Rectangular Acero 30x20x2 mm 6 m",
+      "image_url": "https://media.falabella.com/sodimacCL/166251_01/w=800,h=800,fit=pad",
+      "current_price": "9760.00",
+      "current_price_date": "2025-04-25",
+      "subcategory": 17
+    }
+  }
+]
