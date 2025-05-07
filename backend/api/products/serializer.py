@@ -43,6 +43,57 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             return obj.subcategory.name
         return "Ninguna"
 
+class ProductAddSerializer(serializers.ModelSerializer):
+    codigo_producto = serializers.CharField(source="product_code", required=True)
+    nombre = serializers.CharField(source="name", required=True)
+    precio = serializers.FloatField(source="current_price", required=True)
+    marca = serializers.CharField(source="brand", required=True)
+    codigo_marca = serializers.CharField(source="brand_code", required=True)
+    categoria = serializers.CharField(source="category.name", required=True)
+    subcategoria = serializers.CharField(source="subcategory.name", required=True)
+    imageUrl = serializers.CharField(source="image_url", required=False)
+    descripcion = serializers.CharField(source="description", required=False)
+
+    class Meta:
+        model = Product
+        fields = [
+            "codigo_producto",
+            "nombre",
+            "precio",
+            "marca",
+            "codigo_marca",
+            "categoria",
+            "subcategoria",
+            "imageUrl",
+            "descripcion",
+        ]
+    
+    def validate(self, data):
+        # validate category and subcategory
+        category_name = data.get("category").get("name")
+        subcategory_name = data.get("subcategory").get("name")
+        category = Category.objects.filter(name=category_name).first()
+        subcategory = Subcategory.objects.filter(name=subcategory_name).first()
+        if not category or not subcategory:
+            raise serializers.ValidationError(
+                "La categoria o subcategoria no existe"
+            )
+        # validate that the subcategory belongs to the category
+        if subcategory.category != category:
+            raise serializers.ValidationError(
+                "La subcategoria no pertenece a la categoria"
+            )
+        
+        
+        # validate price over 0
+        if data.get("current_price") <= 0:
+            raise serializers.ValidationError(
+                "El precio debe ser mayor a 0"
+            )
+        
+        
+        return data
+
 
 class CategoriesDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="category_code")

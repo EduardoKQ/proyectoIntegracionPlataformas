@@ -14,7 +14,8 @@ urlpatterns = [
     path("user/me", user_views.me, name="me"),
     path("user/register-client", user_views.register_client, name="register_client"),
     # products related endpoints
-    path("products", product_views.all, name="all"),
+    path("products", product_views.products_list_create, name="products_list_create"),
+    path("products/<str:product_code>", product_views.products_get_update_delete, name="products_get_update_delete"),
     # categories and subcategories endpoints
     path("categories", product_views.category_list_create, name="category_list_create"),
     path(

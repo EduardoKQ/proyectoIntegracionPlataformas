@@ -18,24 +18,58 @@ from .utils import (
     subprocess_category_list_create_post,
     process_subcategory_get,
     process_subcategory_update,
-    process_subcategory_delete,
+    process_subcategory_delete
 )
+
+from .product_utils import (
+    process_product_get_by_code,
+    process_product_update,
+    process_product_delete,
+    process_product_create
+    )
 
 
 # api backend health check
-@api_view(["GET"])
-def all(request):
-    # get all productos
-    try:
-        products = Product.objects.all()
-        products_serializer = ProductDetailSerializer(products, many=True)
-        return JsonResponse(products_serializer.data, safe=False, status=200)
+@api_view(["GET", "POST"])
+def products_list_create(request):
+    # public endpoint for all users
+    if request.method == "GET":
+        # get all productos
+        try:
+            products = Product.objects.all()
+            products_serializer = ProductDetailSerializer(products, many=True)
+            return JsonResponse(products_serializer.data, safe=False, status=200)
 
-    except Product.DoesNotExist:
-        return JsonResponse({"error": "Products not found"}, status=404)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        except Product.DoesNotExist:
+            return JsonResponse({"error": "Products not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    # only admin can create products
+    if request.method == "POST":
+        allowed_roles = [WebRoleNames.ADMIN_TIENDA]
+        auth_response = check_auth_allowed_role(request, allowed_roles)
+        if auth_response is not None:
+            return auth_response
+        # process the request to create a product
+        return process_product_create(request.data)
 
+
+@api_view(["GET", "PUT", "DELETE"])
+def products_get_update_delete(request, product_code):
+    # public endpoint for all users
+    if request.method == "GET":
+        return process_product_get_by_code(product_code)
+    # only admin can update or delete products
+    if request.method == "PUT" or request.method == "DELETE":
+        allowed_roles = [WebRoleNames.ADMIN_TIENDA]
+        auth_response = check_auth_allowed_role(request, allowed_roles)
+        if auth_response is not None:
+            return auth_response
+    # process the request to update or delete a product
+    if request.method == "PUT":
+        return process_product_update(product_code, request.data)
+    if request.method == "DELETE":
+        return process_product_delete(product_code)
 
 @api_view(["GET", "POST"])
 def category_list_create(request):
