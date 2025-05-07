@@ -8,7 +8,7 @@
   <p>Cargando opciones de categoría...</p>
 </div>
 
-<form *ngIf="!isLoadingCategories && productForm" [formGroup]="productForm" (ngSubmit)="addProduct()">
+<form *ngIf="!isLoadingCategories && productForm" [formGroup]="productForm">
 
   <div class="form-field">
     <label for="codigo_producto">Código Producto:</label>
@@ -16,7 +16,6 @@
        <input id="codigo_producto" type="text" formControlName="codigo_producto">
        <button type="button" class="btn-icon generate-code-btn"
                title="Generar Siguiente Código"
-               (click)="generateNextCode()"
                [disabled]="isGeneratingCode">
          <span class="material-symbols-outlined">{{ isGeneratingCode ? 'sync' : 'autorenew' }}</span>
        </button>

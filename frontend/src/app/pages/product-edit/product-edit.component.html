@@ -13,7 +13,7 @@
    <p>{{ actionError }}</p>
 </div>
 
-<form *ngIf="!isLoading && !productNotFound && productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
+<form *ngIf="!isLoading && !productNotFound && productForm" [formGroup]="productForm" >
 
   <div class="form-field">
     <label for="codigo_producto">Código Producto:</label>
@@ -98,7 +98,6 @@
 
   <div class="form-actions">
     <button type="button" class="btn btn-delete"
-            (click)="deleteProduct()"
             [disabled]="isSaving || isDeleting">
        {{ isDeleting ? 'Eliminando...' : 'Eliminar Producto' }}
     </button>

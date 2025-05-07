@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ProductService } from '../../services/product.service';
 import { CategorySubcategoryService } from '../../services/category.service';
 import { Product } from '../../../models/product.model';
 import { Category, Subcategory } from '../../../models/categories.model';
@@ -22,7 +21,6 @@ import { finalize, catchError, take } from 'rxjs/operators';
 export class ProductAddComponent implements OnInit {
 
   private router = inject(Router);
-  private productService = inject(ProductService);
   private categoryService = inject(CategorySubcategoryService);
   private fb = inject(FormBuilder);
 
@@ -81,47 +79,7 @@ export class ProductAddComponent implements OnInit {
     this.filteredSubcategories = selectedCategory ? selectedCategory.subcategories : [];
   }
 
-  generateNextCode(): void {
-    if (this.isGeneratingCode) return;
-    this.isGeneratingCode = true;
-    this.actionError = null;
-    this.productService.getNextProductCode()
-      .pipe(finalize(() => this.isGeneratingCode = false))
-      .subscribe({
-        next: (nextCode) => {
-          this.productForm.get('codigo_producto')?.setValue(nextCode);
-          this.productForm.get('codigo_producto')?.markAsDirty();
-        },
-        error: (err) => {
-          console.error('Error al generar código:', err);
-          this.actionError = err?.message || 'No se pudo generar el código.';
-        }
-      });
-  }
 
-  addProduct(): void {
-    this.actionError = null;
-    if (this.productForm.invalid) {
-      this.productForm.markAllAsTouched();
-      return;
-    }
-    if (this.isSaving) return;
-
-    this.isSaving = true;
-    const newProductData = this.productForm.value as Omit<Product, 'id'>;
-
-    this.productService.addProduct(newProductData)
-      .pipe(finalize(() => this.isSaving = false))
-      .subscribe({
-        next: (newProduct) => {
-          this.router.navigate(['/product']);
-        },
-        error: (err) => {
-          console.error('Error al guardar nuevo producto:', err);
-          this.actionError = err?.message || 'Error desconocido al guardar el producto.';
-        }
-      });
-  }
 
   cancel(): void {
     this.router.navigate(['/product']);

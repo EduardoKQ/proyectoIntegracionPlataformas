@@ -1,12 +1,12 @@
 <h1>Lista de Productos</h1>
 
 <div *ngIf="errorOcurred" class="error-message">
-  <p>error al cargar los productos. Por favor, intenta más tarde.</p>
+  <p>{{ errorMessage || 'Error al cargar los productos. Por favor, intenta más tarde.' }}</p>
 </div>
 
-<div class="product-list-container">
-  <div *ngIf="products$ | async as products; else loading">
-    <div *ngIf="products.length > 0; else noProducts">
+<div class="product-list-container" *ngIf="!errorOcurred">
+  <div *ngIf="productsWithStock$ | async as products; else noProductsInitially">
+    <div *ngIf="products.length > 0; else noProductsMessage">
       <div class="product-card" *ngFor="let product of products">
         <div class="product-image-container" *ngIf="product.imageUrl">
           <img [src]="product.imageUrl" [alt]="product.nombre" class="product-image">
@@ -16,18 +16,17 @@
           <p class="description">{{ product.descripcion }}</p>
           <p><strong>Marca:</strong> {{ product.marca }}</p>
           <p><strong>Categoría:</strong> {{ product.categoria }} | {{ product.subcategoria }}</p>
-          <p><strong>Stock:</strong> {{ product.stock }}</p>
-          <p class="price">{{ product.precio | currency:'CLP':'symbol':'1.0-0' }}</p>
-          <p><small>Código: {{ product.codigo_producto }} / Ref: {{ product.codigoM }}</small></p>
+          <p><strong>Stock Total:</strong> {{ product.stock_total }}</p>
+          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol':'1.0-0' }}</p>
+          <p><small>Código: {{ product.codigo_producto }} / Ref: {{ product.codigo_marca }}</small></p>
         </div>
       </div>
     </div>
-    <ng-template #noProducts>
+    <ng-template #noProductsMessage>
       <p>No hay productos disponibles en este momento.</p>
     </ng-template>
   </div>
+  <ng-template #noProductsInitially>
+    <p>Verificando productos...</p>
+  </ng-template>
 </div>
-
-<ng-template #loading>
-  <p>Cargando productos...</p>
-</ng-template>
