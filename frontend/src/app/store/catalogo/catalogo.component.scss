@@ -210,24 +210,6 @@ $primary-dark: #303f9f;
   border-color: $primary-color;
 }
 
-/* Botón aplicar filtros */
-.apply-filters-btn {
-  width: 100%;
-  background-color: $primary-color;
-  color: white;
-  border: none;
-  border-radius: $border-radius;
-  padding: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin-top: 10px;
-}
-
-.apply-filters-btn:hover {
-  background-color: $primary-dark;
-}
-
 /* Modificaciones a la sección principal */
 .catalog-content {
   flex: 1;
@@ -405,6 +387,44 @@ $primary-dark: #303f9f;
   background-color: $primary-color;
   color: white;
   border-color: $primary-color;
+}
+
+/* Cambio en la disposición de botones de filtros */
+.filters-actions {
+  display: flex;
+  flex-direction: column; /* Cambia de row (predeterminado) a column */
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.apply-filters-btn, .clear-filters-btn {
+  padding: 12px;
+  border: none;
+  border-radius: $border-radius;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  width: 100%; /* Asegurar que ocupen todo el ancho disponible */
+}
+
+.apply-filters-btn {
+  background-color: #2962ff; /* Azul más vibrante */
+  color: white;
+}
+
+.apply-filters-btn:hover {
+  background-color: #1a54f7; /* Azul más oscuro al pasar el mouse */
+}
+
+.clear-filters-btn {
+  background-color: #f44336; /* Color rojo */
+  color: white;
+  border: none;
+}
+
+.clear-filters-btn:hover {
+  background-color: #d32f2f; /* Rojo más oscuro al pasar el mouse */
 }
 
 /* Ajustes responsivos */

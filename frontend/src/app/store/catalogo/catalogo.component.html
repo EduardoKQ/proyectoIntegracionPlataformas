@@ -31,19 +31,11 @@
         <div class="filter-options">
           <div class="filter-checkbox">
             <input type="checkbox" id="marca1" name="marca1">
-            <label for="marca1">Marca 1</label>
+            <label for="marca1">Stanley</label>
           </div>
           <div class="filter-checkbox">
             <input type="checkbox" id="marca2" name="marca2" checked>
-            <label for="marca2">Marca 2</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="marca3" name="marca3">
-            <label for="marca3">Marca 3</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="marca4" name="marca4">
-            <label for="marca4">Marca 4</label>
+            <label for="marca2">Bauker</label>
           </div>
         </div>
       </div>
@@ -85,7 +77,10 @@
         </div>
       </div>
 
-      <button class="apply-filters-btn">Aplicar filtros</button>
+      <div class="filters-actions">
+        <button class="apply-filters-btn">Aplicar filtros</button>
+        <button class="clear-filters-btn" (click)="limpiarFiltros()">Limpiar filtros</button>
+      </div>
     </aside>
 
     <!-- Cartas con productos -->
