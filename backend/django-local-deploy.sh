@@ -23,6 +23,7 @@ echo "Loading initial data..."
 python manage.py loaddata users.json
 python manage.py loaddata products.json
 python manage.py loaddata inventory.json
+python manage.py loaddata workers.json
 
 
 # Run Django development server
