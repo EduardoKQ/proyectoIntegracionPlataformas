@@ -43,6 +43,7 @@ urlpatterns = [
     # inventory endpoints
     path("inventory", inventory_views.inventory_list, name="inventory_list"),
     path("inventory/<str:branch_code>", inventory_views.inventory_by_branch, name="inventory_by_branch"),
+    path("inventory/<str:branch_code>/<str:product_code>", inventory_views.inventory_get_update_quantity, name="inventory_get_update_quantity"),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

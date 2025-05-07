@@ -6,6 +6,8 @@ from api.user.web_role_names import WebRoleNames
 from .utils import (
     process_inventory_list,
     process_inventory_by_branch,
+    process_inventory_get_quantity,
+    process_inventory_update_quantity,
     process_branches_list,
     process_branches_create,
     process_branches_get,
@@ -58,3 +60,18 @@ def inventory_list(request):
 @api_view(["GET"])
 def inventory_by_branch(request, branch_code):
     return process_inventory_by_branch(branch_code)
+
+@api_view(["GET","PUT"])
+def inventory_get_update_quantity(request, branch_code, product_code):
+    # public get endpoint for all users
+    if request.method == "GET":
+        return process_inventory_get_quantity(branch_code, product_code)
+    # only admin can update inventory
+    allowed_roles = [WebRoleNames.ADMIN_TIENDA]
+    auth_response = check_auth_allowed_role(request, allowed_roles)
+    if auth_response is not None:
+        return auth_response
+    # process the request to update inventory quantity
+    if request.method == "PUT":
+        return process_inventory_update_quantity(branch_code, product_code, 0)
+

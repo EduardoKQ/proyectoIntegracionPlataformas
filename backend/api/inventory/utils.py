@@ -152,4 +152,45 @@ def process_inventory_by_branch(branch_code):
         return JsonResponse({"error": "Inventory not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-        
+
+def process_inventory_get_quantity(branch_code, product_code):
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Get the product by code
+        product = Product.objects.get(product_code=product_code)
+        # Get the inventory for the branch and product
+        inventory = Inventory.objects.get(branch=branch, product=product)
+        # Serialize the data
+        inventory_serializer = InventoryGetAllSerializer(inventory)
+        return JsonResponse(inventory_serializer.data, status=200)
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "Branch not found"}, status=404)
+    except Product.DoesNotExist:
+        return JsonResponse({"error": "Product not found"}, status=404)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "Inventory not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+def process_inventory_update_quantity(branch_code, product_code, quantity):
+    try:
+        # Get the branch by code
+        branch = Branch.objects.get(branch_code=branch_code)
+        # Get the product by code
+        product = Product.objects.get(product_code=product_code)
+        # Get the inventory for the branch and product
+        inventory = Inventory.objects.get(branch=branch, product=product)
+        # Update the quantity
+        inventory.quantity = quantity
+        inventory.save()
+        return JsonResponse({"message": "Cantidad actualizada con exito"}, status=200)
+    except Branch.DoesNotExist:
+        return JsonResponse({"error": "Branch not found"}, status=404)
+    except Product.DoesNotExist:
+        return JsonResponse({"error": "Product not found"}, status=404)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "Inventory not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
