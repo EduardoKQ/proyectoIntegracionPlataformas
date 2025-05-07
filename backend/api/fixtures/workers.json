@@ -1,0 +1,62 @@
+[
+  {
+    "model": "api.worker",
+    "pk": 1,
+    "fields": {
+      "first_name": "Juan",
+      "last_name": "VendedorUno",
+      "user_account": 2,
+      "branch": 1
+    }
+  },
+  {
+    "model": "api.worker",
+    "pk": 2,
+    "fields": {
+      "first_name": "Ana",
+      "last_name": "VendedorDos",
+      "user_account": 7,
+      "branch": 2
+    }
+  },
+  {
+    "model": "api.worker",
+    "pk": 3,
+    "fields": {
+      "first_name": "Pedro",
+      "last_name": "BodegueroUno",
+      "user_account": 3,
+      "branch": 1
+    }
+  },
+  {
+    "model": "api.worker",
+    "pk": 4,
+    "fields": {
+      "first_name": "Luisa",
+      "last_name": "BodegueroDos",
+      "user_account": 8,
+      "branch": 2
+    }
+  },
+  {
+    "model": "api.worker",
+    "pk": 5,
+    "fields": {
+      "first_name": "Carlos",
+      "last_name": "Contador",
+      "user_account": 4,
+      "branch": 1
+    }
+  },
+  {
+    "model": "api.worker",
+    "pk": 6,
+    "fields": {
+      "first_name": "Rene",
+      "last_name": "AdminTienda",
+      "user_account": 1,
+      "branch": 1
+    }
+  }
+]
