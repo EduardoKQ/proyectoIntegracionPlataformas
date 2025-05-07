@@ -18,7 +18,7 @@ export const routes: Routes = [
 
   { path: 'login', component: LoginComponent,canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent,canActivate: [rolesGuard] },
-  { path: 'home', component: HomeComponent},
+  { path: 'home',component: HomeComponent, data: { showStoreHeader: true }},
   { path: 'story/:id', component: StoryViewComponent },
   { path : '', redirectTo: 'home', pathMatch: 'full' },
 

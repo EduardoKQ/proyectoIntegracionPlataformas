@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 export interface AuthResponse {
   status: string;
@@ -41,6 +42,11 @@ export interface RegisterResponse {
     user_data: StoredUser;
 }
 
+export interface RefreshTokenResponse {
+  access: string;
+  refresh?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -66,9 +72,17 @@ export class AuthService {
     return this.http.post<RegisterResponse>(registerUrl, data, this.httpOptions);
   }
 
+  storeAccessToken(accessToken: string): void {
+    localStorage.setItem('accessToken', accessToken);
+  }
+
+  storeRefreshToken(refreshToken: string): void {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+
   storeTokens(access: string, refresh: string): void {
-    localStorage.setItem('accessToken', access);
-    localStorage.setItem('refreshToken', refresh);
+    this.storeAccessToken(access);
+    this.storeRefreshToken(refresh);
   }
 
   getAccessToken(): string | null {
@@ -77,6 +91,26 @@ export class AuthService {
 
   getRefreshToken(): string | null {
     return localStorage.getItem('refreshToken');
+  }
+
+  refreshToken(): Observable<RefreshTokenResponse> {
+    const currentRefreshToken = this.getRefreshToken();
+
+    if (!currentRefreshToken) {
+      return throwError(() => new Error('No hay token de refresco disponible.'));
+    }
+
+    const refreshUrl = `${this.apiUrl}/user/token-refresh`;
+    return this.http.post<RefreshTokenResponse>(refreshUrl, { refresh: currentRefreshToken }, this.httpOptions)
+      .pipe(
+        tap((response: RefreshTokenResponse) => {
+          this.storeAccessToken(response.access);
+          if (response.refresh) {
+            this.storeRefreshToken(response.refresh);
+          }
+          console.log('Tokens actualizados después del refresco.');
+        })
+      );
   }
 
   storeUserData(userData: StoredUser): void {
@@ -98,11 +132,19 @@ export class AuthService {
     return userData?.role ?? null;
   }
 
+  isLoggedIn(): boolean {
+    return !!this.getAccessToken();
+  }
+
   clearAuthData(): void {
-    localStorage.clear();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userData');
+    console.log('Datos de autenticación limpiados.');
   }
 
   logout(): void {
     this.clearAuthData();
+    console.log('Usuario deslogueado.');
   }
 }
