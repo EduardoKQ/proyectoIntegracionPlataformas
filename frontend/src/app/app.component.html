@@ -1,4 +1,6 @@
-<div class="app-container">
+<app-header *ngIf="showStoreHeader"></app-header>
+
+<div class="page-body-container">
   <app-sidebar *ngIf="showSidebar"></app-sidebar>
   <main class="content-area">
     <router-outlet></router-outlet>
