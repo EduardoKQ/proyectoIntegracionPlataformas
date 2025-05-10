@@ -240,7 +240,7 @@ h3 {
     }
 
     th {
-      background-color: darken($light-gray-bg, 3%);
+      background-color: color.adjust($light-gray-bg, $lightness: -3%);
       font-weight: 500;
       color: $form-label-color;
     }
@@ -299,7 +299,7 @@ h3 {
 
       &:disabled {
         background-color: $button-save-disabled-bg;
-        color: darken($button-save-disabled-bg, 30%);
+        color: color.adjust($button-save-disabled-bg, $lightness: -30%);
         cursor: not-allowed;
         box-shadow: none;
         transform: none;
@@ -316,7 +316,7 @@ h3 {
         background-color: $button-cancel-hover-bg;
       }
         &:disabled {
-        background-color: lighten($button-cancel-bg, 20%);
+        background-color: color.adjust($button-cancel-bg, $lightness: 20%);
         cursor: not-allowed;
         box-shadow: none;
         transform: none;
@@ -359,11 +359,11 @@ h3 {
       color: white;
 
       &:not(:disabled):hover {
-        background-color: darken($form-error-color, 10%);
+        background-color: color.adjust($form-error-color, $lightness: -10%);
       }
       &:disabled {
-        background-color: lighten($form-error-color, 20%);
-        color: darken($form-error-color, 10%);
+        background-color: color.adjust($form-error-color, $lightness: 20%);
+        color: color.adjust($form-error-color, $lightness: -10%);
       }
     }
   }
@@ -388,27 +388,27 @@ h3 {
 }
 
 .success-message {
-  color: darken($success-color, 20%);
-  background-color: lighten($success-color, 40%);
-  border-color: lighten($success-color, 25%);
+  color: color.adjust($success-color, $lightness: -20%);
+  background-color: color.adjust($success-color, $lightness: 40%);
+  border-color: color.adjust($success-color, $lightness: 25%);
 }
 
 .error-message {
-  color: darken($form-error-color, 10%);
+  color: color.adjust($form-error-color, $lightness: -10%);
   background-color: $form-error-bg-color;
   border-color: $form-error-border-color;
 }
 
 .warning-message {
-  color: darken(#ffc107, 25%);
-  background-color: lighten(#ffc107, 35%);
-  border-color: lighten(#ffc107, 20%);
+  color: color.adjust(#ffc107, $lightness: -25%);
+  background-color: color.adjust(#ffc107, $lightness: 35%);
+  border-color: color.adjust(#ffc107, $lightness: 20%);
 }
 
 .info-message {
-  color: darken(#17a2b8, 25%);
-  background-color: lighten(#17a2b8, 45%);
-  border-color: lighten(#17a2b8, 30%);
+  color: color.adjust(#17a2b8, $lightness: -25%);
+  background-color: color.adjust(#17a2b8, $lightness: 45%);
+  border-color: color.adjust(#17a2b8, $lightness: 30%);
 }
 
 .loading-indicator {

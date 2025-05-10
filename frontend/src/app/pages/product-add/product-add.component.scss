@@ -240,7 +240,7 @@ h3 {
     }
 
     th {
-      background-color: darken($light-gray, 5%);
+      background-color: color.adjust($light-gray, $lightness: -5%);
       font-weight: 500;
       color: $dark-gray;
     }
@@ -314,7 +314,7 @@ h3 {
       &:not(:disabled):hover {
         background-color: $button-cancel-hover-bg;
       }
-       &:disabled {
+        &:disabled {
         background-color: color.adjust($button-cancel-bg, $lightness: 20%);
         cursor: not-allowed;
         box-shadow: none;
@@ -369,19 +369,18 @@ h3 {
 }
 
 .success-message {
-  color: darken($success-color, 20%);
-  background-color: lighten($success-color, 40%);
-  border-color: lighten($success-color, 25%);
+  color: color.adjust($success-color, $lightness: -20%);
+  background-color: color.adjust($success-color, $lightness: 45%);
   a {
-    color: darken($success-color, 20%);
+    color: color.adjust($success-color, $lightness: -20%);
   }
 }
 
 .error-message {
-  color: darken($error-color, 10%);
+  color: color.adjust($error-color, $lightness: -10%);
   background-color: $error-bg;
   border-color: $error-border;
   a {
-    color: darken($error-color, 10%);
+    color: color.adjust($error-color, $lightness: -10%);
   }
 }

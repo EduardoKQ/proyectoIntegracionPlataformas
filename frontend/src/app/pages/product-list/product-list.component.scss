@@ -143,7 +143,7 @@ h1 {
   .btn-refresh {
     background-color: $secondary-color;
     color: white;
-     &:hover {
+      &:hover {
       background-color: color.adjust($secondary-color, $lightness: -8%);
     }
   }
@@ -253,7 +253,7 @@ h1 {
   padding: $spacing ($spacing * 0.75);
   gap: ($spacing * 0.75);
   border-left: 1px solid $medium-gray;
-  background-color: lighten($light-gray, 2%);
+  background-color: color.adjust($light-gray, $lightness: 2%);
   flex-shrink: 0;
 
 
