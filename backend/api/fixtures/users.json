@@ -126,6 +126,32 @@
     }
   },
   {
+    "model": "api.webuser",
+    "pk": 7,
+    "fields": {
+      "email": "vendedor2@example.com",
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": 4,
+      "is_first_time_login": false,
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true
+    }
+  },
+  {
+    "model": "api.webuser",
+    "pk": 8,
+    "fields": {
+      "email": "bodeguero2@example.com",
+      "password": "pbkdf2_sha256$1000000$m0MdzlDf6jRcknCsTUyJSv$etr0Ds0vYGr2fEz1eIcJEuuFwZPm6/4zR9hP00lHnnw=",
+      "role": 2,
+      "is_first_time_login": false,
+      "is_active": true,
+      "is_staff": true,
+      "is_superuser": true
+    }
+  },
+  {
     "model": "api.client",
     "pk": 1,
     "fields": {

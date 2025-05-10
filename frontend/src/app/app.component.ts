@@ -3,6 +3,7 @@ import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/ro
 import { CommonModule } from '@angular/common';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { HeaderComponent } from './shared/components/header/header.component';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +11,8 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
   imports: [
     CommonModule,
     RouterOutlet,
-    SidebarComponent
+    SidebarComponent,
+    HeaderComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -18,6 +20,7 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 export class AppComponent implements OnInit {
   title = 'frontend';
   showSidebar: boolean = false;
+  showStoreHeader: boolean = false;
 
   constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
 
@@ -35,6 +38,7 @@ export class AppComponent implements OnInit {
       mergeMap((route) => route.data)
     ).subscribe((data) => {
       this.showSidebar = data?.['showSidebar'] === true;
+      this.showStoreHeader = data?.['showStoreHeader'] === true;
     });
   }
 }

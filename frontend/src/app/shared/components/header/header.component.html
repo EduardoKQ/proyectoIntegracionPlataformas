@@ -1,1 +1,84 @@
-<p>header works!</p>
+<header class="main-header">
+  <div class="header-content">
+    <div class="logo">
+      <a routerLink="/home">
+        <img src="assets/images/Ferremas.png" alt="ferremas" class="logo-img">
+      </a>
+    </div>
+
+    <div class="categories-menu">
+        <button class="categories-btn" (click)="toggleCategoriesMenu()">
+          <span class="icon-wrapper">
+            <span class="material-symbols-outlined">grid_view</span>
+          </span>
+          <span class="categories-btn-text">Categorías</span>
+          <span class="material-symbols-outlined dropdown-icon">arrow_drop_down</span>
+        </button>
+        <div class="categories-dropdown" *ngIf="showCategoriesMenu" (mouseleave)="closeCategoriesMenu()">
+          <div class="categories-container">
+            <div class="category-column" *ngFor="let group of categoryGroups">
+              <div class="category-header"
+                   [class.active]="hoveredCategory === group.title"
+                   (mouseenter)="hoverCategory(group.title)">
+                <h3 class="category-title">{{ group.title }}</h3>
+                <span class="material-symbols-outlined">chevron_right</span>
+              </div>
+            </div>
+          </div>
+          <div class="product-list" *ngIf="hoveredCategory">
+            <h4 class="active-category-title">{{ hoveredCategory }}</h4>
+            <ul>
+              <li *ngFor="let subcategory of currentSubcategories">
+                <a [routerLink]="subcategory.link" (click)="closeCategoriesMenu()">{{ subcategory.title }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+    </div>
+
+    <div class="search-bar-container">
+        <input
+         type="text"
+         placeholder="¿Qué estás buscando?"
+         class="search-input"
+         [(ngModel)]="searchQuery"
+         (keyup.enter)="search()">
+      <button class="btn-search" aria-label="Buscar" (click)="search()">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </div>
+
+    <div class="header-right">
+      <div class="user-account-menu">
+        <ng-container *ngIf="!isUserLoggedIn">
+            <button class="header-icon-button login-btn" routerLink="/login" aria-label="Ingresar a tu cuenta">
+              <span class="material-symbols-outlined user-icon">account_circle</span>
+              <div class="user-details">
+                <span class="user-main-text">Ingresar</span>
+                <span class="user-sub-text">Tu cuenta</span>
+              </div>
+            </button>
+        </ng-container>
+
+        <ng-container *ngIf="isUserLoggedIn">
+          <button class="header-icon-button account-menu" (click)="toggleUserDropdown()" aria-label="Menú de usuario">
+            <span class="material-symbols-outlined user-icon">account_circle</span>
+            <div class="user-details">
+              <span class="user-main-text">{{ userName ? userName : 'Mi Cuenta' }}</span>
+              <span class="user-sub-text">{{ isAdminUser ? 'Panel Admin' : 'Cliente' }}</span>
+            </div>
+            <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+          </button>
+          <div class="dropdown-menu" *ngIf="showDropdown">
+              <a *ngIf="isAdminUser" (click)="goToInventory()" class="dropdown-item">Inventario</a>
+              <a (click)="logout()" class="dropdown-item">Cerrar Sesión</a>
+          </div>
+        </ng-container>
+      </div>
+
+      <button class="header-icon-button cart-button" aria-label="Carrito de compras" routerLink="/cart">
+        <span class="material-symbols-outlined">shopping_cart</span>
+      </button>
+    </div>
+  </div>
+</header>

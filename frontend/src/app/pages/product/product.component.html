@@ -1,33 +1,34 @@
 <h1>Lista de Productos</h1>
 
-<div *ngIf="errorOcurred" class="error-message">
-  <p>error al cargar los productos. Por favor, intenta más tarde.</p>
-</div>
+<div *ngIf="errorMessage" class="error-message">
+  <p>{{ errorMessage }}</p>
+  <button (click)="refreshProducts()">Reintentar</button> </div>
 
-<div class="product-list-container">
-  <div *ngIf="products$ | async as products; else loading">
-    <div *ngIf="products.length > 0; else noProducts">
+<div *ngIf="isLoading" class="loading-indicator">
+  <p>Cargando productos y stock...</p>
+  </div>
+
+<div class="product-list-container" *ngIf="!isLoading && !errorMessage">
+  <div *ngIf="productsWithStock$ | async as products">
+    <div *ngIf="products.length > 0; else noProductsFound">
       <div class="product-card" *ngFor="let product of products">
         <div class="product-image-container" *ngIf="product.imageUrl">
           <img [src]="product.imageUrl" [alt]="product.nombre" class="product-image">
         </div>
         <div class="product-info">
           <h3>{{ product.nombre }}</h3>
-          <p class="description">{{ product.descripcion }}</p>
+          <p class="description" *ngIf="product.descripcion">{{ product.descripcion }}</p>
           <p><strong>Marca:</strong> {{ product.marca }}</p>
-          <p><strong>Categoría:</strong> {{ product.categoria }} | {{ product.subcategoria }}</p>
-          <p><strong>Stock:</strong> {{ product.stock }}</p>
-          <p class="price">{{ product.precio | currency:'CLP':'symbol':'1.0-0' }}</p>
-          <p><small>Código: {{ product.codigo_producto }} / Ref: {{ product.codigoM }}</small></p>
+          <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
+          <p><strong>Stock Total:</strong> {{ product.stock_total }} unidades</p>
+          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p> <p><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
         </div>
+        <div class="product-actions">
+          </div>
       </div>
     </div>
-    <ng-template #noProducts>
-      <p>No hay productos disponibles en este momento.</p>
+    <ng-template #noProductsFound>
+      <p>No hay productos disponibles para mostrar en este momento.</p>
     </ng-template>
   </div>
 </div>
-
-<ng-template #loading>
-  <p>Cargando productos...</p>
-</ng-template>

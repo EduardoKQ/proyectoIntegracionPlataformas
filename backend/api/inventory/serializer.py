@@ -18,6 +18,10 @@ class BranchAddSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Branch code already exists.")
         return value
 
+class BranchUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ["branch_code","name", "address", "city"]
 
 class InventoryGetAllSerializer(serializers.ModelSerializer):
     branch_code = serializers.CharField(source="branch.branch_code")

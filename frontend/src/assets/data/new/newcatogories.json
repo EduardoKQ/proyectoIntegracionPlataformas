@@ -1,0 +1,101 @@
+[
+  {
+    "model": "api.subcategory",
+    "pk": 12,
+    "fields": {
+      "subcategory_code": "sub-hm-lla",
+      "name": "Llves",
+      "category": 1
+    }
+  },
+  {
+    "model": "api.subcategory",
+    "pk": 13,
+    "fields": {
+      "subcategory_code": "sub-hm-hele",
+      "name": "Herramientas Eléctricas",
+      "category": 1
+    }
+  },
+  {
+   "model": "api.subcategory",
+    "pk": 14,
+    "fields": {
+      "subcategory_code": "sub-hm-tal",
+      "name": "Taladros",
+      "category": 1
+    }
+  },
+  {
+    "model": "api.subcategory",
+     "pk": 15,
+     "fields": {
+       "subcategory_code": "sub-hm-sier",
+       "name": "Sierras",
+       "category": 1
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 16,
+     "fields": {
+       "subcategory_code": "sub-hm-lij",
+       "name": "Lijadoras",
+       "category": 1
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 17,
+     "fields": {
+       "subcategory_code": "sub-hm-mcon",
+       "name": "Materiales de Construcción",
+       "category": 1
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 18,
+     "fields": {
+       "subcategory_code": "sub-hm-are",
+       "name": "Arena",
+       "category": 2
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 19,
+     "fields": {
+       "subcategory_code": "sub-hm-ladr",
+       "name": "Ladrillos",
+       "category": 2
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 20,
+     "fields": {
+       "subcategory_code": "sub-hm-acab",
+       "name": "Acabados",
+       "category": 2
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 21,
+     "fields": {
+       "subcategory_code": "sub-hm-barn",
+       "name": "Barnices",
+       "category": 2
+     }
+   },
+   {
+    "model": "api.subcategory",
+     "pk": 22,
+     "fields": {
+       "subcategory_code": "sub-hm-crms",
+       "name": "Cerámicos",
+       "category": 2
+     }
+   }
+]

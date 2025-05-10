@@ -11,6 +11,7 @@ import { HomeComponent } from './store/home/home.component';
 import { rolesGuard } from './guards/rol.guard';
 import { CatalogoComponent } from './store/catalogo/catalogo.component';
 import { CatalogoMarcaComponent } from './store/catalogo-marca/catalogo-marca.component';
+import { StoryViewComponent } from './store/components/story-view/story-view.component';
 
 ///Roles con acceso al inventario
 const PRODUCT_ACCESS_ROLES = ['vendedor', 'bodeguero', 'contador', 'administrador_tienda'];
@@ -19,9 +20,10 @@ export const routes: Routes = [
 
   { path: 'login', component: LoginComponent,canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent,canActivate: [rolesGuard] },
-  { path: 'home', component: HomeComponent},
   { path: 'catalogo', component: CatalogoComponent},
   { path: 'catalogo-marca', component: CatalogoMarcaComponent},
+  { path: 'home',component: HomeComponent, data: { showStoreHeader: true }},
+  { path: 'story/:id', component: StoryViewComponent },
   { path : '', redirectTo: 'home', pathMatch: 'full' },
 
   {

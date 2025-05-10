@@ -1,112 +1,153 @@
 <h2>Añadir Nuevo Producto</h2>
 
-<div *ngIf="actionError" class="error-message">
-   <p>{{ actionError }}</p>
+<div *ngIf="userMessage.text" [ngClass]="{'success-message': userMessage.type === 'success', 'error-message': userMessage.type === 'error'}">
+  <p>{{ userMessage.text }}</p>
 </div>
 
-<div *ngIf="isLoadingCategories">
-  <p>Cargando opciones de categoría...</p>
-</div>
+<div *ngIf="isLoadingUIData">
+  <p>Cargando datos necesarios para el formulario...</p>
+  </div>
 
-<form *ngIf="!isLoadingCategories && productForm" [formGroup]="productForm" (ngSubmit)="addProduct()">
+<form *ngIf="!isLoadingUIData && productForm" [formGroup]="productForm" (ngSubmit)="onSubmit()">
 
-  <div class="form-field">
-    <label for="codigo_producto">Código Producto:</label>
-    <div class="input-with-icon-button">
-       <input id="codigo_producto" type="text" formControlName="codigo_producto">
-       <button type="button" class="btn-icon generate-code-btn"
-               title="Generar Siguiente Código"
-               (click)="generateNextCode()"
-               [disabled]="isGeneratingCode">
-         <span class="material-symbols-outlined">{{ isGeneratingCode ? 'sync' : 'autorenew' }}</span>
-       </button>
+  <div class="form-row">
+    <div class="form-field column-half">
+      <label for="codigo_producto">Código Producto:</label>
+      <div class="input-with-icon-button">
+        <input id="codigo_producto" type="text" formControlName="codigo_producto">
+        <button type="button" class="btn-icon generate-code-btn"
+                title="Generar Siguiente Código"
+                (click)="generateProductCode()"
+                [disabled]="isGeneratingCode">
+          <span class="material-symbols-outlined">{{ isGeneratingCode ? 'sync' : 'autorenew' }}</span>
+        </button>
+      </div>
+      <div *ngIf="productForm.get('codigo_producto')?.invalid && productForm.get('codigo_producto')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('codigo_producto')?.errors?.['required']">El código es requerido.</small>
+        <small *ngIf="productForm.get('codigo_producto')?.errors?.['productCodeExists']">Este código de producto ya existe.</small>
+      </div>
     </div>
-     <div *ngIf="productForm.get('codigo_producto')?.invalid && (productForm.get('codigo_producto')?.dirty || productForm.get('codigo_producto')?.touched)" class="validation-error">
-      <small *ngIf="productForm.get('codigo_producto')?.errors?.['required']">El código es requerido.</small>
+
+    <div class="form-field column-half">
+      <label for="nombre">Nombre del Producto:</label>
+      <input id="nombre" type="text" formControlName="nombre">
+      <div *ngIf="productForm.get('nombre')?.invalid && productForm.get('nombre')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('nombre')?.errors?.['required']">El nombre es requerido.</small>
+      </div>
     </div>
   </div>
 
-  <div class="form-field">
-    <label for="nombre">Nombre:</label>
-    <input id="nombre" type="text" formControlName="nombre">
-    <div *ngIf="productForm.get('nombre')?.invalid && (productForm.get('nombre')?.dirty || productForm.get('nombre')?.touched)" class="validation-error">
-      <small *ngIf="productForm.get('nombre')?.errors?.['required']">El nombre es requerido.</small>
+
+  <div class="form-row">
+    <div class="form-field column-half">
+      <label for="marca">Marca:</label>
+      <input id="marca" type="text" formControlName="marca">
+       <div *ngIf="productForm.get('marca')?.invalid && productForm.get('marca')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('marca')?.errors?.['required']">La marca es requerida.</small>
+      </div>
+    </div>
+
+    <div class="form-field column-half">
+      <label for="codigo_marca">Código Marca (Referencia):</label>
+      <input id="codigo_marca" type="text" formControlName="codigo_marca">
+      <div *ngIf="productForm.get('codigo_marca')?.invalid && productForm.get('codigo_marca')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('codigo_marca')?.errors?.['required']">El código de marca es requerido.</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-field column-half">
+      <label for="categoria">Categoría:</label>
+      <div class="select-wrapper">
+        <select id="categoria" formControlName="categoria">
+          <option value="" disabled>-- Selecciona Categoría --</option>
+          <option *ngFor="let cat of allCategories" [value]="cat.name">
+            {{ cat.name }}
+          </option>
+        </select>
+        <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
+      </div>
+      <div *ngIf="productForm.get('categoria')?.invalid && productForm.get('categoria')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('categoria')?.errors?.['required']">La categoría es requerida.</small>
+      </div>
+    </div>
+
+    <div class="form-field column-half">
+      <label for="subcategoria">Subcategoría:</label>
+      <div class="select-wrapper">
+        <select id="subcategoria" formControlName="subcategoria" [disabled]="filteredSubcategories.length === 0 && productForm.get('categoria')?.value === ''">
+          <option value="">-- Selecciona Subcategoría --</option>
+          <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
+            {{ subcat.name }}
+          </option>
+        </select>
+        <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
+      </div>
+       <div *ngIf="productForm.get('subcategoria')?.invalid && productForm.get('subcategoria')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('subcategoria')?.errors?.['required']">La subcategoría es requerida.</small>
+      </div>
     </div>
   </div>
 
   <div class="form-field">
     <label for="precio">Precio:</label>
-    <input id="precio" type="number" formControlName="precio">
-     <div *ngIf="productForm.get('precio')?.invalid && (productForm.get('precio')?.dirty || productForm.get('precio')?.touched)" class="validation-error">
+    <input id="precio" type="number" formControlName="precio" min="0">
+    <div *ngIf="productForm.get('precio')?.invalid && productForm.get('precio')?.touched" class="validation-error">
       <small *ngIf="productForm.get('precio')?.errors?.['required']">El precio es requerido.</small>
-      <small *ngIf="productForm.get('precio')?.errors?.['min']">El precio debe ser positivo.</small>
+      <small *ngIf="productForm.get('precio')?.errors?.['min']">El precio debe ser 0 o mayor.</small>
     </div>
   </div>
-
-  <div class="form-field">
-    <label for="stock">Stock:</label>
-    <input id="stock" type="number" formControlName="stock">
-     <div *ngIf="productForm.get('stock')?.invalid && (productForm.get('stock')?.dirty || productForm.get('stock')?.touched)" class="validation-error">
-      <small *ngIf="productForm.get('stock')?.errors?.['required']">El stock es requerido.</small>
-      <small *ngIf="productForm.get('stock')?.errors?.['min']">El stock debe ser positivo.</small>
-    </div>
-  </div>
-
-  <div class="form-field">
-    <label for="marca">Marca:</label>
-    <input id="marca" type="text" formControlName="marca">
-  </div>
-
-  <div class="form-field">
-    <label for="codigoM">Código M (Ref):</label>
-    <input id="codigoM" type="text" formControlName="codigoM">
-  </div>
-
-  <div class="form-field">
-    <label for="categoria">Categoría:</label>
-    <div class="select-wrapper">
-      <select id="categoria" formControlName="categoria">
-         <option value="" disabled>-- Selecciona Categoría --</option>
-         <option *ngFor="let cat of allCategories" [value]="cat.name">
-           {{ cat.name }}
-         </option>
-      </select>
-      <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
-    </div>
-     <div *ngIf="productForm.get('categoria')?.invalid && (productForm.get('categoria')?.dirty || productForm.get('categoria')?.touched)" class="validation-error">
-      <small *ngIf="productForm.get('categoria')?.errors?.['required']">La categoría es requerida.</small>
-    </div>
-  </div>
-
-  <div class="form-field">
-    <label for="subcategoria">Subcategoría:</label>
-     <div class="select-wrapper">
-      <select id="subcategoria" formControlName="subcategoria"
-              [disabled]="filteredSubcategories.length === 0">
-         <option value="">-- Selecciona Subcategoría (si aplica) --</option>
-         <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
-           {{ subcat.name }}
-         </option>
-      </select>
-       <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
-     </div>
-   </div>
 
   <div class="form-field">
     <label for="descripcion">Descripción:</label>
     <textarea id="descripcion" formControlName="descripcion" rows="3"></textarea>
   </div>
 
-   <div class="form-field">
+  <div class="form-field">
     <label for="imageUrl">URL Imagen:</label>
     <input id="imageUrl" type="url" formControlName="imageUrl">
+     <div *ngIf="productForm.get('imageUrl')?.invalid && productForm.get('imageUrl')?.touched" class="validation-error">
+      <small *ngIf="productForm.get('imageUrl')?.errors?.['pattern']">Por favor, introduce una URL válida (ej. http:// o https://).</small>
+    </div>
   </div>
+
+  <hr class="section-divider">
+  <h3>Stock Inicial por Sucursal</h3>
+  <div *ngIf="branches.length === 0 && !isLoadingUIData">
+    <p>No hay sucursales disponibles para asignar stock. Por favor, cree sucursales primero.</p>
+  </div>
+
+  <div *ngIf="branches.length > 0" class="stock-table-container" formArrayName="initialStocks">
+    <table>
+      <thead>
+        <tr>
+          <th>Sucursal (Código)</th>
+          <th>Nombre Sucursal</th>
+          <th>Stock Inicial</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let stockGroup of initialStocksFormArray.controls; let i = index" [formGroupName]="i">
+          <td>{{ stockGroup.get('branch_code')?.value }}</td>
+          <td>{{ stockGroup.get('branch_name')?.value }}</td>
+          <td>
+            <input type="number" formControlName="quantity" min="0" class="stock-input" [disabled]="true">
+            <div *ngIf="stockGroup.get('quantity')?.invalid && stockGroup.get('quantity')?.touched" class="validation-error">
+              <small *ngIf="stockGroup.get('quantity')?.errors?.['min']">El stock no puede ser negativo.</small>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-divider">
 
   <div class="form-actions">
-    <button type="submit" [disabled]="productForm.invalid || isSaving">
-       {{ isSaving ? 'Guardando...' : 'Guardar Producto' }}
+    <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isSaving">Cancelar</button>
+    <button type="submit" [disabled]="productForm.invalid || isSaving || isLoadingUIData">
+      {{ isSaving ? 'Guardando...' : 'Guardar Producto' }}
     </button>
-    <button type="button" (click)="cancel()" [disabled]="isSaving">Cancelar</button>
   </div>
-
 </form>

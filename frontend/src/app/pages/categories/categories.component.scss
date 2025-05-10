@@ -6,7 +6,6 @@ $danger-color: #dc3545;
 $success-color: #28a745;
 $border-color: #e0e0e0;
 $list-bg: #ffffff;
-$list-item-hover-bg: #f8f9fa;
 $form-inline-bg: #f1f3f5;
 $spacing: 10px;
 $small-spacing: 5px;
@@ -27,6 +26,19 @@ h2 {
   text-align: center;
   margin-bottom: 25px;
   color: #333;
+}
+
+.admin-restriction-message {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px 15px;
+  border: 1px solid #ffeeba;
+  border-radius: $border-radius;
+  margin-bottom: 20px;
+  text-align: center;
+  p {
+    margin: 0;
+  }
 }
 
 .actions-bar {
@@ -132,58 +144,58 @@ h2 {
     border-top: 1px solid $border-color;
     border-bottom: 1px solid $border-color;
     margin-top: -1px;
-     input[type="text"] {
-        font-size: 1em;
-     }
+    input[type="text"] {
+      font-size: 1em;
+    }
   }
 
   .subcategory-add-form,
   .subcategory-edit-form {
-     margin-left: $spacing * 3;
-     margin-right: $spacing * 1.5;
-     padding-left: 0;
-     padding-right: 0;
-     border-top: 1px dashed color.adjust($border-color, $lightness: 5%);
-     background-color: transparent;
+    margin-left: $spacing * 3;
+    margin-right: $spacing * 1.5;
+    padding-left: 0;
+    padding-right: 0;
+    border-top: 1px dashed color.adjust($border-color, $lightness: 5%);
+    background-color: transparent;
   }
 
    .subcategory-add-form {
-      margin-top: $spacing;
+     margin-top: $spacing;
    }
-
 }
+
 .category-add-form {
-   display: flex;
-   gap: $small-spacing * 1.5;
-   align-items: center;
-   padding: $spacing * 1.5;
-   background-color: $form-inline-bg;
-   border: 1px solid $border-color;
-   border-radius: $border-radius;
-   margin-bottom: $spacing * 1.5;
+  display: flex;
+  gap: $small-spacing * 1.5;
+  align-items: center;
+  padding: $spacing * 1.5;
+  background-color: $form-inline-bg;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  margin-bottom: $spacing * 1.5;
 
-    input[type="text"] {
-      flex-grow: 1;
-      padding: 8px 12px;
-      border: 1px solid color.adjust($border-color, $lightness: -5%);
-      border-radius: $border-radius;
-      font-size: 1em;
-      color: $text-color;
-      background-color: #ffffff;
-      transition: border-color $transition-speed ease-in-out, box-shadow $transition-speed ease-in-out;
+  input[type="text"] {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid color.adjust($border-color, $lightness: -5%);
+    border-radius: $border-radius;
+    font-size: 1em;
+    color: $text-color;
+    background-color: #ffffff;
+    transition: border-color $transition-speed ease-in-out, box-shadow $transition-speed ease-in-out;
 
-      &:focus {
-        outline: none;
-        border-color: $neon-orange;
-        box-shadow: 0 0 4px rgba($neon-orange, 0.4), 0 0 6px rgba($neon-orange, 0.2);
-      }
+    &:focus {
+      outline: none;
+      border-color: $neon-orange;
+      box-shadow: 0 0 4px rgba($neon-orange, 0.4), 0 0 6px rgba($neon-orange, 0.2);
     }
+  }
 
-    .btn {
-      flex-shrink: 0;
-      padding: 6px 10px;
-      font-size: 0.85em;
-    }
+  .btn {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 0.85em;
+  }
 }
 
 .btn {
@@ -217,4 +229,8 @@ h2 {
   padding: 15px;
   border-radius: 4px;
   margin-bottom: 20px;
+  p {
+    margin:0;
+    white-space: pre-line;
+  }
 }
