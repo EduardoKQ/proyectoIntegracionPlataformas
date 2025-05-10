@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-catalogo',
+  selector: 'app-catalogo-marca',
   imports: [],
-  templateUrl: './catalogo.component.html',
-  styleUrl: './catalogo.component.scss'
+  templateUrl: './catalogo-marca.component.html',
+  styleUrl: './catalogo-marca.component.scss'
 })
-
-export class CatalogoComponent {
+export class CatalogoMarcaComponent {
 
   limpiarFiltros(): void {
     const checkboxes = document.querySelectorAll('.filters-sidebar input[type="checkbox"]') as NodeListOf<HTMLInputElement>;

@@ -9,6 +9,8 @@ import { LoginComponent } from './client/login/login.component';
 import { RegisterComponent } from './client/register/register.component';
 import { HomeComponent } from './store/home/home.component';
 import { rolesGuard } from './guards/rol.guard';
+import { CatalogoComponent } from './store/catalogo/catalogo.component';
+import { CatalogoMarcaComponent } from './store/catalogo-marca/catalogo-marca.component';
 import { StoryViewComponent } from './store/components/story-view/story-view.component';
 
 ///Roles con acceso al inventario
@@ -18,6 +20,8 @@ export const routes: Routes = [
 
   { path: 'login', component: LoginComponent,canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent,canActivate: [rolesGuard] },
+  { path: 'catalogo', component: CatalogoComponent},
+  { path: 'catalogo-marca', component: CatalogoMarcaComponent},
   { path: 'home',component: HomeComponent, data: { showStoreHeader: true }},
   { path: 'story/:id', component: StoryViewComponent },
   { path : '', redirectTo: 'home', pathMatch: 'full' },
