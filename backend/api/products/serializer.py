@@ -115,6 +115,34 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             "descripcion",
         ]
 
+    def validate(self, data):
+        # case 1: only subcategory is updated
+        if "subcategory" in data and "category" not in data:
+            subcategory_name = data.get("subcategory").get("name")
+            subcategory = Subcategory.objects.filter(name=subcategory_name).first()
+            if not subcategory:
+                raise serializers.ValidationError(
+                    "La subcategoria no existe o no pertenece a la categoria"
+                )
+
+        # case 2: both category and subcategory are updated
+        if "category" in data and "subcategory" in data:
+            # check that the category and subcategory exist and belong to each other
+            category_name = data.get("category").get("name")
+            subcategory_name = data.get("subcategory").get("name")
+            category = Category.objects.filter(name=category_name).first()
+            subcategory = Subcategory.objects.filter(name=subcategory_name).first()
+            if not category or not subcategory:
+                raise serializers.ValidationError(
+                    "La categoria o subcategoria no existe"
+                )
+            # validate that the subcategory belongs to the category
+            if subcategory.category != category:
+                raise serializers.ValidationError(
+                    "La subcategoria no pertenece a la categoria"
+                )
+        return data
+
 
 class CategoriesDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="category_code")
