@@ -1,38 +1,42 @@
 <h1>Lista de Productos</h1>
 
-<div *ngIf="errorOcurred" class="error-message">
-  <p>{{ errorMessage || 'Lo sentimos, ocurrió un error al cargar los productos. Por favor, intenta más tarde.' }}</p>
+<div *ngIf="errorMessage" class="error-message">
+  <p>{{ errorMessage }}</p>
+  <button (click)="refreshProducts()" class="btn-secondary btn-sm">Reintentar</button>
 </div>
 
-<div class="product-list-container" *ngIf="!errorOcurred">
-  <div *ngIf="products$ | async as products; else loadingOrNoProducts">
-    <div *ngIf="products.length > 0; else noProductsMessage">
+<div *ngIf="isLoading" class="loading-indicator">
+  <p>Cargando productos y stock...</p>
+</div>
+
+<div class="product-list-container" *ngIf="!isLoading && !errorMessage">
+  <div *ngIf="productsWithStock$ | async as products">
+    <div *ngIf="products.length > 0; else noProductsFound">
       <div class="product-card" *ngFor="let product of products">
+        <div class="product-image-container" *ngIf="product.imageUrl">
+          <img [src]="product.imageUrl" [alt]="product.nombre" class="product-image">
+        </div>
         <div class="product-info">
           <h3>{{ product.nombre }}</h3>
-          <p class="description">{{ product.descripcion }}</p>
+          <p class="description" *ngIf="product.descripcion">{{ product.descripcion }}</p>
           <p><strong>Marca:</strong> {{ product.marca }}</p>
-          <p><strong>Categoría:</strong> {{ product.categoria }} | {{ product.subcategoria }}</p>
-          <p><strong>Stock Total:</strong> {{ product.stock_total }}</p>
-          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol':'1.0-0' }}</p>
-          <p><small>Código: {{ product.codigo_producto }} / Ref: {{ product.codigo_marca }}</small></p>
-          <div class="product-actions">
-            <a [routerLink]="['/product/edit', product.codigo_producto]" class="btn-edit">
-              Modificar
-            </a>
-          </div>
+          <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
+          <p><strong>Stock Total:</strong> {{ product.stock_total }} unidad(es)</p>
+          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+          <p class="product-codes"><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
+        </div>
+        <div class="product-actions">
+          <button [routerLink]="['/product/edit', product.codigo_producto]" class="btn-icon btn-edit" title="Editar Producto">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
         </div>
       </div>
     </div>
-    <ng-template #noProductsMessage>
-      <div class="info-message">
-        <p>No hay productos disponibles en este momento.</p>
-      </div>
+    <ng-template #noProductsFound>
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">inventory_2</span>
+        <p>No hay productos disponibles para mostrar en este momento.</p>
+        </div>
     </ng-template>
   </div>
-  <ng-template #loadingOrNoProducts>
-    <div class="info-message">
-      <p>Cargando productos...</p>
-    </div>
-  </ng-template>
 </div>
