@@ -2,9 +2,9 @@ from django.http import JsonResponse
 from .serializer import (
     ProductDetailSerializer,
     ProductAddSerializer,
+    ProductUpdateSerializer,
 )
 from api.models import Product, Category, Subcategory, Inventory, Branch
-
 
 
 def process_product_get_by_code(product_code):
@@ -18,14 +18,14 @@ def process_product_get_by_code(product_code):
         return JsonResponse({"error": "Product not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
+
 
 def process_product_update(product_code, request_data):
     try:
-        # Get the product by code
+        # Get the product related to the endpoint
         product = Product.objects.get(product_code=product_code)
-        # Get the data from the request
-        product_serializer = ProductDetailSerializer(data=request_data)
+        # serialize the data
+        product_serializer = ProductUpdateSerializer(data=request_data)
         # Check if the data is valid
         if not product_serializer.is_valid():
             return JsonResponse(
@@ -45,14 +45,22 @@ def process_product_update(product_code, request_data):
                 product.product_code = new_product_code
         # Update the product with the new data
         for attr, value in product_serializer.validated_data.items():
-            setattr(product, attr, value)
+            print(f"attr: {attr}, value: {value}")
+            if attr == "subcategory":
+                # get the subcategory by its name
+                subcategory = Subcategory.objects.filter(name=value.get("name")).first()
+                product.subcategory = subcategory
+
+            else:
+                setattr(product, attr, value)
         product.save()
         return JsonResponse(product_serializer.data, status=200)
     except Product.DoesNotExist:
-        return JsonResponse({"error": "No se encontró el codigo de producto"}, status=404)
+        return JsonResponse(
+            {"error": "No se encontró el codigo de producto"}, status=404
+        )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-  
 
 
 def process_product_delete(product_code):
@@ -63,9 +71,14 @@ def process_product_delete(product_code):
         inventories = Inventory.objects.filter(product=product)
         inventories.delete()
         product.delete()
-        return JsonResponse({"message": "Producto eliminado correctamente e inventario actualizado"}, status=200)
+        return JsonResponse(
+            {"message": "Producto eliminado correctamente e inventario actualizado"},
+            status=200,
+        )
     except Product.DoesNotExist:
-        return JsonResponse({"error": "No se encontró el codigo de producto"}, status=404)
+        return JsonResponse(
+            {"error": "No se encontró el codigo de producto"}, status=404
+        )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -74,6 +87,7 @@ def process_product_create(request_data):
     def get_current_date():
         # Get the current date in the format YYYY-MM-DD
         from datetime import datetime
+
         return datetime.now().strftime("%Y-%m-%d")
 
     def create_new_product(**kwargs):
@@ -97,7 +111,7 @@ def process_product_create(request_data):
         # Create an inventory for the new product in all branches
         for branch in Branch.objects.all():
             Inventory.objects.create(product=product, branch=branch, quantity=0)
-    
+
     try:
         # Get the data from the request
         product_serializer = ProductAddSerializer(data=request_data)
@@ -108,10 +122,10 @@ def process_product_create(request_data):
                 status=400,
             )
         # Check if the product code already exists
-        if Product.objects.filter(product_code=product_serializer.validated_data["product_code"]).exists():
-            return JsonResponse(
-                {"error": "Código de producto ya existe"}, status=400
-            )
+        if Product.objects.filter(
+            product_code=product_serializer.validated_data["product_code"]
+        ).exists():
+            return JsonResponse({"error": "Código de producto ya existe"}, status=400)
         # Create the product with the new data and update the inventory
         create_new_product(**product_serializer.validated_data)
         return JsonResponse(product_serializer.data, status=201)
