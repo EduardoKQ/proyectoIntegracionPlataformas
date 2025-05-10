@@ -2,7 +2,6 @@ export interface ApiProductPrice {
   precio_actual: number;
   fecha_precio: string;
 }
-
 export interface ApiProduct {
   codigo_producto: string;
   nombre: string;

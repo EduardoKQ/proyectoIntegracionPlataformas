@@ -1,32 +1,18 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink, ParamMap } from '@angular/router';
-import { CommonModule, DatePipe } from '@angular/common';
-import { Observable, Subject, forkJoin, of, throwError } from 'rxjs';
-import { takeUntil, finalize, switchMap, catchError, tap, map, filter } from 'rxjs/operators';
-
+import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, finalize, switchMap, catchError, tap, map, filter, delay } from 'rxjs/operators';
 import { ProductService } from '../../services/product.service';
 import { CategorySubcategoryService, Category, SubcategoryFromCategoryDetail } from '../../services/category.service';
 import { BranchService, Branch } from '../../services/branch.service';
-import { InventoryService, InventoryItem, UpdateStockResponse } from '../../services/inventory.service';
+import { InventoryService, UpdateStockResponse } from '../../services/inventory.service';
 import { ApiProduct, UpdateProductPayload } from '../../services/product.interfaces';
 
 interface UserMessage {
   text: string | null;
   type: 'success' | 'error' | 'warning' | 'info' | null;
-}
-
-interface FullProductDataForPut {
-  codigo_producto: string;
-  nombre: string;
-  precio: number;
-  marca: string;
-  codigo_marca: string;
-  categoria: string;
-  subcategoria: string;
-  imageUrl: string;
-  descripcion: string;
-  current_price_date: string;
 }
 
 @Component({
@@ -45,10 +31,11 @@ export class ProductEditComponent implements OnInit, OnDestroy {
   productName = '';
   private currentProductCode: string | null = null;
   private originalApiProductData: ApiProduct | null = null;
-  private originalStockData: InventoryItem[] = [];
+  private originalStockData: { branch_code: string, quantity: number }[] = [];
 
   isSaving = false;
   isLoadingData = true;
+  isDeleting = false;
   userMessage: UserMessage = { text: null, type: null };
 
   private destroy$ = new Subject<void>();
@@ -66,6 +53,7 @@ export class ProductEditComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.loadInitialDataAndProduct();
+    this.setupCategoryChangeSubscription();
   }
 
   get currentStocksFormArray(): FormArray {
@@ -75,22 +63,21 @@ export class ProductEditComponent implements OnInit, OnDestroy {
   initForm(): void {
     this.productForm = this.fb.group({
       codigo_producto: [{ value: '', disabled: true }, Validators.required],
-      nombre: ['', Validators.required],
-      precio: [{value: null, disabled: true}, [Validators.required, Validators.min(0)]],
+      nombre: [{ value: '', disabled: true }, Validators.required],
+      precio: [{ value: null, disabled: true }, [Validators.required, Validators.min(0.01)]],
       current_price_date: [{ value: '', disabled: true }],
-      marca: ['', Validators.required],
-      codigo_marca: ['', Validators.required],
-      categoria: [{value: '', disabled: true}, Validators.required],
-      subcategoria: [{value: '', disabled: true}, Validators.required],
-      descripcion: ['', Validators.required],
-      imageUrl: ['',],
+      marca: [{ value: '', disabled: true }, Validators.required],
+      codigo_marca: [{ value: '', disabled: true }, Validators.required],
+      categoria: [{ value: '', disabled: true }, Validators.required],
+      subcategoria: [{ value: '', disabled: true }, Validators.required],
+      descripcion: [{ value: '', disabled: true }, Validators.required],
+      imageUrl: [{ value: '', disabled: true }, [Validators.pattern(/^(ftp|http|https):\/\/[^ "]+$/)]],
       currentStocks: this.fb.array([])
     });
   }
 
   loadInitialDataAndProduct(): void {
     this.isLoadingData = true;
-    this.userMessage = { text: null, type: null };
     this.route.paramMap.pipe(
       takeUntil(this.destroy$),
       filter((params: ParamMap) => params.has('codigo')),
@@ -108,13 +95,14 @@ export class ProductEditComponent implements OnInit, OnDestroy {
       next: ({ product, inventory, categories, branches }) => {
         this.allCategories = categories || [];
         this.branches = branches || [];
-        if (product) {
-          this.originalApiProductData = { ...product };
+        if (product && this.currentProductCode) {
+          this.originalApiProductData = JSON.parse(JSON.stringify(product));
           this.productName = product.nombre;
           this.originalStockData = inventory
             .filter(item => item.product_code === this.currentProductCode)
-            .map(item => ({ ...item }));
+            .map(item => ({ branch_code: item.branch_code, quantity: item.quantity }));
           this.populateForm(product, this.originalStockData);
+          this.enableRelevantControls();
         } else {
           this.userMessage = { text: `Producto con código ${this.currentProductCode} no encontrado.`, type: 'error' };
           this.router.navigate(['/product/list']);
@@ -124,11 +112,22 @@ export class ProductEditComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         this.userMessage = { text: `Error al cargar datos: ${err.message || 'Error desconocido.'}`, type: 'error' };
         this.isLoadingData = false;
+        this.router.navigate(['/product/list']);
       }
     });
   }
 
-  populateForm(product: ApiProduct, productInventory: InventoryItem[]): void {
+  enableRelevantControls(): void {
+    this.productForm.get('nombre')?.enable();
+    this.productForm.get('precio')?.enable();
+    this.productForm.get('marca')?.enable();
+    this.productForm.get('codigo_marca')?.enable();
+    this.productForm.get('categoria')?.enable();
+    this.productForm.get('descripcion')?.enable();
+    this.productForm.get('imageUrl')?.enable();
+  }
+
+  populateForm(product: ApiProduct, productStock: { branch_code: string, quantity: number }[]): void {
     this.productForm.patchValue({
       codigo_producto: product.codigo_producto,
       nombre: product.nombre,
@@ -137,65 +136,101 @@ export class ProductEditComponent implements OnInit, OnDestroy {
       marca: product.marca,
       codigo_marca: product.codigo_marca,
       categoria: product.categoria,
-      subcategoria: product.subcategoria,
       descripcion: product.descripcion,
       imageUrl: product.imageUrl
     });
-    this.populateStockFormArray(productInventory);
+    this.updateFilteredSubcategories(product.categoria, product.subcategoria);
+    this.populateStockFormArray(productStock);
     this.productForm.markAsPristine();
+  }
+
+  updateFilteredSubcategories(categoryName: string, subcategoryNameToSet?: string): void {
+    const subcategoriaControl = this.productForm.get('subcategoria');
+    this.filteredSubcategories = [];
+    if (categoryName) {
+      const selectedCategory = this.allCategories.find(cat => cat.name === categoryName);
+      if (selectedCategory && selectedCategory.subcategories && selectedCategory.subcategories.length > 0) {
+        this.filteredSubcategories = selectedCategory.subcategories;
+        subcategoriaControl?.enable();
+        if (subcategoryNameToSet) {
+           subcategoriaControl?.setValue(subcategoryNameToSet);
+        }
+      } else {
+        subcategoriaControl?.disable();
+      }
+    } else {
+      subcategoriaControl?.disable();
+    }
+  }
+
+  setupCategoryChangeSubscription(): void {
+    const categoriaControl = this.productForm.get('categoria');
+    if (categoriaControl) {
+      categoriaControl.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((categoryName: string) => {
+          const subcategoriaControl = this.productForm.get('subcategoria');
+          if (categoriaControl.dirty) {
+             subcategoriaControl?.reset('');
+          }
+          this.updateFilteredSubcategories(categoryName);
+        });
+    }
+  }
+
+  populateStockFormArray(productStock: { branch_code: string, quantity: number }[]): void {
+    this.currentStocksFormArray.clear();
+    this.branches.forEach(branch => {
+      const inventoryItem = productStock.find(item => item.branch_code === branch.branch_code);
+      this.currentStocksFormArray.push(
+        this.fb.group({
+          branch_code: [branch.branch_code],
+          branch_name: [branch.name],
+          quantity: [inventoryItem ? inventoryItem.quantity : 0, [Validators.required, Validators.min(0), Validators.pattern(/^[0-9]*$/)]]
+        })
+      );
+    });
     this.currentStocksFormArray.markAsPristine();
   }
 
-  populateStockFormArray(productInventory: InventoryItem[]): void {
-    const stockFormGroups = this.branches.map(branch => {
-      const inventoryItem = productInventory.find(item => item.branch_code === branch.branch_code);
-      return this.fb.group({
-        branch_code: [branch.branch_code],
-        branch_name: [branch.name],
-        quantity: [inventoryItem ? inventoryItem.quantity : 0, [Validators.min(0), Validators.pattern(/^[0-9]*$/)]]
-      });
-    });
-    this.productForm.setControl('currentStocks', this.fb.array(stockFormGroups));
-  }
-
-  isProductDataDirty(): boolean {
-    if (!this.originalApiProductData) return false;
+  isProductDataReallyDirty(): boolean {
+    if (!this.originalApiProductData || !this.productForm.enabled) return false;
     const formValues = this.productForm.getRawValue();
-    const editableFields: (keyof FullProductDataForPut)[] = ['nombre', 'marca', 'codigo_marca', 'descripcion', 'imageUrl'];
-
-    return editableFields.some(fieldKey => {
-        const formValue = formValues[fieldKey] === null || formValues[fieldKey] === undefined ? "" : formValues[fieldKey];
-        const originalValue = (this.originalApiProductData as any)[fieldKey] === null || (this.originalApiProductData as any)[fieldKey] === undefined ? "" : (this.originalApiProductData as any)[fieldKey];
-        return formValue !== originalValue;
-    });
+    const fieldsToCompare: (keyof UpdateProductPayload)[] = [
+      'nombre', 'precio', 'marca', 'codigo_marca',
+      'categoria', 'subcategoria', 'descripcion', 'imageUrl'
+    ];
+    for (const key of fieldsToCompare) {
+      let formValue = formValues[key];
+      let originalValue;
+      if (key === 'precio' && this.originalApiProductData.precio) {
+        originalValue = this.originalApiProductData.precio.precio_actual;
+        formValue = parseFloat(formValue);
+      } else {
+        originalValue = (this.originalApiProductData as any)[key];
+      }
+      formValue = (formValue === null || formValue === undefined) ? '' : formValue;
+      originalValue = (originalValue === null || originalValue === undefined) ? '' : originalValue;
+      if (String(formValue).trim() !== String(originalValue).trim()) {
+        return true;
+      }
+    }
+    return false;
   }
-
 
   onSubmit(): void {
     this.userMessage = { text: null, type: null };
-    const productDataChanged = this.isProductDataDirty();
-    const stockDataChanged = this.currentStocksFormArray.dirty;
+    const productDataActuallyChanged = this.isProductDataReallyDirty();
+    const stockDataActuallyChanged = this.currentStocksFormArray.dirty;
 
-    if (!productDataChanged && !stockDataChanged) {
-        this.userMessage = { text: 'No se han realizado cambios en el formulario.', type: 'info' };
-        return;
+    if (!productDataActuallyChanged && !stockDataActuallyChanged) {
+      this.userMessage = { text: 'No se han realizado cambios en el formulario.', type: 'info' };
+      return;
     }
 
-    let formIsValid = true;
-    Object.keys(this.productForm.controls).forEach(key => {
-      const control = this.productForm.get(key);
-      if (control?.enabled && control.invalid) {
-        formIsValid = false;
-        control.markAsTouched();
-      }
-    });
-     if (this.currentStocksFormArray.enabled && this.currentStocksFormArray.invalid){
-        formIsValid = false;
-        this.currentStocksFormArray.markAllAsTouched();
-    }
-
-    if (!formIsValid) {
-      this.userMessage = { text: 'Por favor, corrige los errores en los campos editables.', type: 'error' };
+    if (this.productForm.invalid) {
+      this.productForm.markAllAsTouched();
+      this.userMessage = { text: 'Por favor, corrige los errores en el formulario.', type: 'error' };
       return;
     }
 
@@ -203,135 +238,133 @@ export class ProductEditComponent implements OnInit, OnDestroy {
     const formValues = this.productForm.getRawValue();
     const productCodeForUpdate = this.currentProductCode!;
 
-    const fullProductPayloadForPut: FullProductDataForPut = {
-      codigo_producto: formValues.codigo_producto,
-      nombre: formValues.nombre,
-      precio: this.originalApiProductData!.precio.precio_actual,
-      marca: formValues.marca,
-      codigo_marca: formValues.codigo_marca,
-      categoria: this.originalApiProductData!.categoria,
-      subcategoria: this.originalApiProductData!.subcategoria,
-      imageUrl: formValues.imageUrl || '',
-      descripcion: formValues.descripcion || '',
-      current_price_date: this.originalApiProductData!.precio.fecha_precio
-    };
+    let productUpdatePayload: UpdateProductPayload = {};
+    if (productDataActuallyChanged) {
+        productUpdatePayload = {
+            nombre: formValues.nombre !== this.originalApiProductData?.nombre ? formValues.nombre : undefined,
+            precio: parseFloat(formValues.precio) !== this.originalApiProductData?.precio.precio_actual ? parseFloat(formValues.precio) : undefined,
+            marca: formValues.marca !== this.originalApiProductData?.marca ? formValues.marca : undefined,
+            codigo_marca: formValues.codigo_marca !== this.originalApiProductData?.codigo_marca ? formValues.codigo_marca : undefined,
+            categoria: formValues.categoria !== this.originalApiProductData?.categoria ? formValues.categoria : undefined,
+            subcategoria: formValues.subcategoria !== this.originalApiProductData?.subcategoria ? formValues.subcategoria : undefined,
+            descripcion: formValues.descripcion !== this.originalApiProductData?.descripcion ? formValues.descripcion : undefined,
+            imageUrl: formValues.imageUrl !== this.originalApiProductData?.imageUrl ? formValues.imageUrl : undefined,
+        };
+        productUpdatePayload = Object.fromEntries(Object.entries(productUpdatePayload).filter(([_, v]) => v !== undefined)) as UpdateProductPayload;
+    }
 
     let updateProductObs: Observable<ApiProduct | null>;
-    if (productDataChanged) {
-        console.log("Payload para actualizar PRODUCTO:", fullProductPayloadForPut);
-        updateProductObs = this.productService.updateProduct(productCodeForUpdate, fullProductPayloadForPut as UpdateProductPayload).pipe(
-            catchError(error => {
-                if (error.status === 500 && error.error?.error?.includes("'dict' object has no attribute 'current_price'")) {
-                    this.userMessage = { text: 'Cambios principales del producto guardados. El servidor tuvo un problema al confirmar todos los detalles.', type: 'warning' };
-                    return of(null);
-                }
-                return throwError(() => error);
-            })
-        );
+    if (Object.keys(productUpdatePayload).length > 0) {
+      updateProductObs = this.productService.updateProduct(productCodeForUpdate, productUpdatePayload);
     } else {
-        updateProductObs = of(this.originalApiProductData);
+      updateProductObs = of(this.originalApiProductData);
     }
 
-    const stockUpdatesObservables: Observable<UpdateStockResponse>[] = [];
-    if (stockDataChanged) {
-        const currentStocksValue = this.currentStocksFormArray.getRawValue() as { branch_code: string, quantity: string | number }[];
-        currentStocksValue.forEach((formStockItem) => {
-            const stockControlGroup = this.productForm.get(['currentStocks', currentStocksValue.indexOf(formStockItem)]);
-            if (stockControlGroup?.get('quantity')?.dirty) {
-                 const originalBranchStock = this.originalStockData.find(os => os.branch_code === formStockItem.branch_code);
-                 const originalQuantity = originalBranchStock ? originalBranchStock.quantity : 0;
-                 const currentQuantity = Number(formStockItem.quantity) || 0;
-                 if (currentQuantity !== originalQuantity) {
-                    stockUpdatesObservables.push(
-                        this.inventoryService.updateInventoryItem(formStockItem.branch_code, productCodeForUpdate, currentQuantity)
-                    );
-                }
-            }
-        });
-    }
-
-    let allOperations$: Observable<ApiProduct | null> = updateProductObs;
-
-    if (stockUpdatesObservables.length > 0) {
-        allOperations$ = updateProductObs.pipe(
-            switchMap((productUpdateResponse: ApiProduct | null) => {
-                const productStateAfterAttemptedUpdate = productUpdateResponse || this.originalApiProductData;
-                return forkJoin(stockUpdatesObservables).pipe(
-                    map(() => productStateAfterAttemptedUpdate),
-                    catchError(stockError => {
-                        let existingMessage = this.userMessage.text || '';
-                        if (productDataChanged && productUpdateResponse === null && this.userMessage.type === 'warning') {
-                           existingMessage = this.userMessage.text + ` Además, hubo un error guardando el stock: ${stockError.message || 'Error desconocido.'}`;
-                        } else if (productDataChanged && productUpdateResponse){
-                           existingMessage = `Datos del producto actualizados, pero hubo un error guardando el stock: ${stockError.message || 'Error desconocido.'}`;
-                        } else {
-                           existingMessage = `Hubo un error guardando el stock: ${stockError.message || 'Error desconocido.'}`;
-                        }
-                        this.userMessage = { text: existingMessage, type: 'error' };
-                        return of(productStateAfterAttemptedUpdate);
-                    })
-                );
-            })
-        );
-    }
-
-    allOperations$.pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-            this.isSaving = false;
-            if (this.currentProductCode) {
-                this.productService.getProductByCode(this.currentProductCode).pipe(takeUntil(this.destroy$)).subscribe(freshProduct => {
-                    if (freshProduct) {
-                        this.originalApiProductData = {...freshProduct};
-                        this.productName = freshProduct.nombre;
-                        this.populateForm(freshProduct, this.originalStockData);
-                    }
-                });
-                this.inventoryService.getInventory().pipe(takeUntil(this.destroy$)).subscribe(inv => {
-                    this.originalStockData = inv.filter(i => i.product_code === this.currentProductCode).map(i => ({...i}));
-                    this.populateStockFormArray(this.originalStockData);
-                });
-            }
-        })
-    ).subscribe({
-        next: (resultAfterAllOps: ApiProduct | null) => {
-            if (this.userMessage.type === 'error' || this.userMessage.type === 'warning') {
-            } else if (productDataChanged || stockDataChanged) {
-                 let finalMessage = `Producto "${resultAfterAllOps?.nombre || this.productName}"`;
-                 if (productDataChanged && stockUpdatesObservables.length > 0) {
-                    finalMessage += " y su stock han sido actualizados.";
-                 } else if (productDataChanged) {
-                    finalMessage += " actualizado.";
-                 } else if (stockUpdatesObservables.length > 0) {
-                    finalMessage += ": Stock actualizado.";
-                 }
-                 this.userMessage = { text: finalMessage, type: 'success' };
-            } else if (!this.userMessage.text) {
-                 this.userMessage = { text: 'No se detectaron cambios para guardar.', type: 'info'};
-            }
-
-            this.productForm.markAsPristine();
-            this.currentStocksFormArray.markAsPristine();
-
-            if (resultAfterAllOps) {
-                 this.originalApiProductData = {...resultAfterAllOps};
-            }
-        },
-        error: (err: any) => {
-            if (this.userMessage.type !== 'warning') {
-              this.userMessage = { text: `Error al actualizar producto: ${err.message || 'Error desconocido.'}`, type: 'error' };
-            }
-             if (this.currentProductCode) {
-                this.productService.getProductByCode(this.currentProductCode).subscribe(freshProduct => {
-                    if (freshProduct) this.populateForm(freshProduct, this.originalStockData);
-                });
-            }
+    const stockUpdateObservables: Observable<UpdateStockResponse>[] = [];
+    if (stockDataActuallyChanged) {
+      formValues.currentStocks.forEach((formStockItem: { branch_code: string; quantity: string | number }, index: number) => {
+        const originalStockItem = this.originalStockData.find(os => os.branch_code === formStockItem.branch_code);
+        const originalQuantity = originalStockItem ? originalStockItem.quantity : 0;
+        const currentQuantity = Number(formStockItem.quantity);
+        if (this.currentStocksFormArray.controls[index].dirty && currentQuantity !== originalQuantity) {
+          stockUpdateObservables.push(
+            this.inventoryService.updateInventoryItem(formStockItem.branch_code, productCodeForUpdate, currentQuantity).pipe(
+              map(response => ({
+                ...response,
+                branch_code: formStockItem.branch_code,
+                product_code: productCodeForUpdate,
+                error: false
+              })),
+              catchError(err => of({
+                message: '',
+                error: true,
+                branch_code: formStockItem.branch_code,
+                product_code: productCodeForUpdate,
+                errorMessage: err.message || `Error al actualizar stock para ${formStockItem.branch_code}.`
+              }))
+            )
+          );
         }
+      });
+    }
+
+    updateProductObs.pipe(
+      switchMap((updatedProductResponse: ApiProduct | null) => {
+        const productAfterAttemptedUpdate = updatedProductResponse || this.originalApiProductData;
+        if (stockUpdateObservables.length > 0) {
+          return forkJoin(stockUpdateObservables).pipe(
+            map(stockResults => ({ productAfterAttemptedUpdate, stockResults }))
+          );
+        }
+        return of({ productAfterAttemptedUpdate, stockResults: [] });
+      }),
+      tap(({ productAfterAttemptedUpdate, stockResults }) => {
+        const failedStockUpdates = stockResults.filter(res => res.error === true);
+        if (failedStockUpdates.length > 0) {
+          const errorMessages = failedStockUpdates.map(fu => `Sucursal ${fu.branch_code}: ${fu.errorMessage}`).join('; ');
+          this.userMessage = { text: `Datos del producto "${productAfterAttemptedUpdate?.nombre || this.productName}" guardados, pero con errores al actualizar stock: ${errorMessages}`, type: 'warning' };
+        } else if (Object.keys(productUpdatePayload).length > 0 || stockUpdateObservables.length > 0) {
+          let successMessage = `Producto "${productAfterAttemptedUpdate?.nombre || this.productName}" actualizado exitosamente`;
+          if (stockUpdateObservables.length > 0 && Object.keys(productUpdatePayload).length > 0) {
+            successMessage += " y su stock también.";
+          } else if (stockUpdateObservables.length > 0) {
+            successMessage = `Stock del producto "${productAfterAttemptedUpdate?.nombre || this.productName}" actualizado exitosamente.`;
+          } else {
+            successMessage += ".";
+          }
+          this.userMessage = { text: successMessage, type: 'success' };
+        } else {
+            this.userMessage = { text: 'No se realizaron cambios detectables para guardar.', type: 'info' };
+        }
+      }),
+      delay(this.userMessage.type === 'success' || this.userMessage.type === 'warning' ? 2500 : 0),
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.isSaving = false;
+        if (this.currentProductCode) {
+            this.loadInitialDataAndProduct();
+        }
+      })
+    ).subscribe({
+      next: () => {
+      },
+      error: (err: any) => {
+        this.userMessage = { text: `Error al actualizar el producto: ${err.message || 'Error desconocido.'}`, type: 'error' };
+        this.isLoadingData = false;
+      }
     });
   }
 
+  onDeleteProduct(): void {
+    if (!this.currentProductCode) return;
+    const confirmation = confirm(`¿Estás seguro de que deseas eliminar el producto "${this.productName}" (${this.currentProductCode})? Esta acción no se puede deshacer.`);
+    if (confirmation) {
+      this.isDeleting = true;
+      this.productService.deleteProduct(this.currentProductCode).pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isDeleting = false;
+        })
+      ).subscribe({
+        next: () => {
+          this.userMessage = { text: `Producto "${this.productName}" eliminado exitosamente. Serás redirigido.`, type: 'success' };
+          setTimeout(() => this.router.navigate(['/product/list']), 2000);
+        },
+        error: (err: any) => {
+          this.userMessage = { text: `Error al eliminar el producto: ${err.message || 'Error desconocido.'}`, type: 'error' };
+        }
+      });
+    }
+  }
+
   onCancel(): void {
-    this.router.navigate(['/product/list']);
+    if (this.productForm.dirty || this.currentStocksFormArray.dirty) {
+        if(confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres cancelar?')) {
+            this.router.navigate(['/product/list']);
+        }
+    } else {
+        this.router.navigate(['/product/list']);
+    }
   }
 
   ngOnDestroy(): void {

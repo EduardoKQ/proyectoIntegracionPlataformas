@@ -21,7 +21,7 @@
           <p class="description" *ngIf="product.descripcion">{{ product.descripcion }}</p>
           <p><strong>Marca:</strong> {{ product.marca }}</p>
           <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
-          <p><strong>Stock Total:</strong> {{ product.stock_total }} unidad(es)</p>
+          <p><strong>Stock Total:</strong> {{ product.stock_total }} unidades</p>
           <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
           <p class="product-codes"><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
         </div>

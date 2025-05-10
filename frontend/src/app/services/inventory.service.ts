@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, forkJoin } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 export interface InventoryItem {
@@ -17,6 +17,10 @@ export interface UpdateStockPayload {
 
 export interface UpdateStockResponse {
   message: string;
+  error?: boolean;
+  errorMessage?: string;
+  branch_code?: string;
+  product_code?: string;
 }
 
 @Injectable({
@@ -26,7 +30,9 @@ export class InventoryService {
   private apiUrl = 'http://localhost:8100/api';
   private inventoryBaseApiUrl = `${this.apiUrl}/inventory`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+  ) { }
 
   getInventory(): Observable<InventoryItem[]> {
     return this.http.get<InventoryItem[]>(this.inventoryBaseApiUrl)
@@ -39,10 +45,11 @@ export class InventoryService {
   updateInventoryItem(branchCode: string, productCode: string, quantity: number): Observable<UpdateStockResponse> {
     const url = `${this.inventoryBaseApiUrl}/${branchCode}/${productCode}`;
     const payload: UpdateStockPayload = { quantity };
-
     return this.http.put<UpdateStockResponse>(url, payload)
       .pipe(
-        tap(response => console.log(`Inventario actualizado para producto ${productCode} en sucursal ${branchCode} a ${quantity}. Respuesta:`, response)),
+        tap(response => {
+          console.log(`Inventario actualizado para producto ${productCode} en sucursal ${branchCode} a ${quantity}. Respuesta:`, response);
+        }),
         catchError(this.handleError)
       );
   }
@@ -60,8 +67,7 @@ export class InventoryService {
         errorMessage = `Error ${error.status} (${error.statusText || ''}): ${error.error.error}`;
       } else if (error.error && typeof error.error.message === 'string') {
         errorMessage = `Error ${error.status} (${error.statusText || ''}): ${error.error.message}`;
-      }
-       else if (error.error && typeof error.error === 'string') {
+      } else if (error.error && typeof error.error === 'string') {
         errorMessage = `Error ${error.status} (${error.statusText || ''}): ${error.error}`;
       } else if (error.message) {
         errorMessage = `Error ${error.status} (${error.statusText || ''}): ${error.message}.`;

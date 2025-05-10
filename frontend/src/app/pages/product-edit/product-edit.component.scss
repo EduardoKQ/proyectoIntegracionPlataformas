@@ -110,7 +110,7 @@ h2 {
 
   input[type="date"] {
     min-height: calc(1rem + 24px + 2px);
-     &::-webkit-calendar-picker-indicator {
+      &::-webkit-calendar-picker-indicator {
         cursor: pointer;
         opacity: 0.6;
         &:hover {
@@ -266,7 +266,8 @@ h3 {
 .form-actions {
   margin-top: 30px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
 
   button {
@@ -314,17 +315,65 @@ h3 {
       &:not(:disabled):hover {
         background-color: $button-cancel-hover-bg;
       }
-       &:disabled {
+        &:disabled {
         background-color: lighten($button-cancel-bg, 20%);
         cursor: not-allowed;
         box-shadow: none;
         transform: none;
       }
     }
+
+    &.btn-delete {
+      padding: 10px 22px;
+      border: none;
+      border-radius: $border-radius-general;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color $transition-speed-general ease, box-shadow 0.2s ease, transform 0.1s ease;
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
+      }
+
+      &:active:not(:disabled) {
+          transform: translateY(0px);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        opacity: 0.65;
+      }
+    }
+
+    &.danger-zone {
+      background-color: $form-error-color;
+      color: white;
+
+      &:not(:disabled):hover {
+        background-color: darken($form-error-color, 10%);
+      }
+      &:disabled {
+        background-color: lighten($form-error-color, 20%);
+        color: darken($form-error-color, 10%);
+      }
+    }
+  }
+  .main-actions {
+    display: flex;
+    gap: 12px;
   }
 }
 
-.success-message, .error-message {
+.success-message, .error-message, .warning-message, .info-message {
   padding: 12px 18px;
   border-radius: $border-radius-general;
   margin-bottom: 20px;
@@ -348,4 +397,23 @@ h3 {
   color: darken($form-error-color, 10%);
   background-color: $form-error-bg-color;
   border-color: $form-error-border-color;
+}
+
+.warning-message {
+  color: darken(#ffc107, 25%);
+  background-color: lighten(#ffc107, 35%);
+  border-color: lighten(#ffc107, 20%);
+}
+
+.info-message {
+  color: darken(#17a2b8, 25%);
+  background-color: lighten(#17a2b8, 45%);
+  border-color: lighten(#17a2b8, 30%);
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: $form-label-color;
 }

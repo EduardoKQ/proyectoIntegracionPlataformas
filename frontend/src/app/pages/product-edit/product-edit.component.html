@@ -1,10 +1,17 @@
-<h2>Editar Producto: {{ productName }}</h2> <div *ngIf="userMessage.text" [ngClass]="{'success-message': userMessage.type === 'success', 'error-message': userMessage.type === 'error'}">
-  <p>{{ userMessage.text }}</p>
+<h2>Editar Producto: {{ productName || 'Cargando...' }}</h2>
+
+<div *ngIf="userMessage.text" [ngClass]="{
+  'success-message': userMessage.type === 'success',
+  'error-message': userMessage.type === 'error',
+  'warning-message': userMessage.type === 'warning',
+  'info-message': userMessage.type === 'info'
+}">
+  <p [innerHTML]="userMessage.text"></p>
 </div>
 
-<div *ngIf="isLoadingData">
+<div *ngIf="isLoadingData" class="loading-indicator">
   <p>Cargando datos del producto y opciones...</p>
-  </div>
+</div>
 
 <form *ngIf="!isLoadingData && productForm" [formGroup]="productForm" (ngSubmit)="onSubmit()">
 
@@ -12,9 +19,6 @@
     <div class="form-field column-half">
       <label for="codigo_producto">Código Producto:</label>
       <input id="codigo_producto" type="text" formControlName="codigo_producto">
-      <div *ngIf="productForm.get('codigo_producto')?.invalid && productForm.get('codigo_producto')?.touched" class="validation-error">
-        <small *ngIf="productForm.get('codigo_producto')?.errors?.['required']">El código es requerido.</small>
-      </div>
     </div>
 
     <div class="form-field column-half">
@@ -30,7 +34,7 @@
     <div class="form-field column-half">
       <label for="marca">Marca:</label>
       <input id="marca" type="text" formControlName="marca">
-       <div *ngIf="productForm.get('marca')?.invalid && productForm.get('marca')?.touched" class="validation-error">
+        <div *ngIf="productForm.get('marca')?.invalid && productForm.get('marca')?.touched" class="validation-error">
         <small *ngIf="productForm.get('marca')?.errors?.['required']">La marca es requerida.</small>
       </div>
     </div>
@@ -64,7 +68,7 @@
     <div class="form-field column-half">
       <label for="subcategoria">Subcategoría:</label>
       <div class="select-wrapper">
-        <select id="subcategoria" formControlName="subcategoria" [disabled]="filteredSubcategories.length === 0 && productForm.get('categoria')?.value === ''">
+        <select id="subcategoria" formControlName="subcategoria">
           <option value="">-- Selecciona Subcategoría --</option>
           <option *ngFor="let subcat of filteredSubcategories" [value]="subcat.name">
             {{ subcat.name }}
@@ -72,31 +76,41 @@
         </select>
         <span class="material-symbols-outlined select-arrow">arrow_drop_down</span>
       </div>
-       <div *ngIf="productForm.get('subcategoria')?.invalid && productForm.get('subcategoria')?.touched" class="validation-error">
+        <div *ngIf="productForm.get('subcategoria')?.invalid && productForm.get('subcategoria')?.touched" class="validation-error">
         <small *ngIf="productForm.get('subcategoria')?.errors?.['required']">La subcategoría es requerida.</small>
       </div>
     </div>
   </div>
 
-  <div class="form-field">
-    <label for="precio">Precio:</label>
-    <input id="precio" type="number" formControlName="precio" min="0">
-    <div *ngIf="productForm.get('precio')?.invalid && productForm.get('precio')?.touched" class="validation-error">
-      <small *ngIf="productForm.get('precio')?.errors?.['required']">El precio es requerido.</small>
-      <small *ngIf="productForm.get('precio')?.errors?.['min']">El precio debe ser 0 o mayor.</small>
+  <div class="form-row">
+    <div class="form-field column-half">
+      <label for="precio">Precio:</label>
+      <input id="precio" type="number" formControlName="precio" min="0.01" step="any">
+      <div *ngIf="productForm.get('precio')?.invalid && productForm.get('precio')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('precio')?.errors?.['required']">El precio es requerido.</small>
+        <small *ngIf="productForm.get('precio')?.errors?.['min']">El precio debe ser mayor que 0.</small>
+      </div>
+    </div>
+    <div class="form-field column-half">
+      <label for="current_price_date">Fecha Última Actualización Precio:</label>
+      <input id="current_price_date" type="date" formControlName="current_price_date">
     </div>
   </div>
+
 
   <div class="form-field">
     <label for="descripcion">Descripción:</label>
     <textarea id="descripcion" formControlName="descripcion" rows="3"></textarea>
+     <div *ngIf="productForm.get('descripcion')?.invalid && productForm.get('descripcion')?.touched" class="validation-error">
+        <small *ngIf="productForm.get('descripcion')?.errors?.['required']">La descripción es requerida.</small>
+      </div>
   </div>
 
   <div class="form-field">
     <label for="imageUrl">URL Imagen:</label>
-    <input id="imageUrl" type="url" formControlName="imageUrl">
-     <div *ngIf="productForm.get('imageUrl')?.invalid && productForm.get('imageUrl')?.touched" class="validation-error">
-      <small *ngIf="productForm.get('imageUrl')?.errors?.['pattern']">Por favor, introduce una URL válida (ej. http:// o https://).</small>
+    <input id="imageUrl" type="url" formControlName="imageUrl" placeholder="http:// o https://">
+      <div *ngIf="productForm.get('imageUrl')?.invalid && productForm.get('imageUrl')?.touched" class="validation-error">
+      <small *ngIf="productForm.get('imageUrl')?.errors?.['pattern']">Por favor, introduce una URL válida.</small>
     </div>
   </div>
 
@@ -123,6 +137,8 @@
             <input type="number" formControlName="quantity" min="0" class="stock-input">
             <div *ngIf="stockGroup.get('quantity')?.invalid && stockGroup.get('quantity')?.touched" class="validation-error">
               <small *ngIf="stockGroup.get('quantity')?.errors?.['min']">El stock no puede ser negativo.</small>
+              <small *ngIf="stockGroup.get('quantity')?.errors?.['required']">El stock es requerido.</small>
+              <small *ngIf="stockGroup.get('quantity')?.errors?.['pattern']">Solo números enteros.</small>
             </div>
           </td>
         </tr>
@@ -133,9 +149,14 @@
   <hr class="section-divider">
 
   <div class="form-actions">
-    <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isSaving">Cancelar</button>
-    <button type="submit" [disabled]="productForm.invalid || isSaving || isLoadingData || !productForm.dirty">
-      {{ isSaving ? 'Guardando Cambios...' : 'Guardar Cambios' }}
+    <button type="button" class="btn-delete danger-zone" (click)="onDeleteProduct()" [disabled]="isSaving || isLoadingData || isDeleting">
+      {{ isDeleting ? 'Eliminando...' : 'Eliminar Producto' }}
     </button>
+    <div class="main-actions">
+      <button type="button" class="btn-secondary" (click)="onCancel()" [disabled]="isSaving || isDeleting">Cancelar</button>
+      <button type="submit" [disabled]="productForm.invalid || isSaving || isLoadingData || isDeleting || (!productForm.dirty && !currentStocksFormArray.dirty)">
+        {{ isSaving && !isDeleting ? 'Guardando Cambios...' : 'Guardar Cambios' }}
+      </button>
+    </div>
   </div>
 </form>
