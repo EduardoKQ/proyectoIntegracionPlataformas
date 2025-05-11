@@ -20,8 +20,8 @@ export const routes: Routes = [
 
   { path: 'login', component: LoginComponent,canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent,canActivate: [rolesGuard] },
-  { path: 'catalogo', component: CatalogoComponent},
-  { path: 'catalogo-marca', component: CatalogoMarcaComponent},
+  { path: 'catalogo', component: CatalogoComponent, data: { showStoreHeader: true }},
+  { path: 'catalogo-marca', component: CatalogoMarcaComponent, data: { showStoreHeader: true }},
   { path: 'home',component: HomeComponent, data: { showStoreHeader: true }},
   { path: 'story/:id', component: StoryViewComponent },
   { path : '', redirectTo: 'home', pathMatch: 'full' },

@@ -1,192 +1,114 @@
 <div class="catalog-container">
   <div class="catalog-layout">
-    <!-- Filtros a la izquierda -->
-    <aside class="filters-sidebar">
-      <!-- Buscador  -->
-      <div class="filter-section">
-        <div class="filter-header">
-          <h3 class="filter-title">4 resultados</h3>
-          <button class="reset-filters-link" (click)="limpiarFiltros()">Borrar filtros</button>
+    <aside class="filters-sidebar" *ngIf="!isLoading">
+      <form [formGroup]="filterForm">
+        <div class="filter-section">
+          <div class="filter-header">
+            <h3 class="filter-title">{{ productsToDisplay.length }} resultado<span *ngIf="productsToDisplay.length !== 1">s</span></h3>
+            <button type="button" class="reset-filters-link" (click)="limpiarFiltros()">Borrar filtros</button>
+          </div>
         </div>
-      </div>
 
-      <!-- Filtros de precio -->
-      <div class="filter-section">
-        <h3 class="filter-title">Ordenar por</h3>
-        <div class="sort-filter">
-          <button class="sort-btn" onclick="this.classList.toggle('active')">
-            <span>Ordenar</span>
-            <span class="material-symbols-outlined">arrow_drop_down</span>
-          </button>
-          <div class="sort-dropdown">
-            <div class="sort-option">Precio: mayor a menor</div>
-            <div class="sort-option">Precio: menor a mayor</div>
+        <div class="filter-section">
+          <h3 class="filter-title">Ordenar por</h3>
+          <div class="sort-filter">
+            <button type="button" class="sort-btn" (click)="toggleSortDropdown()" [class.active]="showSortDropdown">
+              <span>{{ currentSortLabel }}</span>
+              <span class="material-symbols-outlined">arrow_drop_down</span>
+            </button>
+            <div class="sort-dropdown" *ngIf="showSortDropdown">
+              <div class="sort-option" *ngFor="let option of sortOptions" (click)="selectSortOrder(option.value)">
+                {{ option.label }}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- Filtros de marcas -->
-      <div class="filter-section">
-        <h3 class="filter-title">Marcas</h3>
-        <div class="filter-options">
-          <div class="filter-checkbox">
-            <input type="checkbox" id="marca1" name="marca1">
-            <label for="marca1">Stanley</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="marca2" name="marca2" checked>
-            <label for="marca2">Bauker</label>
-          </div>
-        </div>
-      </div>
 
-      <!-- Filtros de categorías -->
-      <div class="filter-section">
-        <h3 class="filter-title">Categorías</h3>
-        <div class="filter-options">
-          <div class="filter-checkbox">
-            <input type="checkbox" id="categoria1" name="categoria1" checked>
-            <label for="categoria1">Categoría 1</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="categoria2" name="categoria2">
-            <label for="categoria2">Categoría 2</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="categoria3" name="categoria3">
-            <label for="categoria3">Categoría 3</label>
+        <div class="filter-section" formArrayName="brands" *ngIf="brandsFormArray.controls.length > 0">
+          <h3 class="filter-title">Marcas</h3>
+          <div class="filter-options-scrollable">
+            <div *ngFor="let brandControl of brandsFormArray.controls; let i = index" [formGroupName]="i" class="filter-checkbox">
+              <input type="checkbox" [id]="'brand-' + i" formControlName="selected">
+              <label [for]="'brand-' + i">{{ brandControl.value.name }}</label>
+            </div>
           </div>
         </div>
-      </div>
+        <div *ngIf="!isLoading && brandsFormArray.controls.length === 0 && productsFilteredByUrlParams.length > 0" class="filter-section">
+            <h3 class="filter-title">Marcas</h3>
+            <small>No hay más filtros de marca para los productos actuales.</small>
+        </div>
 
-      <!-- Filtros de Subcategorias -->
-      <div class="filter-section">
-        <h3 class="filter-title">Subcategorias</h3>
-        <div class="filter-options">
-          <div class="filter-checkbox">
-            <input type="checkbox" id="subcategoria1" name="subcategoria1" checked>
-            <label for="subcategoria1">Subcategorias 1</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="subcategoria2" name="subcategoria2">
-            <label for="subcategoria2">Subcategorias 2</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="subcategoria3" name="subcategoria3">
-            <label for="subcategoria3">Subcategorias 3</label>
+
+        <div class="filter-section" formArrayName="categories" *ngIf="categoriesFormArray.controls.length > 0">
+          <h3 class="filter-title">Categorías</h3>
+          <div class="filter-options-scrollable">
+            <div *ngFor="let categoryControl of categoriesFormArray.controls; let i = index" [formGroupName]="i">
+              <div class="filter-checkbox">
+                <input type="checkbox" [id]="'category-' + i" formControlName="selected" (change)="onCategorySelectionChange($any(categoryControl), i)">
+                <label [for]="'category-' + i">{{ categoryControl.value.name }}</label>
+              </div>
+              <div class="subcategory-options"
+                   *ngIf="categoryControl.value.selected && getSubcategoryControls(i).controls.length > 0">
+                 <ng-container [formArrayName]="'subcategories'">
+                    <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
+                        <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected">
+                        <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
+                    </div>
+                 </ng-container>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+         <div *ngIf="!isLoading && categoriesFormArray.controls.length === 0 && productsFilteredByUrlParams.length > 0" class="filter-section">
+            <h3 class="filter-title">Categorías</h3>
+            <small>No hay más filtros de categoría para los productos actuales.</small>
+        </div>
+      </form>
     </aside>
 
-    <!-- Cartas con productos -->
     <main class="catalog-content">
       <header class="catalog-header">
-        <h1>Catálogo de Productos</h1>
+        <h1>{{ catalogTitle }}</h1>
       </header>
-      
-      <div class="product-grid">
-        <!-- Primer producto -->
-        <div class="product-card">
-          <div class="product-badge">Oferta</div>
-          <div class="product-image-container">
-            <img src="../../../assets/images/trabajando.png" alt="Producto 1" class="product-image">
-          </div>
-          <div class="product-details">
-            <h3 class="product-name">Taladro Profesional</h3>
-            <p class="product-category">Herramientas Eléctricas</p>
-            <div class="product-rating">
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star-half">star_half</span>
-              <span class="rating-count">(42)</span>
+
+      <div *ngIf="isLoading" class="loading-indicator">
+        <p>Cargando productos...</p>
+      </div>
+
+      <div *ngIf="!isLoading && productsToDisplay.length === 0" class="no-results-message">
+        <p>No se encontraron productos que coincidan con tu búsqueda o filtros.</p>
+        <p *ngIf="activeSearchTerm || activeCategoryName">Intenta con un término de búsqueda diferente o ajusta los filtros.</p>
+      </div>
+
+      <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
+        <div class="product-card" *ngFor="let product of paginatedProducts">
+          <a [routerLink]="['/product', product.codigo_producto]" class="product-link">
+            <div class="product-image-container">
+              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
             </div>
-            <p class="product-price">
-              <span class="original-price">$24.990</span>
-              <span class="current-price">$19.990</span>
-            </p>
-            <button class="add-to-cart-btn">Agregar al carrito</button>
-          </div>
-        </div>
-        
-        <!-- Segundo producto -->
-        <div class="product-card">
-          <div class="product-image-container">
-            <img src="../../../assets/images/trabajando.png" alt="Producto 2" class="product-image">
-          </div>
-          <div class="product-details">
-            <h3 class="product-name">Set de Destornilladores</h3>
-            <p class="product-category">Herramientas Manuales</p>
-            <div class="product-rating">
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="rating-count">(28)</span>
+            <div class="product-details">
+              <h3 class="product-name">{{ product.nombre }}</h3>
+              <p class="product-category">{{ product.subcategoria }} <span *ngIf="product.subcategoria !== product.categoria && product.categoria">({{ product.categoria }})</span></p>
+              <p class="product-brand">Marca: {{ product.marca }}</p>
+              <p class="product-price">
+                <span class="current-price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+              </p>
             </div>
-            <p class="product-price">
-              <span class="current-price">$12.990</span>
-            </p>
-            <button class="add-to-cart-btn">Agregar al carrito</button>
-          </div>
-        </div>
-        
-        <!-- Tercer producto -->
-        <div class="product-card">
-          <div class="product-badge">Nuevo</div>
-          <div class="product-image-container">
-            <img src="../../../assets/images/trabajando.png" alt="Producto 3" class="product-image">
-          </div>
-          <div class="product-details">
-            <h3 class="product-name">Sierra Circular</h3>
-            <p class="product-category">Herramientas Eléctricas</p>
-            <div class="product-rating">
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="rating-count">(16)</span>
-            </div>
-            <p class="product-price">
-              <span class="current-price">$34.990</span>
-            </p>
-            <button class="add-to-cart-btn">Agregar al carrito</button>
-          </div>
-        </div>
-        
-        <!-- Cuarto producto -->
-        <div class="product-card">
-          <div class="product-image-container">
-            <img src="../../../assets/images/trabajando.png" alt="Producto 4" class="product-image">
-          </div>
-          <div class="product-details">
-            <h3 class="product-name">Martillo de Carpintero</h3>
-            <p class="product-category">Herramientas Manuales</p>
-            <div class="product-rating">
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star</span>
-              <span class="material-symbols-outlined star">star_border</span>
-              <span class="rating-count">(32)</span>
-            </div>
-            <p class="product-price">
-              <span class="current-price">$9.990</span>
-            </p>
-            <button class="add-to-cart-btn">Agregar al carrito</button>
-          </div>
+          </a>
+          <button class="add-to-cart-btn">Agregar al carrito</button>
         </div>
       </div>
-      
-      <div class="pagination">
-        <button class="pagination-btn active">1</button>
-        <button class="pagination-btn">2</button>
-        <button class="pagination-btn">3</button>
-        <button class="pagination-btn">4</button>
-        <button class="pagination-btn">→</button>
+
+      <div class="pagination" *ngIf="!isLoading && productsToDisplay.length > 0 && totalPages > 1">
+        <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1" aria-label="Página anterior">&laquo;</button>
+        <ng-container *ngFor="let page of getPages()">
+            <button class="pagination-btn"
+                    [class.active]="currentPage === page"
+                    (click)="goToPage(page)">
+                {{ page }}
+            </button>
+        </ng-container>
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" aria-label="Página siguiente">&raquo;</button>
       </div>
     </main>
   </div>
