@@ -51,25 +51,28 @@ export class StoryViewComponent implements OnInit, OnDestroy {
   isPaused = false;
   isLoading = true;
   storyNotFound = false;
+  private currentStoryId: string | null = null;
 
   private timerSubscription: Subscription | null = null;
   private readonly DURATION_PER_IMAGE = 5000;
-
+  private readonly STORAGE_KEY_PREFIX = 'story_state_';
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const storyId = params.get('id');
+      this.currentStoryId = storyId;
       this.isLoading = true;
       this.storyNotFound = false;
-      this.resetStoryState();
+      this.resetStoryState(false);
 
       if (storyId && this.storyData[storyId]) {
         const currentStory = this.storyData[storyId];
         this.imageSources = currentStory.images;
         this.headerText = currentStory.header;
         this.logoSrc = currentStory.logo || 'assets/images/histoP.png';
+        this.restoreState();
 
         if (this.imageSources.length > 0) {
-          this.setHostBackgroundImage(this.imageSources[0]);
+          this.setHostBackgroundImage(this.getCurrentImageSrc());
           this.isLoading = false;
           this.startTimer();
         } else {
@@ -87,7 +90,46 @@ export class StoryViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopTimer();
+    this.clearState();
     this.clearHostBackgroundImage();
+  }
+
+  private getStateKey(): string | null {
+    return this.currentStoryId ? `${this.STORAGE_KEY_PREFIX}${this.currentStoryId}` : null;
+  }
+
+  private saveState(): void {
+    const key = this.getStateKey();
+    if (key) {
+      localStorage.setItem(key, JSON.stringify({
+        currentImageIndex: this.currentImageIndex,
+        currentProgress: this.currentProgress
+      }));
+    }
+  }
+
+  private restoreState(): void {
+    const key = this.getStateKey();
+    if (key) {
+      const storedState = localStorage.getItem(key);
+      if (storedState) {
+        try {
+          const state = JSON.parse(storedState);
+          this.currentImageIndex = state.currentImageIndex || 0;
+          this.currentProgress = state.currentProgress || 0;
+        } catch (error) {
+          console.error('Error al parsear el estado de la historia:', error);
+          this.clearState();
+        }
+      }
+    }
+  }
+
+  private clearState(): void {
+    const key = this.getStateKey();
+    if (key) {
+      localStorage.removeItem(key);
+    }
   }
 
   private setHostBackgroundImage(imageUrl: string | null): void {
@@ -105,14 +147,18 @@ export class StoryViewComponent implements OnInit, OnDestroy {
     this.renderer.removeStyle(hostElement, '--story-bg-image');
   }
 
-  private resetStoryState(): void {
+  private resetStoryState(fullReset: boolean = true): void {
     this.stopTimer();
-    this.currentImageIndex = 0;
-    this.currentProgress = 0;
+    if (fullReset) {
+      this.currentImageIndex = 0;
+      this.currentProgress = 0;
+    }
     this.isPaused = false;
-    this.imageSources = [];
-    this.headerText = 'Historia';
-    this.logoSrc = 'assets/images/histoP.png';
+    if (fullReset) {
+      this.imageSources = [];
+      this.headerText = 'Historia';
+      this.logoSrc = 'assets/images/histoP.png';
+    }
   }
 
   private startTimer(): void {
@@ -120,10 +166,9 @@ export class StoryViewComponent implements OnInit, OnDestroy {
     if (this.isPaused || this.imageSources.length === 0) return;
 
     if (this.imageSources.length > 0) {
-        this.setHostBackgroundImage(this.imageSources[this.currentImageIndex]);
+      this.setHostBackgroundImage(this.imageSources[this.currentImageIndex]);
     }
 
-    this.currentProgress = 0;
     const intervalTime = 50;
     const steps = this.DURATION_PER_IMAGE / intervalTime;
 
@@ -134,11 +179,11 @@ export class StoryViewComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       })
     ).subscribe({
-         complete: () => {
-             if (!this.isPaused) {
-                  this.goToNextImage(true);
-             }
-         }
+      complete: () => {
+        if (!this.isPaused) {
+          this.goToNextImage(true);
+        }
+      }
     });
   }
 
@@ -153,18 +198,19 @@ export class StoryViewComponent implements OnInit, OnDestroy {
     this.isPaused = !this.isPaused;
     if (this.isPaused) {
       this.stopTimer();
+      this.saveState();
     } else {
-        if (this.currentProgress >= 100) {
-             if (this.currentImageIndex < this.imageSources.length - 1) {
-                 if(this.currentProgress < 100) {
-                     this.startTimer();
-                 } else {
-                     this.goToNextImage();
-                 }
-             }
-        } else {
-           this.startTimer();
+      if (this.currentProgress >= 100) {
+        if (this.currentImageIndex < this.imageSources.length - 1) {
+          if (this.currentProgress < 100) {
+            this.startTimer();
+          } else {
+            this.goToNextImage();
+          }
         }
+      } else {
+        this.startTimer();
+      }
     }
     this.cdr.detectChanges();
   }
@@ -179,63 +225,68 @@ export class StoryViewComponent implements OnInit, OnDestroy {
       }
     } else {
       if (fromTimer || !this.isPaused) {
-           this.closeStory();
+        this.closeStory();
       } else {
-          this.currentProgress = 100;
+        this.currentProgress = 100;
+      }
+    }
+    this.saveState();
+    this.cdr.detectChanges();
+  }
+
+  goToPreviousImage(): void {
+    if (this.currentImageIndex > 0) {
+      this.currentImageIndex--;
+      this.currentProgress = 0;
+      this.setHostBackgroundImage(this.getCurrentImageSrc());
+      if (!this.isPaused) {
+        this.startTimer();
+      }
+    }
+    this.saveState();
+    this.cdr.detectChanges();
+  }
+
+  clickNext(): void {
+    if (!this.isPaused) {
+      this.stopTimer();
+      this.goToNextImage();
+    } else {
+      if (this.currentImageIndex < this.imageSources.length - 1) {
+        this.currentImageIndex++;
+        this.currentProgress = 0;
+        this.setHostBackgroundImage(this.getCurrentImageSrc());
+        this.saveState();
       }
     }
     this.cdr.detectChanges();
   }
 
-  goToPreviousImage(): void {
+  clickPrevious(): void {
+    if (!this.isPaused) {
+      this.stopTimer();
+      this.goToPreviousImage();
+    } else {
       if (this.currentImageIndex > 0) {
         this.currentImageIndex--;
         this.currentProgress = 0;
         this.setHostBackgroundImage(this.getCurrentImageSrc());
-        if (!this.isPaused) {
-            this.startTimer();
-        }
+        this.saveState();
       }
-      this.cdr.detectChanges();
-  }
-
-  clickNext(): void {
-      if (!this.isPaused) {
-          this.stopTimer();
-          this.goToNextImage();
-      } else {
-          if (this.currentImageIndex < this.imageSources.length - 1) {
-              this.currentImageIndex++;
-              this.currentProgress = 0;
-              this.setHostBackgroundImage(this.getCurrentImageSrc());
-          }
-      }
-      this.cdr.detectChanges();
-  }
-
-  clickPrevious(): void {
-      if (!this.isPaused) {
-          this.stopTimer();
-          this.goToPreviousImage();
-      } else {
-          if (this.currentImageIndex > 0) {
-              this.currentImageIndex--;
-              this.currentProgress = 0;
-              this.setHostBackgroundImage(this.getCurrentImageSrc());
-          }
-      }
-      this.cdr.detectChanges();
+    }
+    this.cdr.detectChanges();
   }
 
   getCurrentImageSrc(): string | null {
     if (this.isLoading || this.storyNotFound || this.imageSources.length === 0 || this.currentImageIndex >= this.imageSources.length) {
-         return null;
+      return null;
     }
     return this.imageSources[this.currentImageIndex];
   }
 
   closeStory(): void {
     this.stopTimer();
+    this.clearState();
     this.router.navigate(['/home']);
   }
 }
