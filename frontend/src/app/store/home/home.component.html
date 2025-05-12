@@ -19,7 +19,6 @@
     </span>
   </div>
 </div>
-
 <div *ngIf="slides.length === 0">
   <p>No hay imágenes para mostrar en el carrusel.</p>
 </div>
@@ -42,5 +41,62 @@
       </div>
     </div>
   </section>
+
+  <!--categorias-->
+  <h2 class="titulo-categorias">Principales categorías</h2>
+
+  <div class="categorias-container">
+    <a class="categoria"
+      *ngFor="let item of categorias"
+      [routerLink]="['/catalogo']"
+      [queryParams]="{ category: item.ruta }">
+      <div class="imagen-categoria">
+        <img [src]="item.imagen" [alt]="item.nombre" />
+      </div>
+      <p>{{ item.nombre }}</p>
+    </a>
+  </div>
+
+  <!--Productos destacados-->
+  <section class="featured-products" *ngIf="featuredProducts.length > 0">
+  <h2>Productos Destacados</h2>
+  <div class="carousel-outer-container">
+    <button
+      class="carousel-nav prev"
+      (click)="prevFeaturedProductsSlide()"
+      *ngIf="featuredProducts.length > productsPerSlide"
+      aria-label="Productos anteriores">&#10094;</button>
+
+    <div class="products-carousel-wrapper" #productsCarouselContainer>
+      <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
+        <div class="product-card-featured" *ngFor="let product of featuredProducts">
+          <a [routerLink]="['/product', product.codigo_producto]" class="product-link">
+            <div class="product-image-container">
+              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
+            </div>
+            <div class="product-info">
+              <h3 class="product-name-featured">{{ product.nombre }}</h3>
+              <p class="product-price-featured">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+            </div>
+          </a>
+          <button class="btn btn-sm btn-primary add-to-cart-featured">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <button
+      class="carousel-nav next"
+      (click)="nextFeaturedProductsSlide()"
+      *ngIf="featuredProducts.length > productsPerSlide"
+      aria-label="Siguientes productos">&#10095;</button>
+  </div>
+  <div class="carousel-indicators products" *ngIf="featuredProducts.length > productsPerSlide && getFeaturedProductSlides().length > 1">
+      <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
+            class="indicator-dot"
+            [class.active]="i === currentFeaturedProductsSlideIndex"
+            (click)="goToFeaturedProductsSlide(i)"></span>
+    </div>
+</section>
+
 
 </div>

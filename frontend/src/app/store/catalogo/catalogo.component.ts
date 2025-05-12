@@ -67,6 +67,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     this.setupFilterFormChangesSubscription();
   }
 
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
