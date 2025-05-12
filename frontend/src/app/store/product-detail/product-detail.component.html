@@ -1,0 +1,110 @@
+<div *ngIf="isLoading; else content" class="loading-container">
+  <p>Cargando detalles del producto...</p>
+</div>
+
+<ng-template #content>
+  <div *ngIf="errorMessage" class="error-message-container">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="product && !errorMessage" class="product-detail-container">
+
+    <section class="product-image-section">
+      <img
+        [src]="product.imageUrl || 'assets/images/placeholder.png'"
+        [alt]="product.nombre || 'Imagen del producto'"
+        class="product-image">
+    </section>
+
+    <section class="product-availability-section">
+      <div class="availability-header">
+        <h2><span class="title-available">Disponibilidad</span></h2>
+        <span class="header-total-stock">{{ totalStock }} unidades</span>
+      </div>
+      <div *ngIf="productInventory.length > 0; else noStockInfo">
+        <ul>
+          <li *ngFor="let item of productInventory">
+            <span>{{ item.branch_name || item.branch_code }}</span>
+            <span>{{ item.quantity }}</span>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noStockInfo>
+        <p>No hay información de stock disponible para este producto o se encuentra agotado.</p>
+      </ng-template>
+    </section>
+
+    <section class="product-info-section">
+      <p class="product-brand">{{ product.marca || 'Marca no disponible' }}</p>
+      <h1 class="product-name">{{ product.nombre || 'Nombre no disponible' }} - {{ product.codigo_producto }}</h1>
+
+      <p class="product-status">
+        <span class="product-reference">Referencia: {{ product.codigo_producto }}</span>
+      </p>
+
+      <hr class="price-divider">
+
+      <ng-container *ngIf="product.precio?.precio_actual != null; else noPriceAvailable">
+        <p class="product-price">
+          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+          <span class="vat-included">IVA incluido.</span>
+        </p>
+      </ng-container>
+      <ng-template #noPriceAvailable>
+        <p class="product-price">Precio no disponible</p>
+      </ng-template>
+
+      <div class="quantity-selector-cart">
+        <div class="quantity-selector">
+          <button type="button" (click)="decreaseQuantity()" [disabled]="selectedQuantity <= 1">-</button>
+          <input type="number" [(ngModel)]="selectedQuantity" min="1" (change)="onQuantityChange($event)">
+          <button type="button" (click)="increaseQuantity()">+</button>
+        </div>
+        <button type="button" class="add-to-cart-button" (click)="addToCart()" [disabled]="totalStock <= 0">
+          AGREGAR AL CARRO
+        </button>
+      </div>
+
+      <div class="payment-options">
+        <img src="assets/image-logos/mercado.png" alt="mercado pago">
+      </div>
+
+      <div class="product-description">
+        <h3 class="section-title">Descripción</h3>
+        <p [innerHTML]="product.descripcion || 'No hay descripción disponible.'"></p>
+      </div>
+
+      <div class="delivery-options-container">
+        <h3 class="section-title">Opciones de Entrega</h3>
+        <div class="delivery-options">
+          <div class="delivery-option">
+            <span class="icon-delivery">🚚</span>
+            <div class="delivery-text-content">
+              <span class="status">Disponible</span>
+              <span class="type">Despacho a domicilio</span>
+            </div>
+          </div>
+          <div class="delivery-option">
+            <span class="icon-store">📍</span>
+            <div class="delivery-text-content">
+              <span class="status">Disponible</span>
+              <span class="type">Retiro en tienda</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        *ngIf="product.codigo_marca"
+        type="button"
+        class="more-products-button"
+        [routerLink]="['/catalogo-marca', product.codigo_marca]">
+        Ver más productos <span class="button-brand-name">{{ product.marca }}</span>
+      </button>
+    </section>
+  </div>
+
+  <div *ngIf="!product && !isLoading && !errorMessage" class="no-product-found">
+    <p>Producto no encontrado con el código especificado.</p>
+  </div>
+</ng-template>

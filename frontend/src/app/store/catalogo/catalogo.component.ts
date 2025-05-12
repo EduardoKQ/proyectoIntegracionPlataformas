@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, AbstractControl } from '@angular/forms';
-import { Subject, combineLatest } from 'rxjs';
+import { Subject, combineLatest, distinctUntilChanged } from 'rxjs';
 import { takeUntil, debounceTime, tap } from 'rxjs/operators';
 
 import { ProductService } from '../../services/product.service';
 import { ApiProduct } from '../../services/product.interfaces';
-import { CategorySubcategoryService, Category as ApiCategory, SubcategoryFromCategoryDetail as ApiSubcategory } from '../../services/category.service';
+import { CategorySubcategoryService, Category as ApiCategory } from '../../services/category.service';
 
 interface BrandFilter {
   name: string;
@@ -63,10 +63,9 @@ export class CatalogoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initFilterForm();
-    this.loadMasterDataAndHandleRouteParams();
+    this.loadMasterDataAndListenToRouteParams();
     this.setupFilterFormChangesSubscription();
   }
-
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -74,15 +73,14 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   }
 
   get currentSortLabel(): string {
-    const selectedOption = this.sortOptions.find(o => o.value === this.currentSortOrder);
-    return selectedOption?.label || 'Ordenar';
+    return this.sortOptions.find(o => o.value === this.currentSortOrder)?.label || 'Ordenar';
   }
 
   initFilterForm(): void {
     this.filterForm = this.fb.group({
       brands: this.fb.array([]),
       categories: this.fb.array([]),
-      sortOrder: ['default' as SortOrder]
+      sortOrder: ['default'as SortOrder]
     });
   }
 
@@ -94,41 +92,77 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     return this.filterForm.get('categories') as FormArray;
   }
 
-  loadMasterDataAndHandleRouteParams(): void {
+  loadMasterDataAndListenToRouteParams(): void {
     this.isLoading = true;
     combineLatest([
       this.productService.getProducts(),
       this.categorySubcategoryService.getCategories(),
-      this.route.queryParams
     ]).pipe(
       takeUntil(this.destroy$)
-    ).subscribe(([products, categories, queryParams]) => {
+    ).subscribe(([products, categories]) => {
       this.allProductsMasterList = [...products];
       this.availableCategoriesForFilter = [...categories];
-      this.rebuildCategoryFilters(this.availableCategoriesForFilter);
-      this.rebuildBrandFilters(this.allProductsMasterList);
-      this.handleRouteParamsAndUpdateFilters(queryParams);
 
-      this.isLoading = false;
+      this.rebuildCategoryFilters(this.availableCategoriesForFilter);
+
+      this.route.queryParams.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(queryParams => {
+        this.handleRouteParamsAndUpdateForm(queryParams);
+      });
     });
   }
 
-  handleRouteParamsAndUpdateFilters(queryParams: any): void {
-    const searchQuery = queryParams['search'];
-    const categoryQueryIdFromUrl = queryParams['category'];
-    const subcategoryQueryIdFromUrl = queryParams['subcategory'];
+  handleRouteParamsAndUpdateForm(queryParams: any): void {
+    this.isLoading = true;
 
-    this.activeSearchTerm = searchQuery || null;
+    const searchQuery = queryParams['search'] || null;
+    const categoryIdsFromUrlString = queryParams['category'] || null;
+    const categoryIdsFromUrlArray: string[] = categoryIdsFromUrlString ? Array.from(new Set(categoryIdsFromUrlString.split(','))) : [];
+
+    const subcategoryIdsFromUrlString = queryParams['subcategory'] || null;
+    const subcategoryIdsFromUrlArray: string[] = subcategoryIdsFromUrlString ? Array.from(new Set(subcategoryIdsFromUrlString.split(','))) : [];
+
+    const brandsFromUrl = queryParams['brands'] ? queryParams['brands'].split(',') : [];
+
+    this.activeSearchTerm = searchQuery;
     this.activeCategoryName = null;
     this.activeSubcategoryName = null;
 
-    this.filterForm.get('sortOrder')?.setValue('default' as SortOrder, { emitEvent: false });
+    this.filterForm.get('sortOrder')?.setValue(queryParams['sortOrder'] || 'default' as SortOrder, { emitEvent: false });
 
     let tempProducts = [...this.allProductsMasterList];
+    this.catalogTitle = 'Catálogo de Productos';
 
-    if (this.activeSearchTerm) {
-      this.catalogTitle = `Resultados para: "${this.activeSearchTerm}"`;
-      const lcSearchTerm = this.activeSearchTerm.toLowerCase();
+    this.categoriesFormArray.controls.forEach(catCtrl => {
+        (catCtrl as FormGroup).get('selected')?.setValue(false, { emitEvent: false });
+        const subcategoriesArray = (catCtrl as FormGroup).get('subcategories') as FormArray;
+        if (subcategoriesArray) {
+            subcategoriesArray.controls.forEach(subCtrl => {
+                (subCtrl as FormGroup).get('selected')?.setValue(false, { emitEvent: false });
+            });
+        }
+    });
+
+    categoryIdsFromUrlArray.forEach(catId => {
+        const categoryControl = this.categoriesFormArray.controls.find(c => c.value.id === catId) as FormGroup;
+        categoryControl?.get('selected')?.setValue(true, { emitEvent: false });
+    });
+    subcategoryIdsFromUrlArray.forEach(subId => {
+        for (const catCtrl of this.categoriesFormArray.controls) {
+            const categoryGroup = catCtrl as FormGroup;
+            const subcategoriesArray = categoryGroup.get('subcategories') as FormArray;
+            const subcategoryControl = subcategoriesArray?.controls.find(sc => sc.value.id === subId) as FormGroup;
+            if (subcategoryControl) {
+                subcategoryControl.get('selected')?.setValue(true, { emitEvent: false });
+            }
+        }
+    });
+
+    if (searchQuery) {
+      this.activeSearchTerm = searchQuery;
+      this.catalogTitle = `Resultados para: "${searchQuery}"`;
+      const lcSearchTerm = searchQuery.toLowerCase();
       tempProducts = tempProducts.filter(p =>
         p.nombre.toLowerCase().includes(lcSearchTerm) ||
         p.descripcion.toLowerCase().includes(lcSearchTerm) ||
@@ -136,75 +170,122 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         p.categoria.toLowerCase().includes(lcSearchTerm) ||
         p.subcategoria.toLowerCase().includes(lcSearchTerm)
       );
-      this.categoriesFormArray.controls.forEach(catCtrl => {
-        catCtrl.get('selected')?.setValue(false, { emitEvent: false });
-        (catCtrl.get('subcategories') as FormArray).controls.forEach(subCtrl => subCtrl.get('selected')?.setValue(false, { emitEvent: false }));
-      });
-      this.brandsFormArray.controls.forEach(brandCtrl => brandCtrl.get('selected')?.setValue(false, { emitEvent: false }));
+    } else if (categoryIdsFromUrlArray.length > 0 || subcategoryIdsFromUrlArray.length > 0) {
+        const productsToShow = new Set<ApiProduct>();
+        this.allProductsMasterList.forEach(product => {
+            const productCatId = this.getCategoryIdByName(product.categoria);
+            const productSubId = this.getSubcategoryIdByName(product.subcategoria, product.categoria);
+            let matchesCriteria = false;
 
-    } else if (categoryQueryIdFromUrl) {
-      const cat = this.availableCategoriesForFilter.find(c => c.id === categoryQueryIdFromUrl);
-      if (cat) {
-        this.activeCategoryName = cat.name;
-        this.catalogTitle = `Categoría: ${cat.name}`;
-        tempProducts = tempProducts.filter(p => this.getCategoryIdByName(p.categoria) === categoryQueryIdFromUrl);
-        const categoryControl = this.categoriesFormArray.controls.find(c => c.value.id === categoryQueryIdFromUrl) as FormGroup;
-        if (categoryControl) {
-          categoryControl.get('selected')?.setValue(true, { emitEvent: false });
-        }
-
-        if (subcategoryQueryIdFromUrl) {
-          const subcat = cat.subcategories?.find(s => s.id === subcategoryQueryIdFromUrl);
-          if (subcat && categoryControl) {
-            this.activeSubcategoryName = subcat.name;
-            this.catalogTitle += ` / ${subcat.name}`;
-            tempProducts = tempProducts.filter(p => this.getSubcategoryIdByName(p.subcategoria, p.categoria) === subcategoryQueryIdFromUrl);
-            const subcategoriesArray = categoryControl.get('subcategories') as FormArray;
-            const subcategoryControl = subcategoriesArray.controls.find(sc => sc.value.id === subcategoryQueryIdFromUrl) as FormGroup;
-            if (subcategoryControl) {
-              subcategoryControl.get('selected')?.setValue(true, { emitEvent: false });
+            if (productSubId && subcategoryIdsFromUrlArray.includes(productSubId)) {
+                matchesCriteria = true;
             }
-          }
-        }
-      }
+
+            if (!matchesCriteria && productCatId && categoryIdsFromUrlArray.includes(productCatId)) {
+                const parentCatObject = this.availableCategoriesForFilter.find(c => c.id === productCatId);
+                const subcategoriesOfThisParentInUrl = parentCatObject?.subcategories?.filter(s => subcategoryIdsFromUrlArray.includes(s.id)) || [];
+                if (subcategoriesOfThisParentInUrl.length === 0) {
+                    matchesCriteria = true;
+                }
+            }
+            if (matchesCriteria) {
+                productsToShow.add(product);
+            }
+        });
+        tempProducts = Array.from(productsToShow);
+        this.updateCatalogTitleAndActiveNames(categoryIdsFromUrlArray, subcategoryIdsFromUrlArray);
     } else {
-      this.catalogTitle = 'Catálogo de Productos';
-      this.categoriesFormArray.controls.forEach(catCtrl => {
-        catCtrl.get('selected')?.setValue(false, { emitEvent: false });
-        (catCtrl.get('subcategories') as FormArray).controls.forEach(subCtrl => subCtrl.get('selected')?.setValue(false, { emitEvent: false }));
-      });
-      this.brandsFormArray.controls.forEach(brandCtrl => brandCtrl.get('selected')?.setValue(false, { emitEvent: false }));
+        this.catalogTitle = 'Catálogo de Productos';
     }
 
     this.productsFilteredByUrlParams = [...tempProducts];
-    this.rebuildBrandFilters(this.productsFilteredByUrlParams, false);
-    this.applySideBarFiltersAndSort(true);
+    this.rebuildBrandFilters(this.productsFilteredByUrlParams);
+
+    if (brandsFromUrl.length > 0) {
+      const availableBrandNamesInForm = this.brandsFormArray.controls.map(ctrl => ctrl.value.name);
+      brandsFromUrl.forEach((brandNameFromUrl: string) => {
+        if (availableBrandNamesInForm.includes(brandNameFromUrl)) {
+          const brandControl = this.brandsFormArray.controls.find(ctrl => ctrl.value.name === brandNameFromUrl) as FormGroup;
+          brandControl?.get('selected')?.setValue(true, { emitEvent: false });
+        }
+      });
+    }
+
+    this.applyAllFiltersAndSort(true);
+    this.isLoading = false;
   }
 
+  private updateCatalogTitleAndActiveNames(categoryIds: string[], subcategoryIds: string[]): void {
+    const numSelectedCats = categoryIds.length;
+    const numSelectedSubcats = subcategoryIds.length;
+
+    this.activeCategoryName = null;
+    this.activeSubcategoryName = null;
+
+    if (numSelectedCats === 1 && numSelectedSubcats === 1) {
+        const catId = categoryIds[0];
+        const subId = subcategoryIds[0];
+        const parentCat = this.availableCategoriesForFilter.find(c => c.id === catId);
+        const subObj = parentCat?.subcategories?.find(s => s.id === subId);
+        if (parentCat && subObj && this.getCategoryBySubcategoryId(subId)?.id === parentCat.id) {
+            this.catalogTitle = `${parentCat.name} / ${subObj.name}`;
+            this.activeCategoryName = parentCat.name;
+            this.activeSubcategoryName = subObj.name;
+            return;
+        }
+    }
+
+    if (numSelectedCats > 0 && numSelectedSubcats > 0) {
+        this.catalogTitle = "Filtros Combinados";
+    } else if (numSelectedSubcats > 0) {
+        if (numSelectedSubcats === 1) {
+            const subId = subcategoryIds[0];
+            const parentCat = this.getCategoryBySubcategoryId(subId);
+            if (parentCat) {
+                const subName = parentCat.subcategories?.find(s => s.id === subId)?.name;
+                this.catalogTitle = `${parentCat.name} / ${subName || 'Subcategoría'}`;
+                this.activeCategoryName = parentCat.name;
+                this.activeSubcategoryName = subName || null;
+            } else { this.catalogTitle = "Subcategoría"; }
+        } else { this.catalogTitle = "Múltiples Subcategorías"; }
+    } else if (numSelectedCats > 0) {
+        if (numSelectedCats === 1) {
+            const cat = this.availableCategoriesForFilter.find(c => c.id === categoryIds[0]);
+            if (cat) {
+                this.catalogTitle = `Categoría: ${cat.name}`;
+                this.activeCategoryName = cat.name;
+            }
+        } else { this.catalogTitle = "Múltiples Categorías"; }
+    } else {
+        this.catalogTitle = 'Catálogo de Productos';
+    }
+  }
+
+  private getCategoryBySubcategoryId(subId: string): ApiCategory | undefined {
+      for (const cat of this.availableCategoriesForFilter) {
+          if (cat.subcategories?.some(s => s.id === subId)) {
+              return cat;
+          }
+      }
+      return undefined;
+  }
 
   rebuildCategoryFilters(allAvailableCats: ApiCategory[]): void {
     this.categoriesFormArray.clear({ emitEvent: false });
     allAvailableCats.forEach(category => {
       const subcategoryControls = (category.subcategories || []).map(sub =>
-        this.fb.group({
-            id: sub.id,
-            name: sub.name,
-            selected: false,
-            categoryId: category.id
-        })
+        this.fb.group({ id: sub.id, name: sub.name, selected: false, categoryId: category.id })
       );
       this.categoriesFormArray.push(this.fb.group({
-        id: category.id,
-        name: category.name,
-        selected: false,
-        subcategories: this.fb.array(subcategoryControls)
+        id: category.id, name: category.name, selected: false, subcategories: this.fb.array(subcategoryControls)
       }), { emitEvent: false });
     });
   }
 
-  rebuildBrandFilters(baseProductsForBrands: ApiProduct[], _keepSelectionIfNoUrlSearch = true): void {
+  rebuildBrandFilters(baseProductsForBrands: ApiProduct[]): void {
+    const uniqueBrands = [...new Set(baseProductsForBrands.map(p => p.marca.trim()).filter(b => b))].sort();
     this.brandsFormArray.clear({ emitEvent: false });
-    const uniqueBrands = [...new Set(baseProductsForBrands.map(p => p.marca))].sort();
+
     uniqueBrands.forEach(brand => {
       this.brandsFormArray.push(this.fb.group({
         name: brand,
@@ -214,192 +295,162 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   }
 
   setupFilterFormChangesSubscription(): void {
-    this.filterForm.valueChanges.pipe(
-      debounceTime(350),
-      takeUntil(this.destroy$),
-      tap(values => this.currentSortOrder = values.sortOrder as SortOrder)
-    ).subscribe((values) => {
-      if (!this.activeSearchTerm && !this.activeCategoryName && !this.activeSubcategoryName) {
-         this.router.navigate([], {
-           relativeTo: this.route,
-           queryParams: this.getFilterQueryParams(values),
-           queryParamsHandling: 'merge'
-         });
+  this.filterForm.valueChanges.pipe(
+    debounceTime(400),
+    takeUntil(this.destroy$),
+    tap(values => { this.currentSortOrder = values.sortOrder as SortOrder; })
+  ).subscribe(formValues => {
+    if (this.isLoading) {
+      return;
+    }
+    const newQueryParams = this.getFilterQueryParams(formValues);
+    Object.keys(newQueryParams).forEach(key => {
+      if (!newQueryParams[key] || newQueryParams[key].length === 0) {
+        delete newQueryParams[key];
       }
-      this.applySideBarFiltersAndSort(true);
     });
-  }
+
+    const queryParamsToNavigate: any = {...this.route.snapshot.queryParams, ...newQueryParams};
+    if (!newQueryParams['brands']) {
+      delete queryParamsToNavigate['brands'];
+    }
+    if (!newQueryParams['category']) {
+      delete queryParamsToNavigate['category'];
+    }
+    if (!newQueryParams['subcategory']) {
+      delete queryParamsToNavigate['subcategory'];
+    }
+
+    const currentUrlParams = this.route.snapshot.queryParams;
+
+    let paramsChanged = false;
+    const newKeys = Object.keys(queryParamsToNavigate);
+    const currentKeys = Object.keys(currentUrlParams);
+
+    if (newKeys.length !== currentKeys.length) {
+      paramsChanged = true;
+    } else {
+      for (const key of newKeys) {
+        if (!currentKeys.includes(key) || String(queryParamsToNavigate[key]) !== String(currentUrlParams[key])) {
+          paramsChanged = true;
+          break;
+        }
+      }
+    }
+
+    if (paramsChanged) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: queryParamsToNavigate,
+      });
+    }
+    this.applyAllFiltersAndSort();
+  });
+}
 
   getFilterQueryParams(formValues: any): any {
-    const params: any = {};
-    const selectedBrands = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
-    if (selectedBrands.length > 0) params.brands = selectedBrands.join(',');
-
-    const selectedCategoryIds: string[] = [];
-    const selectedSubcategoryIds: string[] = [];
-
-    formValues.categories.forEach((catCtrl: any) => {
-        if (catCtrl.selected && !catCtrl.subcategories.some((sub:any) => sub.selected)) {
-            selectedCategoryIds.push(catCtrl.id);
-        }
-        if (catCtrl.subcategories) {
-            const selectedSubs = catCtrl.subcategories.filter((sub: any) => sub.selected).map((sub: any) => sub.id);
-            selectedSubcategoryIds.push(...selectedSubs);
-        }
-    });
-
-    if (selectedSubcategoryIds.length > 0) {
-        params.subcategory = selectedSubcategoryIds.join(',');
-        const firstSub = formValues.categories
-            .flatMap((c:any) => c.subcategories)
-            .find((s:any)=> s.id === selectedSubcategoryIds[0]);
-        if(firstSub) params.category = firstSub.categoryId;
-
-    } else if (selectedCategoryIds.length > 0) {
-        params.category = selectedCategoryIds.join(',');
-    }
-    return params;
+  const params: any = {};
+  const selectedBrands = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
+  if (selectedBrands.length > 0) {
+    params.brands = selectedBrands.join(',');
   }
 
-  applySideBarFiltersAndSort(resetPage: boolean = true): void {
+  const activeCategoryIds: string[] = [];
+  const activeSubcategoryIds: string[] = [];
+
+  formValues.categories.forEach((categoryGroup: any) => {
+    if (categoryGroup.selected) {
+      activeCategoryIds.push(categoryGroup.id);
+    }
+    if (categoryGroup.subcategories) {
+      const selectedSubs = (categoryGroup.subcategories as any[])
+        .filter(sub => sub.selected)
+        .map(sub => sub.id);
+      activeSubcategoryIds.push(...selectedSubs);
+    }
+  });
+
+  const uniqueSubcategoryIds = [...new Set(activeSubcategoryIds)];
+  const uniqueCategoryIds = [...new Set(activeCategoryIds)];
+
+  if (uniqueSubcategoryIds.length > 0) {
+    params.subcategory = uniqueSubcategoryIds.join(',');
+  }
+  if (uniqueCategoryIds.length > 0) {
+    params.category = uniqueCategoryIds.join(',');
+  }
+
+  if (formValues.sortOrder && formValues.sortOrder !== 'default') {
+    params.sortOrder = formValues.sortOrder;
+  }
+
+  Object.keys(params).forEach(key => {
+    if (!params[key] || params[key].length === 0) {
+      delete params[key];
+    }
+  });
+
+  return params;
+}
+
+  applyAllFiltersAndSort(resetPage: boolean = true): void {
     let tempProducts = [...this.productsFilteredByUrlParams];
     const formValues = this.filterForm.getRawValue();
 
-    const selectedBrands = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
-    const selectedCategoryIdsFromForm: string[] = [];
-    const selectedSubcategoryIdsFromForm: string[] = [];
-
-    formValues.categories.forEach((catCtrl: any) => {
-        if (catCtrl.selected && !catCtrl.subcategories.some((sub:any) => sub.selected)) {
-            selectedCategoryIdsFromForm.push(catCtrl.id);
-        }
-        if (catCtrl.subcategories) {
-            const selectedSubs = catCtrl.subcategories.filter((sub: any) => sub.selected).map((sub: any) => sub.id);
-            selectedSubcategoryIdsFromForm.push(...selectedSubs);
-        }
-    });
-    if (selectedBrands.length > 0) {
-      tempProducts = tempProducts.filter(p => selectedBrands.includes(p.marca));
-    }
-    if (selectedSubcategoryIdsFromForm.length > 0) {
-        tempProducts = tempProducts.filter(p => {
-            const subcategoryId = this.getSubcategoryIdByName(p.subcategoria, p.categoria);
-            return subcategoryId !== undefined && selectedSubcategoryIdsFromForm.includes(subcategoryId);
-        });
-    } else if (selectedCategoryIdsFromForm.length > 0) {
-        if (!this.activeSubcategoryName) {
-            tempProducts = tempProducts.filter(p => {
-                const categoryId = this.getCategoryIdByName(p.categoria);
-                return categoryId !== undefined && selectedCategoryIdsFromForm.includes(categoryId);
-            });
-        }
+    const selectedBrandsFromForm = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
+    if (selectedBrandsFromForm.length > 0) {
+      tempProducts = tempProducts.filter(p => selectedBrandsFromForm.includes(p.marca));
     }
 
-    if (!this.activeSearchTerm && (selectedCategoryIdsFromForm.length > 0 || selectedSubcategoryIdsFromForm.length > 0)) {
-        this.rebuildBrandFilters(tempProducts, true);
-    } else if (!this.activeSearchTerm && selectedBrands.length === 0 && selectedCategoryIdsFromForm.length === 0 && selectedSubcategoryIdsFromForm.length === 0) {
-        this.rebuildBrandFilters(this.productsFilteredByUrlParams, false);
-    }
     switch (this.currentSortOrder) {
-      case 'priceAsc':
-        tempProducts.sort((a, b) => a.precio.precio_actual - b.precio.precio_actual);
-        break;
-      case 'priceDesc':
-        tempProducts.sort((a, b) => b.precio.precio_actual - a.precio.precio_actual);
-        break;
-      case 'nameAsc':
-        tempProducts.sort((a,b) => a.nombre.localeCompare(b.nombre));
-        break;
-      case 'nameDesc':
-        tempProducts.sort((a,b) => b.nombre.localeCompare(a.nombre));
-        break;
+      case 'priceAsc': tempProducts.sort((a, b) => a.precio.precio_actual - b.precio.precio_actual); break;
+      case 'priceDesc': tempProducts.sort((a, b) => b.precio.precio_actual - a.precio.precio_actual); break;
+      case 'nameAsc': tempProducts.sort((a,b) => a.nombre.localeCompare(b.nombre)); break;
+      case 'nameDesc': tempProducts.sort((a,b) => b.nombre.localeCompare(a.nombre)); break;
     }
+
     this.productsToDisplay = tempProducts;
     this.totalPages = Math.ceil(this.productsToDisplay.length / this.itemsPerPage);
-
-    if (resetPage) {
-        this.currentPage = 1;
-    } else {
-        this.currentPage = Math.max(1, Math.min(this.currentPage, this.totalPages || 1));
-    }
+    this.currentPage = resetPage ? 1 : Math.max(1, Math.min(this.currentPage, this.totalPages || 1));
     this.updatePaginatedProducts();
   }
 
   getCategoryIdByName(name: string): string | undefined {
-      const category = this.availableCategoriesForFilter.find(c => c.name === name);
-      return category?.id;
+    return this.availableCategoriesForFilter.find(c => c.name === name)?.id;
   }
 
   getSubcategoryIdByName(subName: string, catName: string): string | undefined {
-      const category = this.availableCategoriesForFilter.find(c => c.name === catName);
-      const subcategory = category?.subcategories?.find(s => s.name === subName);
-      return subcategory?.id;
+    const category = this.availableCategoriesForFilter.find(c => c.name === catName);
+    return category?.subcategories?.find(s => s.name === subName)?.id;
   }
 
   updatePaginatedProducts(): void {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    this.paginatedProducts = this.productsToDisplay.slice(startIndex, endIndex);
+    this.paginatedProducts = this.productsToDisplay.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
       this.currentPage = page;
-      this.applySideBarFiltersAndSort(false);
+      this.applyAllFiltersAndSort(false);
     }
   }
-
-  nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.applySideBarFiltersAndSort(false);
-    }
-  }
-
-  previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.applySideBarFiltersAndSort(false);
-    }
-  }
+  nextPage(): void { if (this.currentPage < this.totalPages) { this.currentPage++; this.applyAllFiltersAndSort(false); }}
+  previousPage(): void { if (this.currentPage > 1) { this.currentPage--; this.applyAllFiltersAndSort(false); }}
 
   getPages(): number[] {
-    const pages = [];
-    let startPage = Math.max(1, this.currentPage - 2);
-    let endPage = Math.min(this.totalPages, this.currentPage + 2);
-
-    if (this.totalPages <= 5) {
-        startPage = 1;
-        endPage = this.totalPages;
-    } else {
-        if (this.currentPage <= 3) {
-            endPage = 5;
-        } else if (this.currentPage > this.totalPages - 3) {
-            startPage = this.totalPages - 4;
-        }
-    }
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
+    const pages = []; let startPage = Math.max(1, this.currentPage - 2); let endPage = Math.min(this.totalPages, this.currentPage + 2);
+    if (this.totalPages <= 5) { startPage = 1; endPage = this.totalPages; }
+    else { if (this.currentPage <= 3) endPage = 5; else if (this.currentPage > this.totalPages - 3) startPage = this.totalPages - 4; }
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
     return pages;
   }
 
   limpiarFiltros(): void {
-    this.activeSearchTerm = null;
-    this.activeCategoryName = null;
-    this.activeSubcategoryName = null;
-    this.catalogTitle = 'Catálogo de Productos';
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-    });
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
-  toggleSortDropdown(): void {
-    this.showSortDropdown = !this.showSortDropdown;
-  }
-
+  toggleSortDropdown(): void { this.showSortDropdown = !this.showSortDropdown; }
   selectSortOrder(orderValue: string): void {
     this.filterForm.get('sortOrder')?.setValue(orderValue as SortOrder);
     this.showSortDropdown = false;
@@ -411,16 +462,8 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   }
 
   onCategorySelectionChange(categoryControl: AbstractControl, categoryIndex: number): void {
-    const control = categoryControl as FormGroup;
-    const isSelected = control.get('selected')?.value;
-    const subcategoryArray = this.getSubcategoryControls(categoryIndex);
+  }
 
-    if (!isSelected) {
-      subcategoryArray.controls.forEach(subCtrl => {
-        if (subCtrl.get('selected')?.value) {
-            subCtrl.get('selected')?.setValue(false, { emitEvent: true });
-        }
-      });
-    }
+  onSubcategorySelectionChange(subcategoryControl: AbstractControl, categoryIndex: number): void {
   }
 }
