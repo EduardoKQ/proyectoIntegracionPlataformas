@@ -207,7 +207,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   goToAdminDashboard(): void {
-    this.navigateTo('/product/list');
+    this.navigateTo('/product');
   }
 
   logout(): void {
