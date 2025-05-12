@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "sass:math";
+
 $text-color: #333333;
 $primary-color: #ff5722;
 $primary-dark: #e64a19;
@@ -297,11 +300,11 @@ h1, h2 {
 }
 
 .featured-products {
-  padding: $spacing-unit * 2 0;
+  padding: math.div($spacing-unit, 2) 0;
   text-align: center;
 
   h2 {
-    margin-bottom: $spacing-unit * 1.5;
+    margin-bottom: math.div($spacing-unit, 1.5);
     font-size: 2rem;
     color: $text-color;
   }
@@ -314,13 +317,13 @@ h1, h2 {
   position: relative;
   margin: 0 auto;
   max-width: 1200px;
-  padding: 0 $spacing-unit * 3;
+  padding: 0 math.div($spacing-unit, 3);
 
   .carousel-nav {
     background-color: rgba($dark-gray, 0.6);
     color: $white;
     border: none;
-    padding: $spacing-unit * 0.5 $spacing-unit;
+    padding: math.div($spacing-unit, 0.5) math.div($spacing-unit, 1);
     border-radius: 50%;
     cursor: pointer;
     font-size: 1.5rem;
@@ -336,11 +339,11 @@ h1, h2 {
     }
 
     &.prev {
-      left: $spacing-unit / 2;
+      left: math.div($spacing-unit, 2);
     }
 
     &.next {
-      right: $spacing-unit / 2;
+      right: math.div($spacing-unit, 2);
     }
 
     &:disabled {
@@ -362,9 +365,8 @@ h1, h2 {
 }
 
 .product-card-featured {
-  background-color: $white;
-  border: 1px solid darken($light-gray, 10%);
-  border-radius: $border-radius-base * 2;
+  border: 1px solid color.adjust($light-gray, $lightness: -10%);
+  border-radius: math.div($border-radius-base, 2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -406,7 +408,7 @@ h1, h2 {
   }
 
   .product-info {
-    padding: $spacing-unit * 0.75;
+    padding: math.div($spacing-unit, 0.75);
     text-align: left;
     flex-grow: 1;
     display: flex;
@@ -416,7 +418,7 @@ h1, h2 {
 
   .product-name-featured {
     font-size: 1rem;
-    margin-bottom: $spacing-unit / 2;
+    margin-bottom: math.div($spacing-unit, 2);
     color: $text-color;
     font-weight: 600;
     white-space: nowrap;
@@ -428,32 +430,32 @@ h1, h2 {
     font-size: 0.9rem;
     color: $primary-color;
     font-weight: bold;
-    margin-bottom: $spacing-unit / 2;
+    margin-bottom: math.div($spacing-unit, 2);
   }
 
   .add-to-cart-featured {
     align-self: stretch;
-    margin: 0 ($spacing-unit * 0.75) ($spacing-unit * 0.75);
+    margin: 0 math.div($spacing-unit, 0.75) math.div($spacing-unit, 0.75);
   }
 }
 
 .carousel-indicators {
   &.products {
     text-align: center;
-    margin-top: $spacing-unit * 1.5;
+    margin-top: math.div($spacing-unit, 1.5);
 
     .indicator-dot {
       display: inline-block;
       width: 10px;
       height: 10px;
-      background-color: lighten($dark-gray, 30%);
+      background-color: color.adjust($dark-gray, $lightness: 30%);
       border-radius: 50%;
-      margin: 0 $spacing-unit / 3;
+      margin: 0 math.div($spacing-unit, 3);
       cursor: pointer;
       transition: background-color 0.3s ease;
 
       &:hover {
-        background-color: lighten($dark-gray, 15%);
+        background-color: color.adjust($dark-gray, $lightness: 15%);
       }
 
       &.active {
@@ -483,7 +485,7 @@ h1, h2 {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
     line-height: 1.5;
-    border-radius: $border-radius-base * 0.8;
+    border-radius: math.div($border-radius-base, 0.8);
   }
 
   &.btn-primary {
@@ -494,7 +496,7 @@ h1, h2 {
     &:hover {
       color: $white;
       background-color: $primary-dark;
-      border-color: darken($primary-dark, 5%);
+      border-color: color.adjust($primary-dark, $lightness: -5%);
     }
 
     &:focus, &.focus {
@@ -511,8 +513,8 @@ h1, h2 {
     &:not(:disabled):not(.disabled):active,
     &:not(:disabled):not(.disabled).active {
       color: $white;
-      background-color: darken($primary-dark, 5%);
-      border-color: darken($primary-dark, 7.5%);
+      background-color: color.adjust($primary-dark, $lightness: -5%);
+      border-color: color.adjust($primary-dark, $lightness: -7.5%);
       &:focus {
         box-shadow: 0 0 0 0.2rem rgba($primary-color, 0.5);
       }

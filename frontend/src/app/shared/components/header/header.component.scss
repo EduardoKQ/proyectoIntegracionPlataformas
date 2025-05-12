@@ -324,8 +324,8 @@ $spacing: 15px;
           }
 
           .result-brand {
+            color: color.adjust($dropdown-text-color, $lightness: 20%);
             font-size: 0.8rem;
-            color: lighten($dropdown-text-color, 20%);
             line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;
