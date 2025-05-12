@@ -1,22 +1,32 @@
 <div class="home-container">
-  <!-- Banner principal -->
-  <section class="hero-section">
-    <div class="hero-content">
-      <h1>Bienvenido a <span class="highlight">Ferremas</span></h1>
-      <p>Tu ferretería de confianza para proyectos profesionales y del hogar</p>
-      <div class="hero-buttons">
-        <a href="#" class="btn btn-primary">Ver Productos</a>
-        <a href="#" class="btn btn-outline">Ofertas Especiales</a>
-      </div>
-    </div>
-    <div class="hero-image">
-         <img src="assets/images/trabajando.png" alt="Herramientas Ferremas">
-    </div>
-  </section>
 
-  <!-- Card estilo historias ig -->
+  <!--Carousel-->
+  <div class="carousel-container" *ngIf="slides.length > 0">
+  <button class="carousel-button prev" (click)="previousSlide()" aria-label="Anterior">&#10094;</button>
+
+  <div class="slide-image-container" (click)="navigateToCurrentSlideRoute()" role="link" tabindex="0" (keydown.enter)="navigateToCurrentSlideRoute()">
+    <img [src]="getCurrentSlideUrl()" [alt]="getCurrentSlideAlt()" class="slide-image">
+  </div>
+
+  <button class="carousel-button next" (click)="nextSlide()" aria-label="Siguiente">&#10095;</button>
+
+  <div class="dots-container">
+    <span *ngFor="let slide of slides; let i = index"
+          class="dot"
+          [class.active]="i === currentIndex"
+          (click)="goToSlide(i)"
+          [attr.aria-label]="'Ir a diapositiva ' + (i + 1)">
+    </span>
+  </div>
+</div>
+
+<div *ngIf="slides.length === 0">
+  <p>No hay imágenes para mostrar en el carrusel.</p>
+</div>
+
+
+  <!--Story-->
   <section class="story-cards-section">
-    <h2>Destacado</h2>
     <div class="story-cards-container">
       <div *ngFor="let story of stories" class="story-card" (click)="openStory(story.id)">
         <img [src]="story.backgroundImage" [alt]="story.title" class="card-background">
@@ -33,126 +43,4 @@
     </div>
   </section>
 
-  <!-- Categorías destacadas -->
-  <section class="categories-section">
-    <h2>Categorías Destacadas</h2>
-    <div class="categories-grid">
-      <div class="category-card">
-        <div class="category-icon">
-          <span class="material-symbols-outlined">handyman</span>
-        </div>
-        <h3>Herramientas Manuales</h3>
-        <a href="/categoria/herramientas" class="category-link">Ver productos</a>
-      </div>
-
-      <div class="category-card">
-        <div class="category-icon">
-          <span class="material-symbols-outlined">electrical_services</span>
-        </div>
-        <h3>Materiales Eléctricos</h3>
-        <a href="/categoria/electricos" class="category-link">Ver productos</a>
-      </div>
-
-      <div class="category-card">
-        <div class="category-icon">
-          <span class="material-symbols-outlined">plumbing</span>
-        </div>
-        <h3>Fontanería</h3>
-        <a href="/categoria/fontaneria" class="category-link">Ver productos</a>
-      </div>
-
-      <div class="category-card">
-        <div class="category-icon">
-          <span class="material-symbols-outlined">hardware</span>
-        </div>
-        <h3>Pinturas y Acabados</h3>
-        <a href="/categoria/pinturas" class="category-link">Ver productos</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Productos destacados -->
-  <section class="featured-products">
-    <h2>Productos Destacados</h2>
-    <div class="products-carousel">
-      <div class="product-card">
-        <div class="product-image">
-          <img src="../../../assets/images/trabajando.png" alt="Taladro Profesional">
-          <div class="product-badge">Oferta</div>
-        </div>
-        <div class="product-info">
-          <h3>Producto 1</h3>
-          <p class="product-price">$39.990</p>
-          <button class="btn btn-sm">Ver detalles</button>
-        </div>
-      </div>
-
-      <div class="product-card">
-        <div class="product-image">
-          <img src="../../../assets/images/trabajando.png" alt="Set de Destornilladores">
-        </div>
-        <div class="product-info">
-          <h3>Producto 2</h3>
-          <p class="product-price">$12.990</p>
-          <button class="btn btn-sm">Ver detalles</button>
-        </div>
-      </div>
-
-      <div class="product-card">
-        <div class="product-image">
-          <img src="../../../assets/images/trabajando.png" alt="Caja de Herramientas">
-        </div>
-        <div class="product-info">
-          <h3>Producto 3</h3>
-          <p class="product-price">$24.990</p>
-          <button class="btn btn-sm">Ver detalles</button>
-        </div>
-      </div>
-
-      <div class="product-card">
-        <div class="product-image">
-          <img src="../../../assets/images/trabajando.png" alt="Caja de Herramientas">
-        </div>
-        <div class="product-info">
-          <h3>Producto 4</h3>
-          <p class="product-price">$24.990</p>
-          <button class="btn btn-sm">Ver detalles</button>
-        </div>
-      </div>
-
-      <div class="product-card">
-        <div class="product-image">
-          <img src="../../../assets/images/trabajando.png" alt="Caja de Herramientas">
-        </div>
-        <div class="product-info">
-          <h3>Producto 5</h3>
-          <p class="product-price">$24.990</p>
-          <button class="btn btn-sm">Ver detalles</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Banner promocional -->
-  <section class="promo-banner">
-    <div class="promo-content">
-      <h2>¡Ofertas Especiales de Temporada!</h2>
-      <p>Descuentos de hasta un 30% en herramientas seleccionadas.</p>
-      <a href="#" class="btn btn-white">Ver ofertas</a>
-    </div>
-  </section>
-
-  <!-- Sobre nosotros -->
-  <section class="about-section">
-    <div class="about-image">
-      <img src="../../../assets/images/trabajando.png" alt="Nuestra Tienda">
-    </div>
-    <div class="about-content">
-      <h2>Sobre Ferremas</h2>
-      <p>Somos una empresa dedicada a proporcionar soluciones integrales en ferretería,
-      con más de 15 años de experiencia en el mercado. Ofrecemos productos de alta calidad
-      y el mejor servicio para profesionales y aficionados.</p>
-      <a href="#" class="btn btn-link">Conocer más</a>
-    </div>
-  </section>
 </div>

@@ -62,7 +62,8 @@
           <li *ngFor="let product of searchResults" (click)="selectSearchResult(product)">
             <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="result-image">
             <div class="result-details">
-              <div class="result-text-info"> <span class="result-name">{{ product.nombre }}</span>
+              <div class="result-text-info">
+                <span class="result-name">{{ product.nombre }}</span>
                 <span class="result-brand">{{ product.marca }}</span>
               </div>
               <span class="result-price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>

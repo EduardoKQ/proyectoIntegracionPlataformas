@@ -191,6 +191,7 @@ $spacing: 15px;
             font-size: 14px;
             display: block;
             padding: 4px 0;
+            cursor: pointer;
             &:hover {
               color: $header-accent-color;
             }
@@ -324,7 +325,7 @@ $spacing: 15px;
 
           .result-brand {
             font-size: 0.8rem;
-            color: color.adjust($dropdown-text-color, $lightness: 20%);
+            color: lighten($dropdown-text-color, 20%);
             line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;
@@ -346,7 +347,6 @@ $spacing: 15px;
     }
   }
 }
-
 
 .header-right {
   display: flex;

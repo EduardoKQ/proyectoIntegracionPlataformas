@@ -328,5 +328,50 @@
       "current_price_date": "2025-04-25",
       "subcategory": 22
     }
+  },
+  {
+    "model": "api.product",
+    "pk": 38,
+    "fields": {
+      "product_code": "1269",
+      "brand": "STANLEY",
+      "brand_code": "150183",
+      "name": "Esmeril angular + 2 baterias 4ah",
+      "description": "Esmeril angular 4 1/2 20v + 2 baterias 4ah.  scg400m2k stanley",
+      "image_url": "https://www.imperial.cl/ccstore/v1/images/?source=/file/v8637268548313978669/products/150183-1.jpg",
+      "current_price": "191992.00",
+      "current_price_date": "2025-05-11",
+      "subcategory": 13
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 39,
+    "fields": {
+      "product_code": "1270",
+      "brand": "BLACK+DECKER",
+      "brand_code": "1367972",
+      "name": "Taladro inalámbrico 10 mm",
+      "description": "KIT TALADRO ATORNILLADOR 10 mm 12V",
+      "image_url": "https://www.easy.cl/_next/image?url=https%3A%2F%2Feasycl.vteximg.com.br%2Farquivos%2Fids%2F5084337%2F1367972-0000-001.jpg%3Fv%3D638744082735800000&w=640&q=75",
+      "current_price": "44990.00",
+      "current_price_date": "2025-05-11",
+      "subcategory":14
+    }
+  },
+  {
+    "model": "api.product",
+    "pk": 39,
+    "fields": {
+      "product_code": "1270",
+      "brand": "DEWALT",
+      "brand_code": "1357642",
+      "name": "Taladro percutor",
+      "description": "Taladro percutor - Atornillador 20V",
+      "image_url": "https://www.easy.cl/_next/image?url=https%3A%2F%2Feasycl.vteximg.com.br%2Farquivos%2Fids%2F5040123%2F1357642-0000-001.jpg%3Fv%3D638743236794130000&w=640&q=75",
+      "current_price": "259990.00",
+      "current_price_date": "2025-05-11",
+      "subcategory":14
+    }
   }
 ]
