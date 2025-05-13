@@ -24,7 +24,7 @@ export const routes: Routes = [
   { path: 'catalogo', component: CatalogoComponent, data: { showStoreHeader: true }},
   { path: 'catalogo-marca', component: CatalogoMarcaComponent, data: { showStoreHeader: true }},
   { path: 'home',component: HomeComponent, data: { showStoreHeader: true }},
-  {path: 'product/:codigo_producto',component: ProductDetailComponent,data: { showStoreHeader: true }},
+  {path: 'producto/:codigo_producto',component: ProductDetailComponent,data: { showStoreHeader: true }},
   { path: 'story/:id', component: StoryViewComponent },
   { path : '', redirectTo: 'home', pathMatch: 'full' },
 

@@ -323,11 +323,11 @@ h1, h2 {
     background-color: rgba($dark-gray, 0.6);
     color: $white;
     border: none;
-    padding: math.div($spacing-unit, 0.5) math.div($spacing-unit, 1);
+    padding: math.div($spacing-unit, 0.7) math.div($spacing-unit, 1);
     border-radius: 50%;
     cursor: pointer;
-    font-size: 1.5rem;
-    line-height: 1;
+    font-size: 1rem;
+    line-height: 0;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -339,11 +339,11 @@ h1, h2 {
     }
 
     &.prev {
-      left: math.div($spacing-unit, 2);
+      left: math.div($spacing-unit, 100);
     }
 
     &.next {
-      right: math.div($spacing-unit, 2);
+      right: math.div($spacing-unit,100);
     }
 
     &:disabled {
