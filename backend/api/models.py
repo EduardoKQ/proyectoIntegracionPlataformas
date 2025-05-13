@@ -166,7 +166,9 @@ class Inventory(models.Model):
 
 class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
-    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name="orders")
+    client = models.ForeignKey(
+        Client, on_delete=models.SET_NULL, null=True, blank=True, related_name="orders"
+    )
     payment_type = models.CharField(max_length=50)
     retrieval_type = models.CharField(max_length=50)
     shipping_address = models.CharField(max_length=255, null=True, blank=True)
