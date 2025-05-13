@@ -120,13 +120,14 @@ class Product(models.Model):
     )
 
 
-class PriceHistory(models.Model):
-    price_history_id = models.AutoField(primary_key=True)
-    product = models.ForeignKey(
-        Product, on_delete=models.DO_NOTHING, related_name="price_history"
-    )
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
+# !!! not used yet
+# class PriceHistory(models.Model):
+#     price_history_id = models.AutoField(primary_key=True)
+#     product = models.ForeignKey(
+#         Product, on_delete=models.DO_NOTHING, related_name="price_history"
+#     )
+#     price = models.DecimalField(max_digits=10, decimal_places=2)
+#     date = models.DateField()
 
 
 class Subcategory(models.Model):
@@ -161,3 +162,42 @@ class Inventory(models.Model):
     class Meta:
         # Enforce that the combination of branch and product is unique
         unique_together = ("branch", "product")
+
+
+class Order(models.Model):
+    order_id = models.AutoField(primary_key=True)
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, related_name="orders")
+    payment_type = models.CharField(max_length=50)
+    retrieval_type = models.CharField(max_length=50)
+    shipping_address = models.CharField(max_length=255, null=True, blank=True)
+    pickup_branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pickup_orders",
+    )
+    order_status = models.CharField(max_length=50, default="pending")
+    creation_date = models.DateTimeField(auto_now_add=True)
+    delivery_date = models.DateTimeField(null=True, blank=True)
+
+
+class OrderItem(models.Model):
+    order_item_id = models.AutoField(primary_key=True)
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="order_items"
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="order_items",
+    )
+
+    product_code_copy = models.CharField(max_length=50)
+    product_name_copy = models.CharField(max_length=100)
+    product_brand_copy = models.CharField(max_length=100)
+
+    quantity = models.PositiveIntegerField()
+    transaction_price = models.DecimalField(max_digits=10, decimal_places=2)
