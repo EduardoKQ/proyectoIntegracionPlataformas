@@ -82,7 +82,7 @@
 
       <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
         <div class="product-card" *ngFor="let product of paginatedProducts">
-          <a [routerLink]="['/product', product.codigo_producto]" class="product-link">
+          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
             <div class="product-image-container">
               <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
             </div>
