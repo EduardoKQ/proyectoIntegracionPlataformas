@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 import json
-from api.models import WebUserManager, WebUser, Client, WebRoles
+from api.models import WebUserManager, WebUser, Client, WebRoles, Worker, Branch
+from api.user.web_role_names import WebRoleNames
 from .serializer import RegisterClientSerializer, LoginSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -108,10 +109,18 @@ def me(request):
                 raise NotAuthenticated("Invalid or missing token.")
 
             user = auth_result[0]
-            return JsonResponse(
-                user_data(user),
-                status=200,
-            )
+            # check if is a worker or a client
+            if user.role.role == WebRoleNames.CLIENTE:
+                return JsonResponse(
+                    user_data(user),
+                    status=200,
+                )
+            else:
+                return JsonResponse(
+                    worker_data(user),
+                    status=200,
+                )
+
         except NotAuthenticated as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=401)
         except AuthenticationFailed as e:
@@ -156,6 +165,26 @@ def login_response(user):
         status=200,
     )
     return response
+
+
+def worker_data(user):
+    if not isinstance(user, WebUser):
+        return None
+    # get the worker data
+    worker = Worker.objects.get(user_account=user)
+    # get its the branch data
+    branch = Branch.objects.get(branch_id=worker.branch_id)
+    return {
+        "email": user.email,
+        "role": user.role.role,
+        "name": worker.first_name + " " + worker.last_name,
+        "branch": {
+            "branch_code": branch.branch_code,
+            "name": branch.name,
+            "address": branch.address,
+            "city": branch.city,
+        },
+    }
 
 
 def user_data(user):
