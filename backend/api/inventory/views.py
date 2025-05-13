@@ -13,6 +13,7 @@ from .utils import (
     process_branches_get,
     process_branches_update,
     process_branches_delete,
+    process_inventory_update_quantity_bodeguero,
 )
 
 
@@ -39,7 +40,7 @@ def branch_get_update_delete(request, branch_code):
         return process_branches_get(branch_code)
     # only admin can create edit or delete branches
     if request.method == "PUT" or request.method == "DELETE":
-        allowed_roles = [WebRoleNames.ADMIN_TIENDA]
+        allowed_roles = [WebRoleNames.ADMIN_TIENDA, WebRoleNames.BODEGUERO]
         auth_response = check_auth_allowed_role(request, allowed_roles)
         if auth_response is not None:
             return auth_response
@@ -57,21 +58,32 @@ def branch_get_update_delete(request, branch_code):
 def inventory_list(request):
     return process_inventory_list(request)
 
+
 @api_view(["GET"])
 def inventory_by_branch(request, branch_code):
     return process_inventory_by_branch(branch_code)
 
-@api_view(["GET","PUT"])
+
+@api_view(["GET", "PUT"])
 def inventory_get_update_quantity(request, branch_code, product_code):
     # public get endpoint for all users
     if request.method == "GET":
         return process_inventory_get_quantity(branch_code, product_code)
-    # only admin can update inventory
-    allowed_roles = [WebRoleNames.ADMIN_TIENDA]
+    # only admin and bodeguero can update inventory
+    allowed_roles = [WebRoleNames.ADMIN_TIENDA, WebRoleNames.BODEGUERO]
     auth_response = check_auth_allowed_role(request, allowed_roles)
     if auth_response is not None:
         return auth_response
     # process the request to update inventory quantity
     if request.method == "PUT":
-        return process_inventory_update_quantity(branch_code, product_code, request.data)
-
+        user_role = request.user.role.role
+        if user_role == WebRoleNames.ADMIN_TIENDA:
+            return process_inventory_update_quantity(
+                branch_code, product_code, request.data
+            )
+        elif user_role == WebRoleNames.BODEGUERO:
+            return process_inventory_update_quantity_bodeguero(
+                branch_code, product_code, request
+            )
+        else:
+            return JsonResponse({"error": "Invalid user role"}, status=403)

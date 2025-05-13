@@ -6,7 +6,15 @@ from .serializer import (
     BranchAddSerializer,
     BranchUpdateSerializer,
 )
-from api.models import Product, Branch, Inventory
+from api.models import (
+    Product,
+    Branch,
+    Inventory,
+    Worker,
+    Branch,
+    WebUserManager,
+    WebUser,
+)
 
 
 ### BRANCHES HELPERS ###
@@ -63,6 +71,7 @@ def process_branches_get(branch_code):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 def process_branches_update(request_data, branch_code):
     try:
         # Get the branch by code
@@ -101,7 +110,7 @@ def process_branches_delete(branch_code):
         inventories = Inventory.objects.filter(branch=branch)
         inventories.delete()
         branch.delete()
-    
+
     try:
         # Get the branch by code
         branch = Branch.objects.get(branch_code=branch_code)
@@ -135,6 +144,7 @@ def process_inventory_list(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 def process_inventory_by_branch(branch_code):
     try:
         # Get the branch by code
@@ -152,6 +162,7 @@ def process_inventory_by_branch(branch_code):
         return JsonResponse({"error": "Inventory not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 def process_inventory_get_quantity(branch_code, product_code):
     try:
@@ -173,6 +184,7 @@ def process_inventory_get_quantity(branch_code, product_code):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
 def process_inventory_update_quantity(branch_code, product_code, request_data):
     def get_quantity(request_data):
         # Get the quantity from the request data
@@ -183,7 +195,7 @@ def process_inventory_update_quantity(branch_code, product_code, request_data):
         if quantity < 0:
             raise ValueError("Invalid quantity")
         return quantity
-    
+
     try:
         # Get the branch by code
         branch = Branch.objects.get(branch_code=branch_code)
@@ -206,3 +218,18 @@ def process_inventory_update_quantity(branch_code, product_code, request_data):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+
+def process_inventory_update_quantity_bodeguero(branch_code, product_code, request):
+    # check if branch_code is asociated with the current bodeguero
+    print(request.user)
+    user_email = request.user
+    user = WebUser.objects.filter(email=user_email).first()
+    worker = Worker.objects.filter(user_account=user).first()
+    worker_branch = worker.branch.branch_code if worker else None
+
+    is_branch_code_valid = branch_code == worker_branch
+    if not is_branch_code_valid:
+        return JsonResponse(
+            {"error": "El bodeguero no tiene acceso a esta sucursal"}, status=403
+        )
+    return process_inventory_update_quantity(branch_code, product_code, request.data)
