@@ -98,6 +98,46 @@
         </button>
     </section>
   </div>
+  <section class="productos-similares-section">
+  <div class="productos-relacionados" *ngIf="featuredProducts.length > 0">
+    <h2>Productos similares</h2>
+  </div>
+  <div class="carousel-outer-container">
+    <button
+      class="carousel-nav prev"
+      (click)="prevFeaturedProductsSlide()"
+      *ngIf="featuredProducts.length > productsPerSlide"
+      aria-label="Productos anteriores">&#10094;</button>
+
+    <div class="products-carousel-wrapper" #productsCarouselContainer>
+      <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
+        <div class="product-card-featured" *ngFor="let product of featuredProducts">
+          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+            <div class="product-image-container">
+              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
+            </div>
+            <div class="product-info">
+              <h3 class="product-name-featured">{{ product.nombre }}</h3>
+              <p class="product-price-featured">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <button
+      class="carousel-nav next"
+      (click)="nextFeaturedProductsSlide()"
+      *ngIf="featuredProducts.length > productsPerSlide"
+      aria-label="Siguientes productos">&#10095;</button>
+  </div>
+  <div class="carousel-indicators products" *ngIf="featuredProducts.length > productsPerSlide && getFeaturedProductSlides().length > 1">
+      <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
+            class="indicator-dot"
+            [class.active]="i === currentFeaturedProductsSlideIndex"
+            (click)="goToFeaturedProductsSlide(i)"></span>
+    </div>
+</section>
+
 
   <div *ngIf="!product && !isLoading && !errorMessage" class="no-product-found">
     <p>Producto no encontrado con el código especificado.</p>
