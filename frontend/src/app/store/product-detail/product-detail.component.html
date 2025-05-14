@@ -35,7 +35,7 @@
     </section>
 
     <section class="product-info-section">
-      <a class="product-brand-link"
+      <a class="product-brand-link" style="text-decoration: none;"
          *ngIf="product.marca"
          [routerLink]="['/catalogo']"
          [queryParams]="{ brands: product.marca }">

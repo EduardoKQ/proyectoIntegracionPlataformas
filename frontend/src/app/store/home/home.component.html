@@ -57,7 +57,7 @@
       <div class="products-carousel-wrapper" #productsCarouselContainer>
         <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
           <div class="product-card-featured" *ngFor="let product of featuredProducts">
-            <a [routerLink]="['/store/product-detail', product.codigo_producto]" class="product-link"> <div class="product-image-container">
+            <a [routerLink]="['/producto', product.codigo_producto]" class="product-link"> <div class="product-image-container">
                 <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
               </div>
               <div class="product-info">
