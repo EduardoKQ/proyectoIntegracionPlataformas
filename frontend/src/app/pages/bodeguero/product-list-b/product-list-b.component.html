@@ -1,0 +1,43 @@
+<h1>Lista de Productos</h1>
+
+<div *ngIf="errorMessage" class="error-message">
+  <p>{{ errorMessage }}</p>
+  <button (click)="refreshProducts()" class="btn-secondary btn-sm">Reintentar</button>
+</div>
+
+<div *ngIf="isLoading" class="loading-indicator">
+  <p>Cargando productos y stock...</p>
+</div>
+
+<div class="product-list-container" *ngIf="!isLoading && !errorMessage">
+  <div *ngIf="productsWithStock$ | async as products">
+    <div *ngIf="products.length > 0; else noProductsFound">
+      <div class="product-card" *ngFor="let product of products">
+        <div class="product-image-container" *ngIf="product.imageUrl">
+          <img [src]="product.imageUrl" [alt]="product.nombre" class="product-image">
+        </div>
+        <div class="product-info">
+          <h3>{{ product.nombre }}</h3>
+          <p class="description" *ngIf="product.descripcion">{{ product.descripcion }}</p>
+          <p><strong>Marca:</strong> {{ product.marca }}</p>
+          <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
+          <p *ngIf="currentUserRole === 'bodeguero' && bodegueroBranchName"><strong>Sucursal:</strong> {{ bodegueroBranchName }}</p>
+          <p><strong>Stock:</strong> {{ product.stock_total }} unidades</p>
+          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+          <p class="product-codes"><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
+        </div>
+        <div class="product-actions">
+          <button [routerLink]="['/product-bodeguero/editB', product.codigo_producto]" class="btn-icon btn-edit" title="Editar Producto">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <ng-template #noProductsFound>
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">inventory_2</span>
+        <p>No hay productos disponibles para mostrar en este momento.</p>
+        </div>
+    </ng-template>
+  </div>
+</div>

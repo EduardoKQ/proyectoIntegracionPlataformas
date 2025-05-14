@@ -4,7 +4,6 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, forkJoin, of, Observable } from 'rxjs';
 import { takeUntil, finalize, switchMap, catchError, tap, map } from 'rxjs/operators';
-
 import { ProductService } from '../../services/product.service';
 import { CategorySubcategoryService, Category, SubcategoryFromCategoryDetail } from '../../services/category.service';
 import { BranchService, Branch } from '../../services/branch.service';

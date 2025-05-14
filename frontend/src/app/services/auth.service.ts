@@ -3,33 +3,37 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+export interface BranchInfoForUser {
+  branch_id: number;
+  branch_code: string;
+  name: string;
+}
+
+export interface UserData {
+  id: number;
+  email: string;
+  role: string;
+  name?: string;
+  branch?: BranchInfoForUser;
+  is_first_time_login?: boolean;
+  recieve_offers?: boolean;
+}
+
 export interface AuthResponse {
   status: string;
   message: string;
-  user_data: {
-    email: string;
-    role: string;
-    recieve_offers?: boolean;
-    id?: number;
-  };
+  user_data: UserData;
   tokens: {
     access: string;
     refresh: string;
   };
 }
-
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface StoredUser {
-    email: string;
-    role: string;
-    id?: number;
-    recieve_offers?: boolean;
-}
-
+export type StoredUser = UserData;
 export interface RegisterCredentials {
   email: string;
   password: string;
@@ -37,34 +41,41 @@ export interface RegisterCredentials {
 }
 
 export interface RegisterResponse {
-    status: string;
-    message: string;
-    user_data: StoredUser;
+  status: string;
+  message: string;
+  user_data: UserData;
 }
-
 export interface RefreshTokenResponse {
   access: string;
   refresh?: string;
 }
-
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-
   private apiUrl = 'http://localhost:8100/api';
 
   private httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      })
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
   };
 
   constructor(private http: HttpClient) { }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     const loginUrl = `${this.apiUrl}/user/login`;
-    return this.http.post<AuthResponse>(loginUrl, credentials, this.httpOptions);
+    return this.http.post<AuthResponse>(loginUrl, credentials, this.httpOptions).pipe(
+      tap(response => {
+        if (response && response.status === 'success' && response.tokens && response.user_data) {
+          if (typeof response.user_data.id !== 'number') {
+            console.error('AuthService: El ID de usuario no fue recibido o no es un número en la respuesta del login.', response.user_data);
+          }
+          this.storeTokens(response.tokens.access, response.tokens.refresh);
+          this.storeUserData(response.user_data);
+        }
+      })
+    );
   }
 
   registerClient(data: RegisterCredentials): Observable<RegisterResponse> {
@@ -120,16 +131,22 @@ export class AuthService {
   getUserData(): StoredUser | null {
     const data = localStorage.getItem('userData');
     try {
-        return data ? JSON.parse(data) : null;
+      return data ? JSON.parse(data) as StoredUser : null;
     } catch (e) {
-        this.clearAuthData();
-        return null;
+      console.error('Error al parsear userData de localStorage:', e);
+      this.clearAuthData();
+      return null;
     }
   }
 
   getCurrentUserRole(): string | null {
     const userData = this.getUserData();
     return userData?.role ?? null;
+  }
+
+  getCurrentUserBranchInfo(): BranchInfoForUser | null {
+    const userData = this.getUserData();
+    return userData?.branch ?? null;
   }
 
   isLoggedIn(): boolean {
@@ -145,6 +162,5 @@ export class AuthService {
 
   logout(): void {
     this.clearAuthData();
-    console.log('Usuario deslogueado.');
   }
 }
