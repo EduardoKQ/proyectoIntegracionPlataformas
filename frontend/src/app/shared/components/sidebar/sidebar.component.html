@@ -9,55 +9,86 @@
   </header>
 
   <ul class="nav-links">
-    <li *ngIf="userRole === 'administrador_tienda'">
-      <a routerLink="/product" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" title="Listado Productos">
-        <span class="material-symbols-outlined">menu_book</span>
-        <span class="link-text">Listado productos</span>
-      </a>
-    </li>
-    <li *ngIf="userRole === 'administrador_tienda'">
-      <a routerLink="/product/list" routerLinkActive="active" title="Productos">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span class="link-text">Productos</span>
-      </a>
-    </li>
-    <li *ngIf="userRole === 'bodeguero'">
-      <a routerLink="/product-bodeguero/listB" routerLinkActive="active" title="Productos">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span class="link-text">Productos</span>
-      </a>
-    </li>
+    <ng-container *ngIf="userRole === 'administrador_tienda'">
+      <li>
+        <a routerLink="/product" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" title="Dashboard Admin">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="link-text">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product/list" routerLinkActive="active" title="Productos">
+          <span class="material-symbols-outlined">inventory_2</span>
+          <span class="link-text">Productos</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product/add" routerLinkActive="active" title="Agregar Productos">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span class="link-text">Agregar Productos</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product/orders" routerLinkActive="active" title="Pedidos">
+          <span class="material-symbols-outlined">list_alt</span> <span class="link-text">Pedidos</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product/categories" routerLinkActive="active" title="Categorías">
+          <span class="material-symbols-outlined">category</span>
+          <span class="link-text">Categorías</span>
+        </a>
+      </li>
+    </ng-container>
 
-    <li *ngIf="userRole === 'administrador_tienda'">
-      <a routerLink="/product/add" routerLinkActive="active" title="Agregar Productos">
-        <span class="material-symbols-outlined">add_circle</span>
-        <span class="link-text">Agregar Productos</span>
-      </a>
-    </li>
-    <li *ngIf="userRole === 'administrador_tienda'">
-      <a routerLink="/product/orders" routerLinkActive="active" title="Pedidos">
-        <span class="material-symbols-outlined">list</span>
-        <span class="link-text">Pedidos</span>
-      </a>
-    </li>
-    <li *ngIf="userRole === 'administrador_tienda'">
-      <a routerLink="/product/categories" routerLinkActive="active" title="Categorías">
-        <span class="material-symbols-outlined">category</span>
-        <span class="link-text">Categorías</span>
-      </a>
-    </li>
+    <ng-container *ngIf="userRole === 'bodeguero'">
+      <li>
+        <a routerLink="/product-bodeguero/listB" routerLinkActive="active" title="Productos Bodega">
+          <span class="material-symbols-outlined">inventory_2</span>
+          <span class="link-text">Productos</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product-bodeguero/ordenesB" routerLinkActive="active" title="Órdenes de Bodega">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span class="link-text">Órdenes Bodega</span>
+        </a>
+      </li>
+    </ng-container>
+
+    <ng-container *ngIf="userRole === 'vendedor'">
+      <li>
+        <a routerLink="/product-vendedor/proList" routerLinkActive="active" title="Listado Productos Venta">
+          <span class="material-symbols-outlined">store</span>
+          <span class="link-text">Productos Venta</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/product-vendedor/ordenesCompra" routerLinkActive="active" title="Órdenes de Compra">
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span class="link-text">Órdenes Compra</span>
+        </a>
+      </li>
+    </ng-container>
+
+    <ng-container *ngIf="userRole === 'contador'">
+      <li>
+        <a routerLink="/product-contador/ordenesPago" routerLinkActive="active" title="Órdenes de Pago">
+          <span class="material-symbols-outlined">payments</span>
+          <span class="link-text">Órdenes Pago</span>
+        </a>
+      </li>
+    </ng-container>
   </ul>
 
   <ul class="bottom-actions">
     <li>
-      <a href="" title="Volver a la Tienda" (click)="goToStore()">
-        <span class="material-symbols-outlined">storefront</span>
+      <a (click)="goToStore()" title="Volver a la Tienda" style="cursor: pointer;"> <span class="material-symbols-outlined">storefront</span>
         <span class="link-text">Volver a la Tienda</span>
       </a>
     </li>
     <li>
-      <a href="" title="Cerrar Sesión" (click)="logout(); $event.preventDefault()">
-        <span class="material-symbols-outlined">logout</span>
+      <a (click)="logout(); $event.preventDefault()" title="Cerrar Sesión" style="cursor: pointer;"> <span class="material-symbols-outlined">logout</span>
         <span class="link-text">Cerrar Sesión</span>
       </a>
     </li>

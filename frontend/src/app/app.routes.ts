@@ -12,10 +12,15 @@ import { rolesGuard } from './guards/rol.guard';
 import { CatalogoComponent } from './store/catalogo/catalogo.component';
 import { StoryViewComponent } from './store/components/story-view/story-view.component';
 import { ProductDetailComponent } from './store/product-detail/product-detail.component';
+// Bodeguero
 import { ProductListComponentB } from './pages/bodeguero/product-list-b/product-list-b.component';
 import { ProductEditComponentB } from './pages/bodeguero/product-edit-b/product-edit-b.component';
-
-const PRODUCT_ACCESS_ROLES = ['vendedor', 'bodeguero', 'contador', 'administrador_tienda'];
+import { OrdenesBodegaComponent } from './pages/bodeguero/ordenes-bodega/ordenes-bodega.component';
+//Vendedor
+import { ProListComponent } from './pages/vendedor/pro-list/pro-list.component';
+import { OrdenesCompraComponent } from './pages/vendedor/ordenes-compra/ordenes-compra.component';
+//Contador
+import { OrdenesPagoComponent } from './pages/contador/ordenes-pago/ordenes-pago.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [rolesGuard] },
@@ -26,6 +31,7 @@ export const routes: Routes = [
   { path: 'story/:id', component: StoryViewComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
+  //1 Administrador
   {
     path: 'product',
     canActivate: [rolesGuard],
@@ -43,6 +49,7 @@ export const routes: Routes = [
     ]
   },
 
+  //2 Bodeguero
   {
     path: 'product-bodeguero',
     canActivate: [rolesGuard],
@@ -53,7 +60,37 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'listB', pathMatch: 'full' },
       { path: 'listB', component: ProductListComponentB },
-      { path: 'editB/:codigo', component: ProductEditComponentB }
+      { path: 'editB/:codigo', component: ProductEditComponentB },
+      { path: 'ordenesB', component: OrdenesBodegaComponent }
+    ]
+  },
+
+  //3 Vendedor
+  {
+    path: 'product-vendedor',
+    canActivate: [rolesGuard],
+    data: {
+      roles: ['vendedor'],
+      showSidebar: true
+    },
+    children: [
+      { path: '', redirectTo: 'proList', pathMatch: 'full' },
+      { path: 'proList', component: ProListComponent },
+      { path: 'ordenesCompra', component: OrdenesCompraComponent }
+    ]
+  },
+
+  //4 Contador
+  {
+    path: 'product-contador',
+    canActivate: [rolesGuard],
+    data: {
+      roles: ['contador'],
+      showSidebar: true
+    },
+    children: [
+      { path: '', redirectTo: 'ordenesPago', pathMatch: 'full' },
+      { path: 'ordenesPago', component: OrdenesPagoComponent }
     ]
   }
 ];

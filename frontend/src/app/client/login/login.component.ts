@@ -94,25 +94,35 @@ export class LoginComponent implements OnInit {
     const userRole = userData.role;
 
     if (!userRole) {
-      console.error('Login: Rol de usuario no definido después del login. Redirigiendo a /.');
-      this.router.navigate(['/']);
+      console.error('Login: Rol de usuario no definido después del login. Redirigiendo a /home.');
+      this.router.navigate(['/home']);
       return;
     }
 
     let targetPath: string;
-
     switch (userRole) {
       case 'administrador_tienda':
         targetPath = '/product';
+        console.log(`Login: Redirigiendo 'administrador_tienda' a ${targetPath}`);
         break;
       case 'bodeguero':
         targetPath = '/product-bodeguero';
+        console.log(`Login: Redirigiendo 'bodeguero' a ${targetPath}`);
         break;
       case 'cliente':
         targetPath = '/home';
+        console.log(`Login: Redirigiendo 'cliente' a ${targetPath}`);
+        break;
+      case 'vendedor':
+        targetPath = '/product-vendedor';
+        console.log(`Login: Redirigiendo 'vendedor' a ${targetPath}`);
+        break;
+      case 'contador':
+        targetPath = '/product-contador';
+        console.log(`Login: Redirigiendo 'contador' a ${targetPath}`);
         break;
       default:
-        console.warn(`Login: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home.`);
+        console.warn(`Login: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home como fallback.`);
         targetPath = '/home';
         break;
     }

@@ -213,31 +213,44 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   goToAdminDashboard(): void {
     const userRole = this.authService.getCurrentUserRole();
+    this.showDropdown = false;
+
     if (!userRole) {
       console.error('goToAdminDashboard: No se pudo determinar el rol del usuario. Redirigiendo a /login.');
       this.router.navigate(['/login']);
-      this.showDropdown = false;
       return;
     }
 
     let targetPath: string;
+    console.log(`HeaderComponent: goToAdminDashboard() llamado con rol: ${userRole}`);
+
     switch (userRole) {
       case 'administrador_tienda':
         targetPath = '/product';
+        console.log(`HeaderComponent: Redirigiendo 'administrador_tienda' a ${targetPath}`);
         break;
       case 'bodeguero':
         targetPath = '/product-bodeguero';
+        console.log(`HeaderComponent: Redirigiendo 'bodeguero' a ${targetPath}`);
+        break;
+      case 'vendedor':
+        targetPath = '/product-vendedor';
+        console.log(`HeaderComponent: Redirigiendo 'vendedor' a ${targetPath}`);
+        break;
+      case 'contador':
+        targetPath = '/product-contador';
+        console.log(`HeaderComponent: Redirigiendo 'contador' a ${targetPath}`);
         break;
       case 'cliente':
         targetPath = '/user/profile';
+        console.log(`HeaderComponent: Rol 'cliente' detectado. Redirigiendo a ${targetPath}`);
         break;
       default:
-        console.warn(`goToAdminDashboard: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home.`);
+        console.warn(`HeaderComponent: Rol '${userRole}' no tiene una redirección de dashboard específica en goToAdminDashboard. Redirigiendo a /home como fallback.`);
         targetPath = '/home';
         break;
     }
     this.router.navigate([targetPath]);
-    this.showDropdown = false;
   }
 
   logout(): void {
