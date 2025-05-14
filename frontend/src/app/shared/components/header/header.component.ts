@@ -181,7 +181,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   selectSearchResult(product: ApiProduct): void {
-    this.router.navigate(['/store/product-detail', product.codigo_producto]);
+    this.router.navigate(['/producto', product.codigo_producto]);
     this.clearSearch();
   }
 
