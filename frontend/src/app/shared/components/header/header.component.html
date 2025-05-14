@@ -5,7 +5,6 @@
         <img src="assets/images/Ferremas.png" alt="ferremas" class="logo-img">
       </a>
     </div>
-
     <div class="categories-menu">
       <button class="categories-btn" (click)="toggleCategoriesMenu()">
         <span class="icon-wrapper">
@@ -42,7 +41,6 @@
         </div>
       </div>
     </div>
-
     <div class="search-bar-container">
       <input
         type="text"
@@ -66,8 +64,35 @@
                 <span class="result-name">{{ product.nombre }}</span>
                 <span class="result-brand">{{ product.marca }}</span>
               </div>
-              <span class="result-price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
-            </div>
+              <ng-container *ngIf="product.precio; else noPriceSearchResult">
+                <ng-container [ngSwitch]="(currencyService.selectedCurrency$ | async)">
+                  <span *ngSwitchCase="'USD'" class="result-price">
+                    <ng-container *ngIf="product.precio.precio_dolares != null; else searchPriceCLPOnlyUSD">
+                      {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                    </ng-container>
+                    <ng-template #searchPriceCLPOnlyUSD>
+                      <span *ngIf="product.precio.precio_actual != null; else searchNoPrice">
+                         {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                      </span>
+                      <ng-template #searchNoPrice>N/A</ng-template>
+                    </ng-template>
+                  </span>
+                  <span *ngSwitchDefault class="result-price"> <ng-container *ngIf="product.precio.precio_actual != null; else searchPriceUSDOnlyCLP">
+                      {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                    </ng-container>
+                    <ng-template #searchPriceUSDOnlyCLP>
+                      <span *ngIf="product.precio.precio_dolares != null; else searchNoPrice">
+                        {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                      </span>
+                      <ng-template #searchNoPrice>N/A</ng-template>
+                    </ng-template>
+                  </span>
+                </ng-container>
+              </ng-container>
+              <ng-template #noPriceSearchResult>
+                <span class="result-price">N/A</span>
+              </ng-template>
+              </div>
           </li>
         </ul>
         <div *ngIf="!isLoadingSearch && searchResults.length === 0 && searchQuery.length > 1" class="no-results">
@@ -75,7 +100,6 @@
         </div>
       </div>
     </div>
-
     <div class="header-right">
       <div class="currency-selector">
         <button
@@ -105,7 +129,6 @@
               </div>
             </button>
         </ng-container>
-
         <ng-container *ngIf="isUserLoggedIn">
           <button class="header-icon-button account-menu" (click)="toggleUserDropdown()" aria-label="Menú de usuario">
             <span class="material-symbols-outlined user-icon">account_circle</span>
@@ -121,10 +144,9 @@
           </div>
         </ng-container>
       </div>
-
       <button class="header-icon-button cart-button" aria-label="Carrito de compras" routerLink="/cart">
         <span class="material-symbols-outlined">shopping_cart</span>
-        </button>
+      </button>
     </div>
   </div>
 </header>
