@@ -10,7 +10,6 @@ import { RegisterComponent } from './client/register/register.component';
 import { HomeComponent } from './store/home/home.component';
 import { rolesGuard } from './guards/rol.guard';
 import { CatalogoComponent } from './store/catalogo/catalogo.component';
-import { CatalogoMarcaComponent } from './store/catalogo-marca/catalogo-marca.component';
 import { StoryViewComponent } from './store/components/story-view/story-view.component';
 import { ProductDetailComponent } from './store/product-detail/product-detail.component';
 import { ProductListComponentB } from './pages/bodeguero/product-list-b/product-list-b.component';
@@ -22,7 +21,6 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [rolesGuard] },
   { path: 'catalogo', component: CatalogoComponent, data: { showStoreHeader: true } },
-  { path: 'catalogo-marca', component: CatalogoMarcaComponent, data: { showStoreHeader: true } },
   { path: 'home', component: HomeComponent, data: { showStoreHeader: true } },
   { path: 'producto/:codigo_producto', component: ProductDetailComponent, data: { showStoreHeader: true } },
   { path: 'story/:id', component: StoryViewComponent },

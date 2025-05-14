@@ -35,7 +35,14 @@
     </section>
 
     <section class="product-info-section">
-      <p class="product-brand">{{ product.marca || 'Marca no disponible' }}</p>
+      <a class="product-brand-link"
+         *ngIf="product.marca"
+         [routerLink]="['/catalogo']"
+         [queryParams]="{ brands: product.marca }">
+        <p class="product-brand">{{ product.marca }}</p>
+      </a>
+      <p *ngIf="!product.marca" class="product-brand">Marca no disponible</p>
+
       <h1 class="product-name">{{ product.nombre || 'Nombre no disponible' }} - {{ product.codigo_producto }}</h1>
 
       <p class="product-status">
@@ -44,11 +51,41 @@
 
       <hr class="price-divider">
 
-      <ng-container *ngIf="product.precio?.precio_actual != null; else noPriceAvailable">
-        <p class="product-price">
-          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
-          <span class="vat-included">IVA incluido.</span>
+      <ng-container *ngIf="product.precio; else noPriceAvailable">
+        <ng-container [ngSwitch]="currentSelectedCurrency">
+          <p *ngSwitchCase="'USD'" class="product-price">
+            <ng-container *ngIf="product.precio.precio_dolares != null; else priceCLPOnlyForUSDView">
+              {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+              </ng-container>
+            <ng-template #priceCLPOnlyForUSDView>
+              <span *ngIf="product.precio.precio_actual != null; else noPriceAtAll">
+                {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} (Precio en CLP)
+              </span>
+              <ng-template #noPriceAtAll>Precio no disponible</ng-template>
+            </ng-template>
+          </p>
+
+          <p *ngSwitchDefault class="product-price">
+            <ng-container *ngIf="product.precio.precio_actual != null; else priceUSDOnlyForCLPView">
+              {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+              <span class="vat-included">IVA incluido.</span>
+            </ng-container>
+            <ng-template #priceUSDOnlyForCLPView>
+              <span *ngIf="product.precio.precio_dolares != null; else noPriceAtAll">
+                 {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} (Precio en USD)
+              </span>
+              <ng-template #noPriceAtAll>Precio no disponible</ng-template>
+            </ng-template>
+          </p>
+        </ng-container>
+
+        <p *ngIf="currentSelectedCurrency === 'CLP' && product.precio.precio_dolares != null && product.precio.precio_actual != null" class="product-price-reference">
+          Aprox. {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
         </p>
+        <p *ngIf="currentSelectedCurrency === 'USD' && product.precio.precio_actual != null && product.precio.precio_dolares != null" class="product-price-reference">
+          Aprox. {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} CLP
+        </p>
+
       </ng-container>
       <ng-template #noPriceAvailable>
         <p class="product-price">Precio no disponible</p>
@@ -56,11 +93,11 @@
 
       <div class="quantity-selector-cart">
         <div class="quantity-selector">
-          <button type="button" (click)="decreaseQuantity()" [disabled]="selectedQuantity <= 1">-</button>
-          <input type="number" [(ngModel)]="selectedQuantity" min="1" (change)="onQuantityChange($event)">
-          <button type="button" (click)="increaseQuantity()">+</button>
+          <button type="button" (click)="decreaseQuantity()" [disabled]="(selectedQuantity <= 1 && totalStock > 0) || totalStock === 0">-</button>
+          <input type="number" [(ngModel)]="selectedQuantity" min="0" [max]="totalStock" (change)="onQuantityChange($event)" [disabled]="totalStock === 0">
+          <button type="button" (click)="increaseQuantity()" [disabled]="selectedQuantity >= totalStock || totalStock === 0">+</button>
         </div>
-        <button type="button" class="add-to-cart-button" (click)="addToCart()" [disabled]="totalStock <= 0">
+        <button type="button" class="add-to-cart-button" (click)="addToCart()" [disabled]="totalStock <= 0 || selectedQuantity <=0">
           AGREGAR AL CARRO
         </button>
       </div>
@@ -98,46 +135,72 @@
         </button>
     </section>
   </div>
-  <section class="productos-similares-section">
-  <div class="productos-relacionados" *ngIf="featuredProducts.length > 0">
-    <h2>Productos similares</h2>
-  </div>
-  <div class="carousel-outer-container">
-    <button
-      class="carousel-nav prev"
-      (click)="prevFeaturedProductsSlide()"
-      *ngIf="featuredProducts.length > productsPerSlide"
-      aria-label="Productos anteriores">&#10094;</button>
 
-    <div class="products-carousel-wrapper" #productsCarouselContainer>
-      <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
-        <div class="product-card-featured" *ngFor="let product of featuredProducts">
-          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
-            <div class="product-image-container">
-              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
-            </div>
-            <div class="product-info">
-              <h3 class="product-name-featured">{{ product.nombre }}</h3>
-              <p class="product-price-featured">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-            </div>
-          </a>
+  <section class="productos-similares-section" *ngIf="featuredProducts.length > 0">
+    <div class="productos-relacionados">
+      <h2>Productos similares</h2>
+    </div>
+    <div class="carousel-outer-container">
+      <button
+        class="carousel-nav prev"
+        (click)="prevFeaturedProductsSlide()"
+        *ngIf="featuredProducts.length > productsPerSlide"
+        aria-label="Productos anteriores">&#10094;</button>
+
+      <div class="products-carousel-wrapper" #productsCarouselContainer>
+        <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
+          <div class="product-card-featured" *ngFor="let featuredProd of featuredProducts">
+            <a [routerLink]="['/store/product-detail', featuredProd.codigo_producto]" class="product-link">
+              <div class="product-image-container">
+                <img [src]="featuredProd.imageUrl || 'assets/images/placeholder.png'" [alt]="featuredProd.nombre" class="product-image">
+              </div>
+              <div class="product-info">
+                <h3 class="product-name-featured">{{ featuredProd.nombre }}</h3>
+                <ng-container *ngIf="featuredProd.precio">
+                  <ng-container [ngSwitch]="currentSelectedCurrency">
+                    <p *ngSwitchCase="'USD'" class="product-price-featured">
+                      <ng-container *ngIf="featuredProd.precio.precio_dolares != null">
+                        {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                      </ng-container>
+                      <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual != null">
+                        {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                      </ng-container>
+                       <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual == null">
+                        N/A
+                      </ng-container>
+                    </p>
+                    <p *ngSwitchDefault class="product-price-featured">
+                       <ng-container *ngIf="featuredProd.precio.precio_actual != null">
+                        {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                      </ng-container>
+                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares != null">
+                        {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                      </ng-container>
+                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares == null">
+                        N/A
+                      </ng-container>
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <p *ngIf="!featuredProd.precio" class="product-price-featured">Precio no disponible</p>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
+      <button
+        class="carousel-nav next"
+        (click)="nextFeaturedProductsSlide()"
+        *ngIf="featuredProducts.length > productsPerSlide"
+        aria-label="Siguientes productos">&#10095;</button>
     </div>
-    <button
-      class="carousel-nav next"
-      (click)="nextFeaturedProductsSlide()"
-      *ngIf="featuredProducts.length > productsPerSlide"
-      aria-label="Siguientes productos">&#10095;</button>
-  </div>
-  <div class="carousel-indicators products" *ngIf="featuredProducts.length > productsPerSlide && getFeaturedProductSlides().length > 1">
-      <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
-            class="indicator-dot"
-            [class.active]="i === currentFeaturedProductsSlideIndex"
-            (click)="goToFeaturedProductsSlide(i)"></span>
-    </div>
-</section>
-
+    <div class="carousel-indicators products" *ngIf="featuredProducts.length > productsPerSlide && getFeaturedProductSlides().length > 1">
+        <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
+              class="indicator-dot"
+              [class.active]="i === currentFeaturedProductsSlideIndex"
+              (click)="goToFeaturedProductsSlide(i)"></span>
+      </div>
+  </section>
 
   <div *ngIf="!product && !isLoading && !errorMessage" class="no-product-found">
     <p>Producto no encontrado con el código especificado.</p>

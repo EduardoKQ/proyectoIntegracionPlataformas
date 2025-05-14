@@ -9,6 +9,7 @@ import { ApiProduct } from '../../../services/product.interfaces';
 import { Subject, of, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil, filter, tap, map, finalize } from 'rxjs/operators';
 
+import { CurrencyService, SupportedCurrency } from '../../../services/Currency.Service';
 interface DisplayCategory {
   id: string;
   title: string;
@@ -34,10 +35,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private elementRef = inject(ElementRef);
   private categorySubcategoryService = inject(CategorySubcategoryService);
   private productService = inject(ProductService);
+  public currencyService = inject(CurrencyService);
+
   private destroy$ = new Subject<void>();
 
   showCategoriesMenu = false;
-  showDropdown = false;
+  allDisplayCategories: DisplayCategory[] = [];
+  hoveredCategory: DisplayCategory | null = null;
+  currentSubcategories: DisplaySubcategory[] = [];
 
   searchQuery = '';
   searchResults: ApiProduct[] = [];
@@ -45,15 +50,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isLoadingSearch = false;
   private searchSubject = new Subject<string>();
 
-  allDisplayCategories: DisplayCategory[] = [];
-  hoveredCategory: DisplayCategory | null = null;
-  currentSubcategories: DisplaySubcategory[] = [];
-
+  showDropdown = false;
   userName: string | null = null;
   isAdminUser: boolean = false;
   isUserLoggedIn: boolean = false;
-
   private readonly ADMIN_TIENDA_ROLES = ['vendedor', 'bodeguero', 'contador', 'administrador_tienda', 'superuser'];
+
+  constructor() {
+  }
 
   ngOnInit(): void {
     this.updateLoginState();
@@ -129,7 +133,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
-   performSearchNavigation(): void {
+  performSearchNavigation(): void {
     const trimmedQuery = this.searchQuery.trim();
     if (trimmedQuery) {
       this.router.navigate(['/catalogo'], { queryParams: { search: trimmedQuery } });
@@ -155,16 +159,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
           map((products: ApiProduct[]) =>
             products.filter((product: ApiProduct) =>
               product.nombre.toLowerCase().includes(query.toLowerCase()) ||
-              product.marca.toLowerCase().includes(query.toLowerCase()) ||
-              product.descripcion.toLowerCase().includes(query.toLowerCase()) ||
+              (product.marca && product.marca.toLowerCase().includes(query.toLowerCase())) ||
+              (product.descripcion && product.descripcion.toLowerCase().includes(query.toLowerCase())) ||
               product.codigo_producto.toLowerCase().includes(query.toLowerCase())
             ).slice(0, 10)
           ),
           catchError((): Observable<ApiProduct[]> => {
             this.isLoadingSearch = false;
-            this.showSearchResults = true;
             return of([]);
           }),
+          finalize(() => {
+          })
         );
       }),
       takeUntil(this.destroy$)
@@ -176,7 +181,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   selectSearchResult(product: ApiProduct): void {
-    this.router.navigate(['/catalogo'], { queryParams: { search: product.nombre } });
+    this.router.navigate(['/store/product-detail', product.codigo_producto]);
     this.clearSearch();
   }
 
@@ -207,35 +212,33 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   goToAdminDashboard(): void {
-  const userRole = this.authService.getCurrentUserRole();
-  if (!userRole) {
-    console.error('goToAdminDashboard: No se pudo determinar el rol del usuario. Redirigiendo a /login.');
-    this.router.navigate(['/login']);
-    return;
-  }
+    const userRole = this.authService.getCurrentUserRole();
+    if (!userRole) {
+      console.error('goToAdminDashboard: No se pudo determinar el rol del usuario. Redirigiendo a /login.');
+      this.router.navigate(['/login']);
+      this.showDropdown = false;
+      return;
+    }
 
-  let targetPath: string;
-
-  switch (userRole) {
-    case 'administrador_tienda':
-      targetPath = '/product';
-      console.log(`Redirigiendo administrador_tienda a: ${targetPath}`);
-      break;
-    case 'bodeguero':
-      targetPath = '/product-bodeguero';
-      console.log(`Redirigiendo bodeguero a: ${targetPath}`);
-      break;
-    case 'cliente':
-      targetPath = '/home';
-      console.log(`Rol cliente detectado en goToAdminDashboard. Redirigiendo a: ${targetPath}`);
-      break;
-    default:
-      console.warn(`goToAdminDashboard: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home como fallback.`);
-      targetPath = '/home';
-      break;
+    let targetPath: string;
+    switch (userRole) {
+      case 'administrador_tienda':
+        targetPath = '/product';
+        break;
+      case 'bodeguero':
+        targetPath = '/product-bodeguero';
+        break;
+      case 'cliente':
+        targetPath = '/user/profile';
+        break;
+      default:
+        console.warn(`goToAdminDashboard: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home.`);
+        targetPath = '/home';
+        break;
+    }
+    this.router.navigate([targetPath]);
+    this.showDropdown = false;
   }
-  this.router.navigate([targetPath]);
-}
 
   logout(): void {
     this.authService.logout();
@@ -244,25 +247,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.router.navigate(['/home']);
   }
 
+  changeCurrency(currency: SupportedCurrency): void {
+    this.currencyService.setSelectedCurrency(currency);
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as Node;
-    const accountMenuElement = this.elementRef.nativeElement.querySelector('.account-menu');
+    const accountMenuButton = this.elementRef.nativeElement.querySelector('.account-menu');
     const dropdownMenuElement = this.elementRef.nativeElement.querySelector('.dropdown-menu');
-    const categoriesMenuButtonElement = this.elementRef.nativeElement.querySelector('.categories-btn');
-    const categoriesDropdownElement = this.elementRef.nativeElement.querySelector('.categories-dropdown');
-    const searchBarContainer = this.elementRef.nativeElement.querySelector('.search-bar-container');
-
-    if (this.showDropdown && accountMenuElement && !accountMenuElement.contains(target) && dropdownMenuElement && !dropdownMenuElement.contains(target)) {
+    if (this.showDropdown && accountMenuButton && !accountMenuButton.contains(target) && dropdownMenuElement && !dropdownMenuElement.contains(target)) {
       this.showDropdown = false;
     }
-
-    if (this.showCategoriesMenu &&
-        categoriesMenuButtonElement && !categoriesMenuButtonElement.contains(target) &&
-        categoriesDropdownElement && !categoriesDropdownElement.contains(target)) {
-        this.closeCategoriesMenu();
+    const categoriesMenuButtonElement = this.elementRef.nativeElement.querySelector('.categories-btn');
+    const categoriesDropdownElement = this.elementRef.nativeElement.querySelector('.categories-dropdown');
+    if (this.showCategoriesMenu && categoriesMenuButtonElement && !categoriesMenuButtonElement.contains(target) && categoriesDropdownElement && !categoriesDropdownElement.contains(target)) {
+      this.closeCategoriesMenu();
     }
-
+    const searchBarContainer = this.elementRef.nativeElement.querySelector('.search-bar-container');
     if (this.showSearchResults && searchBarContainer && !searchBarContainer.contains(target)) {
       this.clearSearch();
     }

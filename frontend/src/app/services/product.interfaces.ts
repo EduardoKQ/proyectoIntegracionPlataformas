@@ -1,7 +1,10 @@
 export interface ApiProductPrice {
   precio_actual: number;
   fecha_precio: string;
+  precio_dolares?: number;
+  fecha_cambio_dolar?: string;
 }
+
 export interface ApiProduct {
   codigo_producto: string;
   nombre: string;

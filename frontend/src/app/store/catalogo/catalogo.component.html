@@ -49,12 +49,12 @@
               </div>
               <div class="subcategory-options"
                    *ngIf="categoryControl.value.selected && getSubcategoryControls(i).controls.length > 0">
-                 <ng-container [formArrayName]="'subcategories'">
+                  <ng-container [formArrayName]="'subcategories'">
                     <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
-                        <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected">
+                        <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected" (change)="onSubcategorySelectionChange($any(subcatControl), i)">
                         <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
                     </div>
-                 </ng-container>
+                  </ng-container>
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@
     <main class="catalog-content">
       <header class="catalog-header">
         <h1>{{ catalogTitle }}</h1>
-      </header>
+        </header>
 
       <div *ngIf="isLoading" class="loading-indicator">
         <p>Cargando productos...</p>
@@ -77,23 +77,56 @@
 
       <div *ngIf="!isLoading && productsToDisplay.length === 0" class="no-results-message">
         <p>No se encontraron productos que coincidan con tu búsqueda o filtros.</p>
-        <p *ngIf="activeSearchTerm || activeCategoryName">Intenta con un término de búsqueda diferente o ajusta los filtros.</p>
+        <p *ngIf="activeSearchTerm || activeCategoryName || activeSubcategoryName">Intenta con un término de búsqueda diferente o ajusta los filtros.</p>
       </div>
 
       <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
         <div class="product-card" *ngFor="let product of paginatedProducts">
-          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
-            <div class="product-image-container">
+          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link"> <div class="product-image-container">
               <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
             </div>
             <div class="product-details">
               <h3 class="product-name">{{ product.nombre }}</h3>
-              <p class="product-category">{{ product.subcategoria }} <span *ngIf="product.subcategoria !== product.categoria && product.categoria">({{ product.categoria }})</span></p>
-              <p class="product-brand">Marca: {{ product.marca }}</p>
-              <p class="product-price">
-                <span class="current-price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+              <p class="product-category">
+                {{ product.subcategoria || product.categoria }}
+                <span *ngIf="product.subcategoria && product.subcategoria !== product.categoria && product.categoria">
+                  ({{ product.categoria }})
+                </span>
               </p>
-            </div>
+              <p class="product-brand">Marca: {{ product.marca }}</p>
+
+              <p class="product-price">
+                <ng-container *ngIf="product.precio; else noPriceInCard">
+                  <ng-container [ngSwitch]="currentSelectedCurrency">
+                    <span *ngSwitchCase="'USD'">
+                      <ng-container *ngIf="product.precio.precio_dolares != null; else catPriceCLPOnlyUSD">
+                        {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                      </ng-container>
+                      <ng-template #catPriceCLPOnlyUSD>
+                        <span *ngIf="product.precio.precio_actual != null; else catNoPrice">
+                           {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                        </span>
+                        <ng-template #catNoPrice>N/A</ng-template>
+                      </ng-template>
+                    </span>
+                    <span *ngSwitchDefault>
+                      <ng-container *ngIf="product.precio.precio_actual != null; else catPriceUSDOnlyCLP">
+                        {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                      </ng-container>
+                      <ng-template #catPriceUSDOnlyCLP>
+                        <span *ngIf="product.precio.precio_dolares != null; else catNoPrice">
+                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                        </span>
+                        <ng-template #catNoPrice>N/A</ng-template>
+                      </ng-template>
+                    </span>
+                  </ng-container>
+                </ng-container>
+                <ng-template #noPriceInCard>
+                  <span class="current-price">Precio no disponible</span>
+                </ng-template>
+              </p>
+              </div>
           </a>
           <button class="add-to-cart-btn">Agregar al carrito</button>
         </div>

@@ -8,8 +8,6 @@ $medium-gray: #dddddd;
 $dark-gray: #999999;
 $primary-color: #F57C00;
 $primary-dark: color.adjust($primary-color, $lightness: -10%);
-$accent-color: #FF4081;
-$secondary-color: #2196f3;
 
 :host {
   display: block;
@@ -100,13 +98,6 @@ $secondary-color: #2196f3;
 
 .reset-filters-link:hover {
   color: $primary-dark;
-}
-
-.filter-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 5px;
 }
 
 .sort-filter {
@@ -351,17 +342,21 @@ $secondary-color: #2196f3;
 
 .product-price {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   margin-top: auto;
   padding-top: 10px;
   margin-bottom: 10px;
-}
-
-.current-price {
+  color: $primary-color;
   font-size: 1.1rem;
   font-weight: 700;
-  color: $primary-color;
+
+  small {
+    font-size: 0.75rem;
+    color: $dark-gray;
+    margin-left: 4px;
+  }
 }
 
 .add-to-cart-btn {
@@ -373,6 +368,7 @@ $secondary-color: #2196f3;
   border-radius: $border-radius;
   padding: 10px 36px;
   font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease;
 
@@ -440,7 +436,7 @@ $secondary-color: #2196f3;
   .product-name {
     font-size: 0.95rem;
   }
-  .current-price {
+  .product-price .current-price {
     font-size: 1.05rem;
   }
   .add-to-cart-btn {

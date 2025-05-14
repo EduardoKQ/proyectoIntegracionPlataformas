@@ -1,30 +1,22 @@
 <div class="home-container">
 
-  <!--Carousel-->
   <div class="carousel-container" *ngIf="slides.length > 0">
-  <button class="carousel-button prev" (click)="previousSlide()" aria-label="Anterior">&#10094;</button>
-
-  <div class="slide-image-container" (click)="navigateToCurrentSlideRoute()" role="link" tabindex="0" (keydown.enter)="navigateToCurrentSlideRoute()">
-    <img [src]="getCurrentSlideUrl()" [alt]="getCurrentSlideAlt()" class="slide-image">
+    <button class="carousel-button prev" (click)="previousSlide()" aria-label="Anterior">&#10094;</button>
+    <div class="slide-image-container" (click)="navigateToCurrentSlideRoute()" role="link" tabindex="0" (keydown.enter)="navigateToCurrentSlideRoute()">
+      <img [src]="getCurrentSlideUrl()" [alt]="getCurrentSlideAlt()" class="slide-image">
+    </div>
+    <button class="carousel-button next" (click)="nextSlide()" aria-label="Siguiente">&#10095;</button>
+    <div class="dots-container">
+      <span *ngFor="let slide of slides; let i = index"
+            class="dot"
+            [class.active]="i === currentIndex"
+            (click)="goToSlide(i)"
+            [attr.aria-label]="'Ir a diapositiva ' + (i + 1)">
+      </span>
+    </div>
   </div>
+  <div *ngIf="slides.length === 0" class="loading-container"> <p>Cargando carrusel principal...</p> </div>
 
-  <button class="carousel-button next" (click)="nextSlide()" aria-label="Siguiente">&#10095;</button>
-
-  <div class="dots-container">
-    <span *ngFor="let slide of slides; let i = index"
-          class="dot"
-          [class.active]="i === currentIndex"
-          (click)="goToSlide(i)"
-          [attr.aria-label]="'Ir a diapositiva ' + (i + 1)">
-    </span>
-  </div>
-</div>
-<div *ngIf="slides.length === 0">
-  <p>No hay imágenes para mostrar en el carrusel.</p>
-</div>
-
-
-  <!--Story-->
   <section class="story-cards-section">
     <div class="story-cards-container">
       <div *ngFor="let story of stories" class="story-card" (click)="openStory(story.id)">
@@ -42,61 +34,79 @@
     </div>
   </section>
 
-  <!--categorias-->
   <h2 class="titulo-categorias">Principales categorías</h2>
-
   <div class="categorias-container">
     <a class="categoria"
-      *ngFor="let item of categorias"
-      [routerLink]="['/catalogo']"
-      [queryParams]="{ category: item.ruta }">
-      <div class="imagen-categoria">
+       *ngFor="let item of categorias"
+       [routerLink]="['/catalogo']"
+       [queryParams]="{ category: item.ruta }"> <div class="imagen-categoria">
         <img [src]="item.imagen" [alt]="item.nombre" />
       </div>
       <p>{{ item.nombre }}</p>
     </a>
   </div>
 
-  <!--Productos destacados-->
   <section class="featured-products" *ngIf="featuredProducts.length > 0">
-  <h2>Productos Destacados</h2>
-  <div class="carousel-outer-container">
-    <button
-      class="carousel-nav prev"
-      (click)="prevFeaturedProductsSlide()"
-      *ngIf="featuredProducts.length > productsPerSlide"
-      aria-label="Productos anteriores">&#10094;</button>
+    <h2>Productos Destacados</h2>
+    <div class="carousel-outer-container">
+      <button
+        class="carousel-nav prev"
+        (click)="prevFeaturedProductsSlide()"
+        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Productos anteriores">&#10094;</button>
 
-    <div class="products-carousel-wrapper" #productsCarouselContainer>
-      <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
-        <div class="product-card-featured" *ngFor="let product of featuredProducts">
-          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
-            <div class="product-image-container">
-              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
-            </div>
-            <div class="product-info">
-              <h3 class="product-name-featured">{{ product.nombre }}</h3>
-              <p class="product-price-featured">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-            </div>
-          </a>
-          <button class="btn btn-sm btn-primary add-to-cart-featured">Agregar</button>
+      <div class="products-carousel-wrapper" #productsCarouselContainer>
+        <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
+          <div class="product-card-featured" *ngFor="let product of featuredProducts">
+            <a [routerLink]="['/store/product-detail', product.codigo_producto]" class="product-link"> <div class="product-image-container">
+                <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
+              </div>
+              <div class="product-info">
+                <h3 class="product-name-featured">{{ product.nombre }}</h3>
+                <ng-container *ngIf="product.precio">
+                  <ng-container [ngSwitch]="currentSelectedCurrency">
+                    <p *ngSwitchCase="'USD'" class="product-price-featured">
+                      <ng-container *ngIf="product.precio.precio_dolares != null; else featPriceCLPOnlyUSD">
+                        {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                      </ng-container>
+                      <ng-template #featPriceCLPOnlyUSD>
+                        <span *ngIf="product.precio.precio_actual != null; else featNoPrice">
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                        </span>
+                         <ng-template #featNoPrice>N/A</ng-template>
+                      </ng-template>
+                    </p>
+                    <p *ngSwitchDefault class="product-price-featured"> <ng-container *ngIf="product.precio.precio_actual != null; else featPriceUSDOnlyCLP">
+                        {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                      </ng-container>
+                      <ng-template #featPriceUSDOnlyCLP>
+                        <span *ngIf="product.precio.precio_dolares != null; else featNoPrice">
+                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                        </span>
+                        <ng-template #featNoPrice>N/A</ng-template>
+                      </ng-template>
+                    </p>
+                  </ng-container>
+                </ng-container>
+                <p *ngIf="!product.precio" class="product-price-featured">Precio no disponible</p>
+              </div>
+            </a>
+            <button class="btn btn-sm btn-primary add-to-cart-featured" >Agregar</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <button
-      class="carousel-nav next"
-      (click)="nextFeaturedProductsSlide()"
-      *ngIf="featuredProducts.length > productsPerSlide"
-      aria-label="Siguientes productos">&#10095;</button>
+      <button
+        class="carousel-nav next"
+        (click)="nextFeaturedProductsSlide()"
+        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Siguientes productos">&#10095;</button>
+    </div>
+    <div class="carousel-indicators products" *ngIf="getFeaturedProductSlides().length > 1">
+        <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
+              class="indicator-dot"
+              [class.active]="i === currentFeaturedProductsSlideIndex"
+              (click)="goToFeaturedProductsSlide(i)"></span>
+      </div>
+  </section>
+  <div *ngIf="featuredProducts.length === 0" class="loading-container"> <p>Cargando productos destacados...</p>
   </div>
-  <div class="carousel-indicators products" *ngIf="featuredProducts.length > productsPerSlide && getFeaturedProductSlides().length > 1">
-      <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
-            class="indicator-dot"
-            [class.active]="i === currentFeaturedProductsSlideIndex"
-            (click)="goToFeaturedProductsSlide(i)"></span>
-    </div>
-</section>
-
-
-</div>
+  </div>

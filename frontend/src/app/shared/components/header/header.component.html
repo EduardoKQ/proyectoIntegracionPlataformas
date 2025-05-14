@@ -77,6 +77,24 @@
     </div>
 
     <div class="header-right">
+      <div class="currency-selector">
+        <button
+          type="button"
+          class="currency-btn"
+          title="Ver precios en Pesos Chilenos"
+          (click)="changeCurrency('CLP')"
+          [class.active]="(currencyService.selectedCurrency$ | async) === 'CLP'">
+          CLP
+        </button>
+        <button
+          type="button"
+          class="currency-btn"
+          title="Ver precios en Dólares Americanos"
+          (click)="changeCurrency('USD')"
+          [class.active]="(currencyService.selectedCurrency$ | async) === 'USD'">
+          USD
+        </button>
+      </div>
       <div class="user-account-menu">
         <ng-container *ngIf="!isUserLoggedIn">
             <button class="header-icon-button login-btn" routerLink="/login" aria-label="Ingresar a tu cuenta">
@@ -106,7 +124,7 @@
 
       <button class="header-icon-button cart-button" aria-label="Carrito de compras" routerLink="/cart">
         <span class="material-symbols-outlined">shopping_cart</span>
-      </button>
+        </button>
     </div>
   </div>
 </header>

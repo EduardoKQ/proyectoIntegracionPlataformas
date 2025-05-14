@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, AbstractControl, FormControl } from '@angular/forms';
-import { Subject, combineLatest, distinctUntilChanged } from 'rxjs';
+import { Subject, combineLatest, distinctUntilChanged, Subscription } from 'rxjs';
 import { takeUntil, debounceTime, tap } from 'rxjs/operators';
-
 import { ProductService } from '../../services/product.service';
 import { ApiProduct } from '../../services/product.interfaces';
 import { CategorySubcategoryService, Category as ApiCategory } from '../../services/category.service';
+import { CurrencyService, SupportedCurrency } from '../../services/Currency.Service';
 
 interface BrandFilter {
   name: string;
@@ -30,6 +30,11 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
+
+  public currentSelectedCurrency: SupportedCurrency = 'CLP';
+  private currencySubscription!: Subscription;
+  private currencyService = inject(CurrencyService);
+
 
   allProductsMasterList: ApiProduct[] = [];
   productsFilteredByUrlParams: ApiProduct[] = [];
@@ -65,11 +70,22 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     this.initFilterForm();
     this.loadMasterDataAndListenToRouteParams();
     this.setupFilterFormChangesSubscription();
+    this.currencySubscription = this.currencyService.selectedCurrency$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(currency => {
+        this.currentSelectedCurrency = currency;
+        if (this.currentSortOrder === 'priceAsc' || this.currentSortOrder === 'priceDesc') {
+           if (!this.isLoading) {
+            this.applyAllFiltersAndSort(false);
+           }
+        }
+      });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.currencySubscription?.unsubscribe();
   }
 
   get currentSortLabel(): string {
@@ -102,9 +118,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     ).subscribe(([products, categories]) => {
       this.allProductsMasterList = [...products];
       this.availableCategoriesForFilter = [...categories];
-
       this.rebuildCategoryFilters(this.availableCategoriesForFilter);
-
       this.route.queryParams.pipe(
         takeUntil(this.destroy$)
       ).subscribe(queryParams => {
@@ -176,13 +190,13 @@ export class CatalogoComponent implements OnInit, OnDestroy {
             if (productSubId && subcategoryIdsFromUrlArray.includes(productSubId)) {
                 matchesCriteria = true;
             }
-             if (!matchesCriteria && productCatId && categoryIdsFromUrlArray.includes(productCatId)) {
-                 const parentCatObject = this.availableCategoriesForFilter.find(c => c.id === productCatId);
-                 const hasSelectedSubcategoriesWithinThisParent = parentCatObject?.subcategories?.some(s => subcategoryIdsFromUrlArray.includes(s.id));
-                 if (!hasSelectedSubcategoriesWithinThisParent || (productSubId && subcategoryIdsFromUrlArray.includes(productSubId))) {
-                     matchesCriteria = true;
-                 }
-             }
+              if (!matchesCriteria && productCatId && categoryIdsFromUrlArray.includes(productCatId)) {
+                const parentCatObject = this.availableCategoriesForFilter.find(c => c.id === productCatId);
+                const hasSelectedSubcategoriesWithinThisParent = parentCatObject?.subcategories?.some(s => subcategoryIdsFromUrlArray.includes(s.id));
+                if (!hasSelectedSubcategoriesWithinThisParent || (productSubId && subcategoryIdsFromUrlArray.includes(productSubId))) {
+                    matchesCriteria = true;
+                }
+              }
             if (matchesCriteria) {
                 productsToShow.add(product);
             }
@@ -231,38 +245,38 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         selectedSubcatNames.forEach(item => {
             const parentCatIsSelected = selectedCatNames.includes(item.catName);
             if (parentCatIsSelected && numSelectedCats === 1) {
-                  displayNames.push(`${item.catName} / ${item.subName}`);
+                displayNames.push(`${item.catName} / ${item.subName}`);
             } else if (!parentCatIsSelected){
-                 displayNames.push(`${item.catName} / ${item.subName}`);
+                displayNames.push(`${item.catName} / ${item.subName}`);
             }
         });
-         selectedCatNames.forEach(catName => {
+          selectedCatNames.forEach(catName => {
             const category = this.availableCategoriesForFilter.find(c => c.name === catName);
-             const hasAnySubcatSelectedInUrl = category?.subcategories?.some(s => subcategoryIds.includes(s.id));
-             if (!hasAnySubcatSelectedInUrl) {
-                 displayNames.push(catName);
-             }
-         });
+              const hasAnySubcatSelectedInUrl = category?.subcategories?.some(s => subcategoryIds.includes(s.id));
+              if (!hasAnySubcatSelectedInUrl) {
+                  displayNames.push(catName);
+              }
+          });
         const uniqueDisplayNames = [...new Set(displayNames)];
         if (uniqueDisplayNames.length > 0) {
-             this.catalogTitle = uniqueDisplayNames.join(', ');
-             if (uniqueDisplayNames.length === 1) {
-                 const parts = uniqueDisplayNames[0].split(' / ');
-                 this.activeCategoryName = parts[0] || null;
-                 this.activeSubcategoryName = parts[1] || null;
-             } else {
-                 this.activeCategoryName = null;
-                 this.activeSubcategoryName = null;
-             }
+              this.catalogTitle = uniqueDisplayNames.join(', ');
+              if (uniqueDisplayNames.length === 1) {
+                  const parts = uniqueDisplayNames[0].split(' / ');
+                  this.activeCategoryName = parts[0] || null;
+                  this.activeSubcategoryName = parts[1] || null;
+              } else {
+                  this.activeCategoryName = null;
+                  this.activeSubcategoryName = null;
+              }
         } else {
               if(numSelectedSubcats === 1) {
                   this.catalogTitle = `${selectedSubcatNames[0].catName} / ${selectedSubcatNames[0].subName}`;
                   this.activeCategoryName = selectedSubcatNames[0].catName;
                   this.activeSubcategoryName = selectedSubcatNames[0].subName;
               } else {
-                 this.catalogTitle = "Múltiples Subcategorías";
-                 this.activeCategoryName = null;
-                 this.activeSubcategoryName = null;
+                  this.catalogTitle = "Múltiples Subcategorías";
+                  this.activeCategoryName = null;
+                  this.activeSubcategoryName = null;
               }
         }
     } else if (numSelectedCats > 0) {
@@ -280,9 +294,9 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         this.activeCategoryName = null;
         this.activeSubcategoryName = null;
     }
-     if (this.activeSearchTerm) {
-         this.catalogTitle = `Resultados para: "${this.activeSearchTerm}"` + (this.catalogTitle !== 'Catálogo de Productos' ? ` en ${this.catalogTitle}` : '');
-     }
+      if (this.activeSearchTerm) {
+          this.catalogTitle = `Resultados para: "${this.activeSearchTerm}"` + (this.catalogTitle !== 'Catálogo de Productos' ? ` en ${this.catalogTitle}` : '');
+      }
 }
   private getCategoryBySubcategoryId(subId: string): ApiCategory | undefined {
       for (const cat of this.availableCategoriesForFilter) {
@@ -324,13 +338,13 @@ export class CatalogoComponent implements OnInit, OnDestroy {
             const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).join(',');
             return `${cat.id}:${cat.selected ? 'T' : 'F'}:${selectedSubs}`;
         }).join(';');
-         const currSelectedCatSubs = curr.categories.map((cat: any) => {
+          const currSelectedCatSubs = curr.categories.map((cat: any) => {
             const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).join(',');
             return `${cat.id}:${cat.selected ? 'T' : 'F'}:${selectedSubs}`;
         }).join(';');
         return prevSelectedBrands === currSelectedBrands &&
-               prevSelectedCatSubs === currSelectedCatSubs &&
-               prev.sortOrder === curr.sortOrder;
+                prevSelectedCatSubs === currSelectedCatSubs &&
+                prev.sortOrder === curr.sortOrder;
     }),
     tap(values => { this.currentSortOrder = values.sortOrder as SortOrder; }),
     takeUntil(this.destroy$)
@@ -344,69 +358,84 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         delete newQueryParams[key];
       }
     });
-     const currentUrlParams = this.route.snapshot.queryParams;
-     const mergedQueryParams: any = {};
-     Object.keys(currentUrlParams).forEach(key => {
-         if (!['brands', 'category', 'subcategory', 'sortOrder', 'search'].includes(key)) {
-             mergedQueryParams[key] = currentUrlParams[key];
-         }
-     });
+      const currentUrlParams = this.route.snapshot.queryParams;
+      const mergedQueryParams: any = {};
+      Object.keys(currentUrlParams).forEach(key => {
+          if (!['brands', 'category', 'subcategory', 'sortOrder'].includes(key)) {
+              mergedQueryParams[key] = currentUrlParams[key];
+          }
+      });
+    if (currentUrlParams['search']) {
+        mergedQueryParams.search = currentUrlParams['search'];
+    }
+
+
     Object.assign(mergedQueryParams, newQueryParams);
+
     let paramsChanged = false;
-    const newKeys = Object.keys(mergedQueryParams);
-    const currentKeys = Object.keys(currentUrlParams);
-    if (newKeys.length !== currentKeys.length) {
+    const finalNewKeys = Object.keys(mergedQueryParams);
+    const finalCurrentKeys = Object.keys(currentUrlParams);
+    if (finalNewKeys.length !== finalCurrentKeys.filter(k => mergedQueryParams.hasOwnProperty(k) || currentUrlParams[k] !== undefined).length) {
       paramsChanged = true;
     } else {
-      for (const key of newKeys) {
+      for (const key of finalNewKeys) {
         const newVal = mergedQueryParams[key] === undefined || mergedQueryParams[key] === null ? '' : String(mergedQueryParams[key]);
         const currentVal = currentUrlParams[key] === undefined || currentUrlParams[key] === null ? '' : String(currentUrlParams[key]);
         if (newVal !== currentVal) {
-           paramsChanged = true;
-           break;
+            paramsChanged = true;
+            break;
         }
       }
+      if (!paramsChanged) {
+          for (const key of finalCurrentKeys) {
+              if (['brands', 'category', 'subcategory', 'sortOrder'].includes(key) && !mergedQueryParams.hasOwnProperty(key)) {
+                  paramsChanged = true;
+                  break;
+              }
+          }
+      }
     }
+
     if (paramsChanged) {
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: mergedQueryParams,
       });
     } else {
-         this.applyAllFiltersAndSort(true);
+        this.applyAllFiltersAndSort(true);
     }
   });
 }
   getFilterQueryParams(formValues: any): any {
-  const params: any = {};
-  const selectedBrands = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
-  if (selectedBrands.length > 0) {
-    params.brands = selectedBrands.join(',');
-  }
-  const activeCategoryIds: string[] = [];
-  const activeSubcategoryIds: string[] = [];
-  formValues.categories.forEach((categoryGroup: any) => {
-     const selectedSubsOfThisCat = (categoryGroup.subcategories as any[])
-        .filter(sub => sub.selected)
-        .map(sub => sub.id);
+    const params: any = {};
+    const selectedBrands = formValues.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name);
+    if (selectedBrands.length > 0) {
+      params.brands = selectedBrands.join(',');
+    }
+    const activeCategoryIds: string[] = [];
+    const activeSubcategoryIds: string[] = [];
+    formValues.categories.forEach((categoryGroup: any) => {
+        const selectedSubsOfThisCat = (categoryGroup.subcategories as any[])
+            .filter(sub => sub.selected)
+            .map(sub => sub.id);
 
-    if (categoryGroup.selected && selectedSubsOfThisCat.length === 0) {
-       activeCategoryIds.push(categoryGroup.id);
+      if (categoryGroup.selected && selectedSubsOfThisCat.length === 0) {
+          activeCategoryIds.push(categoryGroup.id);
+      }
+      if (categoryGroup.subcategories) {
+        activeSubcategoryIds.push(...selectedSubsOfThisCat);
+      }
+    });
+    if (activeCategoryIds.length > 0) {
+        params.category = activeCategoryIds.join(',');
     }
-    if (categoryGroup.subcategories) {
-      activeSubcategoryIds.push(...selectedSubsOfThisCat);
+    if (activeSubcategoryIds.length > 0) {
+      params.subcategory = activeSubcategoryIds.join(',');
     }
-  });
-  if (activeCategoryIds.length > 0) {
-      params.category = activeCategoryIds.join(',');
-  }
-  if (activeSubcategoryIds.length > 0) {
-    params.subcategory = activeSubcategoryIds.join(',');
-  }
-  if (formValues.sortOrder && formValues.sortOrder !== 'default') {
-    params.sortOrder = formValues.sortOrder;
-  }
-  return params;
+    if (formValues.sortOrder && formValues.sortOrder !== 'default') {
+      params.sortOrder = formValues.sortOrder;
+    }
+    return params;
 }
   applyAllFiltersAndSort(resetPage: boolean = true): void {
     let tempProducts = [...this.productsFilteredByUrlParams];
@@ -416,17 +445,56 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     if (selectedBrandsFromForm.length > 0) {
       tempProducts = tempProducts.filter(p => selectedBrandsFromForm.includes(p.marca));
     }
-    switch (this.currentSortOrder) {
-      case 'priceAsc': tempProducts.sort((a, b) => a.precio.precio_actual - b.precio.precio_actual); break;
-      case 'priceDesc': tempProducts.sort((a, b) => b.precio.precio_actual - a.precio.precio_actual); break;
+    const selectedCategoryIdsFromForm: string[] = [];
+    const selectedSubcategoryIdsFromForm: string[] = [];
+    formValues.categories.forEach((catGroup: any) => {
+        const subcategoriesFromForm = (catGroup.subcategories as any[]).filter(sub => sub.selected).map(sub => sub.id);
+        if (subcategoriesFromForm.length > 0) {
+            selectedSubcategoryIdsFromForm.push(...subcategoriesFromForm);
+        } else if (catGroup.selected) {
+            selectedCategoryIdsFromForm.push(catGroup.id);
+        }
+    });
+
+    if (selectedSubcategoryIdsFromForm.length > 0) {
+        tempProducts = tempProducts.filter(p => {
+            const productSubId = this.getSubcategoryIdByName(p.subcategoria, p.categoria);
+            return productSubId && selectedSubcategoryIdsFromForm.includes(productSubId);
+        });
+    } else if (selectedCategoryIdsFromForm.length > 0) {
+        tempProducts = tempProducts.filter(p => {
+            const productCatId = this.getCategoryIdByName(p.categoria);
+            return productCatId && selectedCategoryIdsFromForm.includes(productCatId);
+        });
+    }
+    const sortOrder = formValues.sortOrder as SortOrder;
+    switch (sortOrder) {
+      case 'priceAsc':
+        tempProducts.sort((a, b) => {
+          const priceA = this.currentSelectedCurrency === 'USD' ? (a.precio.precio_dolares ?? Infinity) : a.precio.precio_actual;
+          const priceB = this.currentSelectedCurrency === 'USD' ? (b.precio.precio_dolares ?? Infinity) : b.precio.precio_actual;
+          return priceA - priceB;
+        });
+        break;
+      case 'priceDesc':
+        tempProducts.sort((a, b) => {
+          const priceA = this.currentSelectedCurrency === 'USD' ? (a.precio.precio_dolares ?? -Infinity) : a.precio.precio_actual;
+          const priceB = this.currentSelectedCurrency === 'USD' ? (b.precio.precio_dolares ?? -Infinity) : b.precio.precio_actual;
+          return priceB - priceA;
+        });
+        break;
       case 'nameAsc': tempProducts.sort((a,b) => a.nombre.localeCompare(b.nombre)); break;
       case 'nameDesc': tempProducts.sort((a,b) => b.nombre.localeCompare(a.nombre)); break;
-       case 'default':
+        case 'default':
           break;
     }
     this.productsToDisplay = tempProducts;
     this.totalPages = Math.ceil(this.productsToDisplay.length / this.itemsPerPage);
-    this.currentPage = resetPage ? 1 : Math.max(1, Math.min(this.currentPage, this.totalPages || 1));
+    if (resetPage) {
+        this.currentPage = 1;
+    } else {
+        this.currentPage = Math.max(1, Math.min(this.currentPage, this.totalPages || 1));
+    }
     this.updatePaginatedProducts();
   }
 
@@ -434,7 +502,8 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     return this.availableCategoriesForFilter.find(c => c.name === name)?.id;
   }
 
-  getSubcategoryIdByName(subName: string, catName: string): string | undefined {
+  getSubcategoryIdByName(subName: string | undefined, catName: string): string | undefined {
+    if (!subName) return undefined;
     const category = this.availableCategoriesForFilter.find(c => c.name === catName);
     return category?.subcategories?.find(s => s.name === subName)?.id;
   }
@@ -461,19 +530,28 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   }
 
   limpiarFiltros(): void {
-    this.filterForm.patchValue({ sortOrder: 'default' }, { emitEvent: false });
-    this.brandsFormArray.controls.forEach(ctrl => (ctrl as FormGroup).get('selected')?.setValue(false, { emitEvent: false }));
-    this.categoriesFormArray.controls.forEach(catCtrl => {
-        (catCtrl as FormGroup).get('selected')?.setValue(false, { emitEvent: false });
-        const subcategoriesArray = (catCtrl as FormGroup).get('subcategories') as FormArray;
-         if (subcategoriesArray) {
-            subcategoriesArray.controls.forEach(subCtrl => {
-                (subCtrl as FormGroup).get('selected')?.setValue(false, { emitEvent: false });
-            });
-         }
+    this.filterForm.patchValue({
+        brands: this.brandsFormArray.controls.map(c => ({ name: c.value.name, selected: false })),
+        categories: this.categoriesFormArray.controls.map(c => ({
+            id: c.value.id,
+            name: c.value.name,
+            selected: false,
+            subcategories: (c.value.subcategories || []).map((sc: any) => ({ id: sc.id, name: sc.name, selected: false, categoryId: c.value.id }))
+        })),
+        sortOrder: 'default'
+    }, { emitEvent: false });
+    this.currentSortOrder = 'default';
+    const currentParams = this.route.snapshot.queryParams;
+    const paramsToKeep: any = {};
+    if (currentParams['search']) {
+        paramsToKeep.search = currentParams['search'];
+    }
+    this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: paramsToKeep
     });
-    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
+
 
   toggleSortDropdown(): void { this.showSortDropdown = !this.showSortDropdown; }
   selectSortOrder(orderValue: string): void {
@@ -499,19 +577,25 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   }
 
   onSubcategorySelectionChange(subcategoryControl: AbstractControl, categoryIndex: number): void {
-       const subcategoryGroup = subcategoryControl as FormGroup;
-       const isSelected = subcategoryGroup.get('selected')?.value;
-       const categoryGroup = this.categoriesFormArray.at(categoryIndex) as FormGroup;
-       const categorySelectedControl = categoryGroup.get('selected') as FormControl;
-       const subcategoriesArray = categoryGroup.get('subcategories') as FormArray;
-       if (isSelected && !categorySelectedControl.value) {
-           categorySelectedControl.setValue(true, { emitEvent: true });
-       }
-       if (!isSelected) {
-            const anyOtherSubSelected = subcategoriesArray.controls.some(subCtrl => (subCtrl as FormGroup).get('selected')?.value);
-            if (!anyOtherSubSelected && categorySelectedControl.value) {
-                 categorySelectedControl.setValue(false, { emitEvent: true });
-            }
-       }
+      const subcategoryGroup = subcategoryControl as FormGroup;
+      const isSelected = subcategoryGroup.get('selected')?.value;
+      const categoryGroup = this.categoriesFormArray.at(categoryIndex) as FormGroup;
+      const categorySelectedControl = categoryGroup.get('selected') as FormControl;
+      const subcategoriesArray = categoryGroup.get('subcategories') as FormArray;
+
+      if (isSelected && !categorySelectedControl.value) {
+          categorySelectedControl.setValue(true, { emitEvent: true });
+      } else if (!isSelected) {
+          const anyOtherSubSelected = subcategoriesArray.controls
+            .filter(subCtrl => subCtrl !== subcategoryControl)
+            .some(subCtrl => (subCtrl as FormGroup).get('selected')?.value);
+
+          if (!anyOtherSubSelected && categorySelectedControl.value) {
+              categorySelectedControl.setValue(false, { emitEvent: true });
+          }
+      }
+  }
+  addToCart(product: ApiProduct): void {
+    console.log('Añadir al carrito (desde catálogo):', product.nombre, product.codigo_producto);
   }
 }

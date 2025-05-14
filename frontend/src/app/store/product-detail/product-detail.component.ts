@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Subscription, Subject, interval, fromEvent } from 'rxjs';
 import { takeUntil, debounceTime } from 'rxjs/operators';
@@ -8,9 +8,7 @@ import { ApiProduct } from '../../services/product.interfaces';
 import { InventoryItem } from '../../services/inventory.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface EnrichedInventoryItem extends InventoryItem {
-}
+import { CurrencyService, SupportedCurrency } from '../../services/Currency.Service';
 
 @Component({
   selector: 'app-product-detail',
@@ -25,7 +23,7 @@ interface EnrichedInventoryItem extends InventoryItem {
 })
 export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   product: ApiProduct | null = null;
-  productInventory: EnrichedInventoryItem[] = [];
+  productInventory: InventoryItem[] = [];
   totalStock: number = 0;
   isLoading: boolean = true;
   errorMessage: string | null = null;
@@ -43,6 +41,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
 
   private windowResizeSubscription?: Subscription;
 
+  public currentSelectedCurrency: SupportedCurrency = 'CLP';
+  private currencySubscription!: Subscription;
+  private currencyService = inject(CurrencyService);
+
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
@@ -57,9 +59,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
       const productCode = params.get('codigo_producto');
       this.featuredProducts = [];
       this.currentFeaturedProductsSlideIndex = 0;
-      if (this.featuredProductsIntervalId) {
-        this.featuredProductsIntervalId.unsubscribe();
-      }
+      this.featuredProductsIntervalId?.unsubscribe();
+
       if (productCode) {
         this.loadProductDetails(productCode);
       } else {
@@ -68,11 +69,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
         console.error('Error: No product code found in route parameters.');
       }
     });
+
+    this.currencySubscription = this.currencyService.selectedCurrency$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(currency => {
+        this.currentSelectedCurrency = currency;
+      });
   }
 
   ngAfterViewInit(): void {
-    this.setupSimilarProductsCarousel();
-
     this.windowResizeSubscription = fromEvent(window, 'resize')
       .pipe(
         debounceTime(250),
@@ -80,7 +85,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
       )
       .subscribe(() => {
         if (this.featuredProducts.length > 0 && this.featuredWrapperRef && this.featuredInnerContainerRef) {
-          this.updateFeaturedCarouselPosition();
+          this.updateFeaturedCarouselPosition(false);
         }
       });
   }
@@ -98,18 +103,27 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     .subscribe({
       next: (productData) => {
         this.product = productData;
-        this.loadInventoryForProduct(productCode);
-        if (this.product && this.product.categoria) {
-          this.loadSimilarProductsByCategory(this.product.categoria, productCode);
+        if (this.product) {
+          this.loadInventoryForProduct(productCode);
+          if (this.product.categoria) {
+            this.loadSimilarProductsByCategory(this.product.categoria, productCode);
+          } else {
+            this.featuredProducts = [];
+            this.setupSimilarProductsCarousel();
+          }
         } else {
-          this.featuredProducts = [];
-          this.setupSimilarProductsCarousel();
+            this.errorMessage = `Producto con código ${productCode} no encontrado.`;
+            this.isLoading = false;
+            this.featuredProducts = [];
+            this.setupSimilarProductsCarousel();
         }
       },
       error: (err) => {
         this.errorMessage = `Error al cargar el producto: ${err.message || 'Error desconocido'}`;
         console.error('Error fetching product by code:', err);
         this.isLoading = false;
+        this.featuredProducts = [];
+        this.setupSimilarProductsCarousel();
       }
     });
   }
@@ -135,13 +149,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   calculateTotalStock(): void {
-    this.totalStock = this.productInventory.reduce((sum, item) => sum + item.quantity, 0);
+    this.totalStock = this.productInventory.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     if (this.totalStock === 0) {
       this.selectedQuantity = 0;
     } else if (this.selectedQuantity > this.totalStock) {
       this.selectedQuantity = this.totalStock;
-    }
-    if (this.selectedQuantity < 1 && this.totalStock > 0) {
+    } else if (this.selectedQuantity < 1 && this.totalStock > 0) {
+        this.selectedQuantity = 1;
+    } else if (this.selectedQuantity <= 0 && this.totalStock > 0) {
         this.selectedQuantity = 1;
     }
   }
@@ -153,7 +168,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   increaseQuantity(): void {
-    if (this.selectedQuantity < this.totalStock) {
+    if (this.totalStock > 0 && this.selectedQuantity < this.totalStock) {
       this.selectedQuantity++;
     }
   }
@@ -161,18 +176,39 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
   onQuantityChange(event: Event): void {
     const inputElement = event.target as HTMLInputElement;
     let value = parseInt(inputElement.value, 10);
-    if (isNaN(value) || value < 1) {
-      value = 1;
+    if (isNaN(value)) {
+        value = (this.totalStock > 0) ? 1 : 0;
+    } else if (value < 1 && this.totalStock > 0) {
+        value = 1;
+    } else if (value < 0) {
+        value = 0;
     }
+
+
+    if (this.totalStock > 0 && value > this.totalStock) {
+      value = this.totalStock;
+    } else if (this.totalStock === 0) {
+      value = 0;
+    }
+
     this.selectedQuantity = value;
     inputElement.value = this.selectedQuantity.toString();
   }
 
   addToCart(): void {
-    if (!this.product) return;
-    if (this.selectedQuantity <= 0) return;
-    if (this.selectedQuantity > this.totalStock) return;
-    console.log(`Añadiendo ${this.selectedQuantity} de ${this.product.nombre} al carro.`);
+    if (!this.product) {
+        console.error('Intento de añadir al carro sin producto cargado.');
+        return;
+    }
+    if (this.totalStock <= 0) {
+        console.warn('Intento de añadir al carro un producto sin stock.');
+        return;
+    }
+    if (this.selectedQuantity <= 0) {
+        console.warn('Intento de añadir al carro con cantidad cero o negativa.');
+        return;
+    }
+    console.log(`Añadiendo ${this.selectedQuantity} de ${this.product.nombre} (${this.product.codigo_producto}) al carro.`);
   }
 
   loadSimilarProductsByCategory(category: string, currentProductCode: string): void {
@@ -183,30 +219,28 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
           p.categoria === category &&
           p.codigo_producto !== currentProductCode
         );
-        if (similarInCategory.length > 0) {
-          this.featuredProducts = this.getRandomProducts(similarInCategory, this.maxSimilarProductsToShow);
-        } else {
-          this.featuredProducts = [];
-        }
+
+        this.featuredProducts = this.getRandomProducts(similarInCategory, this.maxSimilarProductsToShow);
         this.currentFeaturedProductsSlideIndex = 0;
         this.setupSimilarProductsCarousel();
       });
   }
-  setupSimilarProductsCarousel(): void {
 
-    if (this.featuredWrapperRef && this.featuredInnerContainerRef) {
-      if (this.featuredProducts.length > 0) {
-        this.updateFeaturedCarouselPosition();
-        this.startFeaturedProductsAutoplay();
-      } else {
-        if (this.featuredInnerContainerRef.nativeElement) {
-            this.renderer.setStyle(this.featuredInnerContainerRef.nativeElement, 'transform', `translateX(0px)`);
-        }
-        if (this.featuredProductsIntervalId) {
-            this.featuredProductsIntervalId.unsubscribe();
-        }
-      }
-    } else if (this.featuredProducts.length > 0) {
+  setupSimilarProductsCarousel(): void {
+    if (this.featuredProductsIntervalId) {
+      this.featuredProductsIntervalId.unsubscribe();
+      this.featuredProductsIntervalId = undefined;
+    }
+
+    if (this.featuredProducts.length > 0) {
+        Promise.resolve().then(() => {
+            if (this.featuredWrapperRef && this.featuredInnerContainerRef) {
+                this.updateFeaturedCarouselPosition();
+                this.startFeaturedProductsAutoplay();
+            }
+        });
+    } else if (this.featuredInnerContainerRef?.nativeElement) {
+        this.renderer.setStyle(this.featuredInnerContainerRef.nativeElement, 'transform', `translateX(0px)`);
     }
   }
 
@@ -226,13 +260,17 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     return slidesArray;
   }
 
-  updateFeaturedCarouselPosition(): void {
+  updateFeaturedCarouselPosition(resetAutoplay: boolean = true): void {
     if (!this.featuredInnerContainerRef?.nativeElement || !this.featuredWrapperRef?.nativeElement) {
       return;
     }
-    const slideWidth = this.featuredWrapperRef.nativeElement.offsetWidth;
-    const newTransformValue = -(this.currentFeaturedProductsSlideIndex * slideWidth);
+    const containerWidth = this.featuredWrapperRef.nativeElement.offsetWidth;
+    const newTransformValue = -(this.currentFeaturedProductsSlideIndex * containerWidth);
     this.renderer.setStyle(this.featuredInnerContainerRef.nativeElement, 'transform', `translateX(${newTransformValue}px)`);
+
+    if (resetAutoplay) {
+        this.resetFeaturedProductsInterval();
+    }
   }
 
   startFeaturedProductsAutoplay(): void {
@@ -251,24 +289,17 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
 
   nextFeaturedProductsSlide(isAuto: boolean = false): void {
     const totalSlides = this.getFeaturedProductSlides().length;
-    if (totalSlides <= 1) return;
-
-    this.currentFeaturedProductsSlideIndex = (this.currentFeaturedProductsSlideIndex + 1) % totalSlides;
-    this.updateFeaturedCarouselPosition();
-    if (!isAuto) {
-      this.resetFeaturedProductsInterval();
-    }
+    if (totalSlides <= 1 && this.featuredProducts.length <= this.productsPerSlide) return;
+    this.currentFeaturedProductsSlideIndex = (this.currentFeaturedProductsSlideIndex + 1) % Math.max(1, totalSlides);
+    this.updateFeaturedCarouselPosition(!isAuto);
   }
 
   prevFeaturedProductsSlide(isAuto: boolean = false): void {
     const totalSlides = this.getFeaturedProductSlides().length;
-    if (totalSlides <= 1) return;
+    if (totalSlides <= 1 && this.featuredProducts.length <= this.productsPerSlide) return;
 
-    this.currentFeaturedProductsSlideIndex = (this.currentFeaturedProductsSlideIndex - 1 + totalSlides) % totalSlides;
-    this.updateFeaturedCarouselPosition();
-    if (!isAuto) {
-        this.resetFeaturedProductsInterval();
-    }
+    this.currentFeaturedProductsSlideIndex = (this.currentFeaturedProductsSlideIndex - 1 + Math.max(1, totalSlides)) % Math.max(1, totalSlides);
+    this.updateFeaturedCarouselPosition(!isAuto);
   }
 
   goToFeaturedProductsSlide(index: number): void {
@@ -276,7 +307,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     if (index >= 0 && index < totalSlides) {
       this.currentFeaturedProductsSlideIndex = index;
       this.updateFeaturedCarouselPosition();
-      this.resetFeaturedProductsInterval();
     }
   }
 
@@ -287,11 +317,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.featuredProductsIntervalId) {
-        this.featuredProductsIntervalId.unsubscribe();
-    }
-    if (this.windowResizeSubscription) {
-        this.windowResizeSubscription.unsubscribe();
-    }
+    this.featuredProductsIntervalId?.unsubscribe();
+    this.windowResizeSubscription?.unsubscribe();
+    this.currencySubscription?.unsubscribe();
   }
 }
