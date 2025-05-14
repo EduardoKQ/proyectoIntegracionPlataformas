@@ -7,6 +7,7 @@ from .serializer import (
     ProductDetailSerializer,
 )
 from api.models import Product
+from external_apis.dollar_service import DolarService
 
 
 from .utils import (
@@ -18,15 +19,15 @@ from .utils import (
     subprocess_category_list_create_post,
     process_subcategory_get,
     process_subcategory_update,
-    process_subcategory_delete
+    process_subcategory_delete,
 )
 
 from .product_utils import (
     process_product_get_by_code,
     process_product_update,
     process_product_delete,
-    process_product_create
-    )
+    process_product_create,
+)
 
 
 # api backend health check
@@ -36,8 +37,24 @@ def products_list_create(request):
     if request.method == "GET":
         # get all productos
         try:
+            dolar_service = DolarService()
+            dollar_exchange_info = dolar_service.get_dollar_exchange()
+            # context to be used in the serializer
+            if dollar_exchange_info is None:
+                serializer_context = {
+                    "dollar_price": None,
+                    "exchange_date": None,
+                }
+            else:
+                serializer_context = {
+                    "dollar_price": dollar_exchange_info["dollar_price"],
+                    "exchange_date": dollar_exchange_info["date"],
+                }
+
             products = Product.objects.all()
-            products_serializer = ProductDetailSerializer(products, many=True)
+            products_serializer = ProductDetailSerializer(
+                products, many=True, context=serializer_context
+            )
             return JsonResponse(products_serializer.data, safe=False, status=200)
 
         except Product.DoesNotExist:
@@ -70,6 +87,7 @@ def products_get_update_delete(request, product_code):
         return process_product_update(product_code, request.data)
     if request.method == "DELETE":
         return process_product_delete(product_code)
+
 
 @api_view(["GET", "POST"])
 def category_list_create(request):

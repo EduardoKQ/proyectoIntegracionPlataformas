@@ -4,6 +4,7 @@ from .serializer import (
     ProductAddSerializer,
     ProductUpdateSerializer,
 )
+from external_apis.dollar_service import DolarService
 from api.models import Product, Category, Subcategory, Inventory, Branch
 
 
@@ -12,7 +13,22 @@ def process_product_get_by_code(product_code):
         # Get the product by code
         product = Product.objects.get(product_code=product_code)
         # Serialize the data
-        product_serializer = ProductDetailSerializer(product)
+        dolar_service = DolarService()
+        dollar_exchange_info = dolar_service.get_dollar_exchange()
+        # context to be used in the serializer
+        if dollar_exchange_info is None:
+            serializer_context = {
+                "dollar_price": None,
+                "exchange_date": None,
+            }
+        else:
+            serializer_context = {
+                "dollar_price": dollar_exchange_info["dollar_price"],
+                "exchange_date": dollar_exchange_info["date"],
+            }
+        product_serializer = ProductDetailSerializer(
+            product, context=serializer_context
+        )
         return JsonResponse(product_serializer.data, status=200)
     except Product.DoesNotExist:
         return JsonResponse({"error": "Product not found"}, status=404)
