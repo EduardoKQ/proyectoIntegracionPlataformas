@@ -164,7 +164,7 @@ h1, h2 {
 
 .carousel-container {
   position: relative;
-  width: 2000px;
+  width: 1900px;
   height: 550px;
   margin: auto;
   overflow: hidden;
@@ -258,6 +258,7 @@ h1, h2 {
   text-decoration: none;
   color: $text-color;
   font-weight: bold;
+  margin-top: 20px;
 }
 
 .imagen-categoria {
@@ -302,6 +303,7 @@ h1, h2 {
 .featured-products {
   padding: math.div($spacing-unit, 2) 0;
   text-align: center;
+  margin-top: 80px;
 
   h2 {
     margin-bottom: math.div($spacing-unit, 1.5);
@@ -315,7 +317,7 @@ h1, h2 {
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: 0 auto;
+  margin: 40px auto;
   max-width: 1200px;
   padding: 0 math.div($spacing-unit, 3);
 

@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
-import { AuthService, AuthResponse, LoginCredentials, StoredUser } from '../../services/auth.service'; // Ajusta la ruta
+import { AuthService, AuthResponse, LoginCredentials, UserData } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -56,36 +56,66 @@ export class LoginComponent implements OnInit {
       .subscribe({
         next: (response: AuthResponse) => {
           if (response.status === 'success' && response.tokens && response.user_data) {
-            this.authService.storeTokens(response.tokens.access, response.tokens.refresh);
-            this.authService.storeUserData(response.user_data as StoredUser);
-
-            const userRole = response.user_data.role;
-
-            if (userRole === 'cliente') {
-              this.router.navigate(['/home']);
-            } else if (userRole) {
-              this.router.navigate(['/product']);
-            } else {
-              this.router.navigate(['/']);
-            }
+            this.navigateToRoleBasedDashboard(response.user_data);
           } else {
-            this.errorMessage = response.message || 'Respuesta inesperada.';
+            this.errorMessage = response.message || 'Respuesta inesperada del servidor.';
           }
         },
         error: (errorResponse: HttpErrorResponse) => {
           let messageForUser = 'No se pudo iniciar sesión. Intente más tarde.';
           let backendErrorDetail = '';
-          if (errorResponse.error) { if (typeof errorResponse.error === 'object') { backendErrorDetail = errorResponse.error.detail
-          || errorResponse.error.error || errorResponse.error.message ||
-          (errorResponse.error.non_field_errors ? errorResponse.error.non_field_errors.join(' ') : ''); }
-          else if (typeof errorResponse.error === 'string') { backendErrorDetail = errorResponse.error; } }
-          if (!backendErrorDetail && errorResponse.statusText) { backendErrorDetail = errorResponse.statusText; }
-          const lowerCaseErrorDetail = backendErrorDetail.toLowerCase();
-          if (lowerCaseErrorDetail.includes('invalid credentials')) {
+          if (errorResponse.error) {
+            if (typeof errorResponse.error === 'object') {
+                backendErrorDetail = errorResponse.error.detail
+                || errorResponse.error.error
+                || errorResponse.error.message
+                || (errorResponse.error.non_field_errors ? errorResponse.error.non_field_errors.join(' ') : JSON.stringify(errorResponse.error));
+            } else if (typeof errorResponse.error === 'string') {
+                backendErrorDetail = errorResponse.error;
+            }
+          }
+          if (!backendErrorDetail && errorResponse.statusText) {
+            backendErrorDetail = errorResponse.statusText;
+          }
+
+          const lowerCaseErrorDetail = backendErrorDetail?.toLowerCase() || '';
+
+          if (lowerCaseErrorDetail.includes('invalid credentials') || errorResponse.status === 401) {
             messageForUser = 'Correo electrónico o contraseña incorrectos.';
+          } else if (backendErrorDetail) {
+            messageForUser = `Error: ${backendErrorDetail}`;
           }
           this.errorMessage = messageForUser;
-       }
+          console.error('Error en login:', errorResponse);
+        }
       });
+  }
+  private navigateToRoleBasedDashboard(userData: UserData): void {
+    const userRole = userData.role;
+
+    if (!userRole) {
+      console.error('Login: Rol de usuario no definido después del login. Redirigiendo a /.');
+      this.router.navigate(['/']);
+      return;
+    }
+
+    let targetPath: string;
+
+    switch (userRole) {
+      case 'administrador_tienda':
+        targetPath = '/product';
+        break;
+      case 'bodeguero':
+        targetPath = '/product-bodeguero';
+        break;
+      case 'cliente':
+        targetPath = '/home';
+        break;
+      default:
+        console.warn(`Login: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home.`);
+        targetPath = '/home';
+        break;
+    }
+    this.router.navigate([targetPath]);
   }
 }

@@ -207,8 +207,35 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   goToAdminDashboard(): void {
-    this.navigateTo('/product');
+  const userRole = this.authService.getCurrentUserRole();
+  if (!userRole) {
+    console.error('goToAdminDashboard: No se pudo determinar el rol del usuario. Redirigiendo a /login.');
+    this.router.navigate(['/login']);
+    return;
   }
+
+  let targetPath: string;
+
+  switch (userRole) {
+    case 'administrador_tienda':
+      targetPath = '/product';
+      console.log(`Redirigiendo administrador_tienda a: ${targetPath}`);
+      break;
+    case 'bodeguero':
+      targetPath = '/product-bodeguero';
+      console.log(`Redirigiendo bodeguero a: ${targetPath}`);
+      break;
+    case 'cliente':
+      targetPath = '/home';
+      console.log(`Rol cliente detectado en goToAdminDashboard. Redirigiendo a: ${targetPath}`);
+      break;
+    default:
+      console.warn(`goToAdminDashboard: Rol '${userRole}' no tiene una redirección de dashboard específica. Redirigiendo a /home como fallback.`);
+      targetPath = '/home';
+      break;
+  }
+  this.router.navigate([targetPath]);
+}
 
   logout(): void {
     this.authService.logout();

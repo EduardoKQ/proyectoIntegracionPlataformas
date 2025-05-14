@@ -93,14 +93,9 @@
           </div>
         </div>
       </div>
-
-      <button
-        *ngIf="product.codigo_marca"
-        type="button"
-        class="more-products-button"
-        [routerLink]="['/catalogo-marca', product.codigo_marca]">
-        Ver más productos <span class="button-brand-name">{{ product.marca }}</span>
-      </button>
+        <button *ngIf="product && product.marca" type="button" class="more-products-button" [routerLink]="['/catalogo']" [queryParams]="{ brands: product.marca }">
+          Ver más productos <span class="button-brand-name">{{ product.marca }}</span>
+        </button>
     </section>
   </div>
 
