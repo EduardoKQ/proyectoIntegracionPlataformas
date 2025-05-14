@@ -40,11 +40,16 @@ def products_list_create(request):
             dolar_service = DolarService()
             dollar_exchange_info = dolar_service.get_dollar_exchange()
             # context to be used in the serializer
-            serializer_context = {
-                "request": request,
-                "dollar_price": dollar_exchange_info["dollar_price"],
-                "exchange_date": dollar_exchange_info["date"],
-            }
+            if dollar_exchange_info is None:
+                serializer_context = {
+                    "dollar_price": None,
+                    "exchange_date": None,
+                }
+            else:
+                serializer_context = {
+                    "dollar_price": dollar_exchange_info["dollar_price"],
+                    "exchange_date": dollar_exchange_info["date"],
+                }
 
             products = Product.objects.all()
             products_serializer = ProductDetailSerializer(

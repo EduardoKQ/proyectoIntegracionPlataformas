@@ -31,6 +31,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def get_precio(self, obj):
         dollar_price = self.context.get("dollar_price")
         exchange_date = self.context.get("exchange_date")
+        if dollar_price is None or exchange_date is None:
+            return {
+                "precio_actual": round(obj.current_price),
+                "fecha_precio": obj.current_price_date,
+                "precio_dolares": None,
+                "fecha_cambio_dolar": None,
+            }
         return {
             "precio_actual": round(obj.current_price),
             "fecha_precio": obj.current_price_date,

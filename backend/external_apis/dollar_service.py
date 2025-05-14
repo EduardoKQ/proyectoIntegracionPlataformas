@@ -23,6 +23,8 @@ class DolarService:
             return True
 
     def get_dollar_exchange(self) -> dict | None:
+        #!!!
+        return None
         try:
             if self.api_not_available():
                 return None
