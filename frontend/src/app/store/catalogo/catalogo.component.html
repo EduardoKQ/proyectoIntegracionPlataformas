@@ -23,7 +23,6 @@
             </div>
           </div>
         </div>
-
         <div class="filter-section" formArrayName="brands" *ngIf="brandsFormArray.controls.length > 0">
           <h3 class="filter-title">Marcas</h3>
           <div class="filter-options-scrollable">
@@ -37,26 +36,26 @@
             <h3 class="filter-title">Marcas</h3>
             <small>No hay más filtros de marca para los productos actuales.</small>
         </div>
-
-
         <div class="filter-section" formArrayName="categories" *ngIf="categoriesFormArray.controls.length > 0">
           <h3 class="filter-title">Categorías</h3>
           <div class="filter-options-scrollable">
-            <div *ngFor="let categoryControl of categoriesFormArray.controls; let i = index" [formGroupName]="i">
-              <div class="filter-checkbox">
-                <input type="checkbox" [id]="'category-' + i" formControlName="selected" (change)="onCategorySelectionChange($any(categoryControl), i)">
-                <label [for]="'category-' + i">{{ categoryControl.value.name }}</label>
+            <ng-container *ngFor="let categoryControl of categoriesFormArray.controls; let i = index">
+              <div *ngIf="!currentlySelectedCategoryForDisplay || categoryControl === currentlySelectedCategoryForDisplay" [formGroupName]="i">
+                <div class="filter-checkbox">
+                  <input type="checkbox" [id]="'category-' + i" formControlName="selected" (change)="onCategorySelectionChange($any(categoryControl), i)">
+                  <label [for]="'category-' + i">{{ categoryControl.value.name }}</label>
+                </div>
+                <div class="subcategory-options"
+                     *ngIf="categoryControl.value.selected && getSubcategoryControls(i).controls.length > 0">
+                    <ng-container [formArrayName]="'subcategories'">
+                      <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
+                          <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected" (change)="onSubcategorySelectionChange($any(subcatControl), i)">
+                          <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
+                      </div>
+                    </ng-container>
+                </div>
               </div>
-              <div class="subcategory-options"
-                   *ngIf="categoryControl.value.selected && getSubcategoryControls(i).controls.length > 0">
-                  <ng-container [formArrayName]="'subcategories'">
-                    <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
-                        <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected" (change)="onSubcategorySelectionChange($any(subcatControl), i)">
-                        <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
-                    </div>
-                  </ng-container>
-              </div>
-            </div>
+            </ng-container>
           </div>
         </div>
          <div *ngIf="!isLoading && categoriesFormArray.controls.length === 0 && productsFilteredByUrlParams.length > 0" class="filter-section">
@@ -70,7 +69,6 @@
       <header class="catalog-header">
         <h1>{{ catalogTitle }}</h1>
         </header>
-
       <div *ngIf="isLoading" class="loading-indicator">
         <p>Cargando productos...</p>
       </div>
@@ -79,7 +77,6 @@
         <p>No se encontraron productos que coincidan con tu búsqueda o filtros.</p>
         <p *ngIf="activeSearchTerm || activeCategoryName || activeSubcategoryName">Intenta con un término de búsqueda diferente o ajusta los filtros.</p>
       </div>
-
       <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
         <div class="product-card" *ngFor="let product of paginatedProducts">
           <a [routerLink]="['/producto', product.codigo_producto]" class="product-link"> <div class="product-image-container">
@@ -94,7 +91,6 @@
                 </span>
               </p>
               <p class="product-brand">Marca: {{ product.marca }}</p>
-
               <p class="product-price">
                 <ng-container *ngIf="product.precio; else noPriceInCard">
                   <ng-container [ngSwitch]="currentSelectedCurrency">
@@ -104,7 +100,7 @@
                       </ng-container>
                       <ng-template #catPriceCLPOnlyUSD>
                         <span *ngIf="product.precio.precio_actual != null; else catNoPrice">
-                           {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                            {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
                         </span>
                         <ng-template #catNoPrice>N/A</ng-template>
                       </ng-template>
@@ -131,14 +127,13 @@
           <button class="add-to-cart-btn">Agregar al carrito</button>
         </div>
       </div>
-
       <div class="pagination" *ngIf="!isLoading && productsToDisplay.length > 0 && totalPages > 1">
         <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1" aria-label="Página anterior">&laquo;</button>
         <ng-container *ngFor="let page of getPages()">
             <button class="pagination-btn"
                     [class.active]="currentPage === page"
                     (click)="goToPage(page)">
-                {{ page }}
+              {{ page }}
             </button>
         </ng-container>
         <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" aria-label="Página siguiente">&raquo;</button>
