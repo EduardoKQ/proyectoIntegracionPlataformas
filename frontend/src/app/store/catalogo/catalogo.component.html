@@ -23,6 +23,7 @@
             </div>
           </div>
         </div>
+
         <div class="filter-section" formArrayName="brands" *ngIf="brandsFormArray.controls.length > 0">
           <h3 class="filter-title">Marcas</h3>
           <div class="filter-options-scrollable">
@@ -36,6 +37,7 @@
             <h3 class="filter-title">Marcas</h3>
             <small>No hay más filtros de marca para los productos actuales.</small>
         </div>
+
         <div class="filter-section" formArrayName="categories" *ngIf="categoriesFormArray.controls.length > 0">
           <h3 class="filter-title">Categorías</h3>
           <div class="filter-options-scrollable">
@@ -47,18 +49,18 @@
                 </div>
                 <div class="subcategory-options"
                      *ngIf="categoryControl.value.selected && getSubcategoryControls(i).controls.length > 0">
-                    <ng-container [formArrayName]="'subcategories'">
-                      <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
-                          <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected" (change)="onSubcategorySelectionChange($any(subcatControl), i)">
-                          <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
-                      </div>
-                    </ng-container>
+                  <ng-container [formArrayName]="'subcategories'">
+                    <div *ngFor="let subcatControl of getSubcategoryControls(i).controls; let j = index" [formGroupName]="j" class="filter-checkbox sub-item">
+                        <input type="checkbox" [id]="'subcat-' + i + '-' + j" formControlName="selected" (change)="onSubcategorySelectionChange($any(subcatControl), i)">
+                        <label [for]="'subcat-' + i + '-' + j">{{ subcatControl.value.name }}</label>
+                    </div>
+                  </ng-container>
                 </div>
               </div>
             </ng-container>
           </div>
         </div>
-         <div *ngIf="!isLoading && categoriesFormArray.controls.length === 0 && productsFilteredByUrlParams.length > 0" class="filter-section">
+        <div *ngIf="!isLoading && categoriesFormArray.controls.length === 0 && productsFilteredByUrlParams.length > 0" class="filter-section">
             <h3 class="filter-title">Categorías</h3>
             <small>No hay más filtros de categoría para los productos actuales.</small>
         </div>
@@ -68,7 +70,15 @@
     <main class="catalog-content">
       <header class="catalog-header">
         <h1>{{ catalogTitle }}</h1>
-        </header>
+        <div *ngIf="currentSelectedBranch" class="selected-branch-info">
+          <span class="material-symbols-outlined">store</span>
+          Comprando en: <strong>{{ currentSelectedBranch.name }} ({{ currentSelectedBranch.city }})</strong>
+          <button (click)="showBranchModal = true" class="btn-link change-branch-btn">Cambiar Sucursal</button>
+        </div>
+        <div *ngIf="!currentSelectedBranch && !isLoading" class="selected-branch-info">
+            <button (click)="showBranchModal = true" class="btn btn-primary select-branch-prompt-btn">Seleccionar Sucursal para Comprar</button>
+        </div>
+      </header>
       <div *ngIf="isLoading" class="loading-indicator">
         <p>Cargando productos...</p>
       </div>
@@ -77,9 +87,11 @@
         <p>No se encontraron productos que coincidan con tu búsqueda o filtros.</p>
         <p *ngIf="activeSearchTerm || activeCategoryName || activeSubcategoryName">Intenta con un término de búsqueda diferente o ajusta los filtros.</p>
       </div>
+
       <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
         <div class="product-card" *ngFor="let product of paginatedProducts">
-          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link"> <div class="product-image-container">
+          <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+            <div class="product-image-container">
               <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
             </div>
             <div class="product-details">
@@ -111,7 +123,7 @@
                       </ng-container>
                       <ng-template #catPriceUSDOnlyCLP>
                         <span *ngIf="product.precio.precio_dolares != null; else catNoPrice">
-                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                            {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
                         </span>
                         <ng-template #catNoPrice>N/A</ng-template>
                       </ng-template>
@@ -122,11 +134,50 @@
                   <span class="current-price">Precio no disponible</span>
                 </ng-template>
               </p>
-              </div>
+            </div>
           </a>
-          <button class="add-to-cart-btn">Agregar al carrito</button>
+          <div class="add-to-cart-container">
+            <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 0; else quantityControlsCatalog">
+              <button (click)="addToCart(product)"
+                      class="add-to-cart-btn"
+                      [disabled]="currentSelectedBranch && getProductMaxStock(product.codigo_producto) === 0">
+                Agregar
+              </button>
+            </ng-container>
+            <ng-template #quantityControlsCatalog>
+              <div class="item-quantity-controls">
+                <button (click)="updateQuantityFromCatalog(product.codigo_producto, getQuantityInCart(product.codigo_producto) - 1)"
+                        class="quantity-btn remove-btn" aria-label="Eliminar o disminuir cantidad">
+                  <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 1; else minusIconCatalog">
+                      <span class="material-symbols-outlined">delete</span>
+                  </ng-container>
+                  <ng-template #minusIconCatalog>
+                      <span class="material-symbols-outlined">remove</span>
+                  </ng-template>
+                </button>
+
+                <span class="quantity-display">
+                  <ng-container *ngIf="isStockMaxedOut(product.codigo_producto) && getQuantityInCart(product.codigo_producto) > 0; else showNumericQuantity">
+                    Cant. Máx.
+                  </ng-container>
+                  <ng-template #showNumericQuantity>
+                    {{ getQuantityInCart(product.codigo_producto) }} un
+                  </ng-template>
+                </span>
+
+                <button
+                  (click)="updateQuantityFromCatalog(product.codigo_producto, getQuantityInCart(product.codigo_producto) + 1)"
+                  class="quantity-btn add-btn"
+                  aria-label="Aumentar cantidad"
+                  [disabled]="isStockMaxedOut(product.codigo_producto)">
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </ng-template>
+          </div>
         </div>
       </div>
+
       <div class="pagination" *ngIf="!isLoading && productsToDisplay.length > 0 && totalPages > 1">
         <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1" aria-label="Página anterior">&laquo;</button>
         <ng-container *ngFor="let page of getPages()">
@@ -141,3 +192,8 @@
     </main>
   </div>
 </div>
+
+<app-branch-selector-modal *ngIf="showBranchModal"
+  (branchSelected)="handleBranchSelectedFromModal($event)"
+  (modalClosed)="handleModalClosed()">
+</app-branch-selector-modal>

@@ -54,6 +54,15 @@ export class InventoryService {
       );
   }
 
+  getProductStockInBranch(branchCode: string, productCode: string): Observable<InventoryItem> {
+    const url = `${this.inventoryBaseApiUrl}/${branchCode}/${productCode}`;
+    return this.http.get<InventoryItem>(url)
+      .pipe(
+        tap(data => console.log(`Stock para producto ${productCode} en sucursal ${branchCode}:`, data)),
+        catchError(this.handleError)
+      );
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocurrió un error desconocido al interactuar con el inventario.';
     if (error.error instanceof ErrorEvent) {
@@ -78,4 +87,5 @@ export class InventoryService {
     console.error('Error en InventoryService:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
+
 }

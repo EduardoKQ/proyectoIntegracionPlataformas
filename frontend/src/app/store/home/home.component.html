@@ -39,7 +39,8 @@
     <a class="categoria"
        *ngFor="let item of categorias"
        [routerLink]="['/catalogo']"
-       [queryParams]="{ category: item.ruta }"> <div class="imagen-categoria">
+       [queryParams]="{ category: item.ruta }">
+      <div class="imagen-categoria">
         <img [src]="item.imagen" [alt]="item.nombre" />
       </div>
       <p>{{ item.nombre }}</p>
@@ -52,12 +53,15 @@
       <button
         class="carousel-nav prev"
         (click)="prevFeaturedProductsSlide()"
-        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Productos anteriores">&#10094;</button>
+        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Productos anteriores">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
 
       <div class="products-carousel-wrapper" #productsCarouselContainer>
         <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
           <div class="product-card-featured" *ngFor="let product of featuredProducts">
-            <a [routerLink]="['/producto', product.codigo_producto]" class="product-link"> <div class="product-image-container">
+            <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+              <div class="product-image-container">
                 <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
               </div>
               <div class="product-info">
@@ -70,13 +74,14 @@
                       </ng-container>
                       <ng-template #featPriceCLPOnlyUSD>
                         <span *ngIf="product.precio.precio_actual != null; else featNoPrice">
-                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                            {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
                         </span>
-                         <ng-template #featNoPrice>N/A</ng-template>
+                        <ng-template #featNoPrice>N/A</ng-template>
                       </ng-template>
                     </p>
-                    <p *ngSwitchDefault class="product-price-featured"> <ng-container *ngIf="product.precio.precio_actual != null; else featPriceUSDOnlyCLP">
-                        {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                    <p *ngSwitchDefault class="product-price-featured">
+                      <ng-container *ngIf="product.precio.precio_actual != null; else featPriceUSDOnlyCLP">
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
                       </ng-container>
                       <ng-template #featPriceUSDOnlyCLP>
                         <span *ngIf="product.precio.precio_dolares != null; else featNoPrice">
@@ -90,7 +95,42 @@
                 <p *ngIf="!product.precio" class="product-price-featured">Precio no disponible</p>
               </div>
             </a>
-            <button class="btn btn-sm btn-primary add-to-cart-featured" >Agregar</button>
+            <div class="add-to-cart-container">
+              <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 0; else quantityControlsHome">
+                <button (click)="addToCartFromHome(product)"
+                        class="btn btn-sm btn-primary add-to-cart-featured"
+                        [disabled]="currentSelectedBranch && getProductMaxStock(product.codigo_producto) === 0 && featuredProducts.length > 0">
+                  Agregar
+                </button>
+              </ng-container>
+              <ng-template #quantityControlsHome>
+                <div class="item-quantity-controls">
+                  <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) - 1)"
+                          class="quantity-btn remove-btn" aria-label="Eliminar o disminuir cantidad">
+                    <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 1; else minusIconHome">
+                        <span class="material-symbols-outlined">delete</span>
+                    </ng-container>
+                    <ng-template #minusIconHome>
+                        <span class="material-symbols-outlined">remove</span>
+                    </ng-template>
+                  </button>
+                  <span class="quantity-display">
+                    <ng-container *ngIf="isStockMaxedOut(product.codigo_producto) && getQuantityInCart(product.codigo_producto) > 0; else showNumericQuantityHome">
+                      Cant. Máx.
+                    </ng-container>
+                    <ng-template #showNumericQuantityHome>
+                      {{ getQuantityInCart(product.codigo_producto) }} un
+                    </ng-template>
+                  </span>
+                  <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) + 1)"
+                          class="quantity-btn add-btn"
+                          aria-label="Aumentar cantidad"
+                          [disabled]="isStockMaxedOut(product.codigo_producto)">
+                    <span class="material-symbols-outlined">add</span>
+                  </button>
+                </div>
+              </ng-template>
+            </div>
           </div>
         </div>
       </div>
@@ -98,7 +138,9 @@
       <button
         class="carousel-nav next"
         (click)="nextFeaturedProductsSlide()"
-        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Siguientes productos">&#10095;</button>
+        *ngIf="getFeaturedProductSlides().length > 1" aria-label="Siguientes productos">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
     </div>
     <div class="carousel-indicators products" *ngIf="getFeaturedProductSlides().length > 1">
         <span *ngFor="let slideGroup of getFeaturedProductSlides(); let i = index"
@@ -107,6 +149,10 @@
               (click)="goToFeaturedProductsSlide(i)"></span>
       </div>
   </section>
-  <div *ngIf="featuredProducts.length === 0" class="loading-container"> <p>Cargando productos destacados...</p>
-  </div>
-  </div>
+  <div *ngIf="featuredProducts.length === 0" class="loading-container"> <p>Cargando productos destacados...</p> </div>
+</div>
+
+<app-branch-selector-modal *ngIf="showBranchModal"
+  (branchSelected)="handleBranchSelectedFromModal($event)"
+  (modalClosed)="handleModalClosed()">
+</app-branch-selector-modal>

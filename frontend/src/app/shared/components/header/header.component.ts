@@ -8,8 +8,9 @@ import { ProductService } from '../../../services/product.service';
 import { ApiProduct } from '../../../services/product.interfaces';
 import { Subject, of, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil, filter, tap, map, finalize } from 'rxjs/operators';
-
 import { CurrencyService, SupportedCurrency } from '../../../services/Currency.Service';
+import { CartService } from '../../../services/cart.service';
+
 interface DisplayCategory {
   id: string;
   title: string;
@@ -36,6 +37,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private categorySubcategoryService = inject(CategorySubcategoryService);
   private productService = inject(ProductService);
   public currencyService = inject(CurrencyService);
+  private cartService = inject(CartService);
 
   private destroy$ = new Subject<void>();
 
@@ -56,7 +58,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isUserLoggedIn: boolean = false;
   private readonly ADMIN_TIENDA_ROLES = ['vendedor', 'bodeguero', 'contador', 'administrador_tienda', 'superuser'];
 
+  cartItemCount$: Observable<number>;
+
   constructor() {
+     this.cartItemCount$ = this.cartService.getTotalItems();
   }
 
   ngOnInit(): void {

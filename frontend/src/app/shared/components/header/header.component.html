@@ -72,7 +72,7 @@
                     </ng-container>
                     <ng-template #searchPriceCLPOnlyUSD>
                       <span *ngIf="product.precio.precio_actual != null; else searchNoPrice">
-                         {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
                       </span>
                       <ng-template #searchNoPrice>N/A</ng-template>
                     </ng-template>
@@ -146,6 +146,7 @@
       </div>
       <button class="header-icon-button cart-button" aria-label="Carrito de compras" routerLink="/cart">
         <span class="material-symbols-outlined">shopping_cart</span>
+        <span class="cart-count" *ngIf="cartItemCount$ | async as count">{{ count > 0 ? count : '' }}</span>
       </button>
     </div>
   </div>

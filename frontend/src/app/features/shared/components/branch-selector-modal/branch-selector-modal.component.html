@@ -1,0 +1,28 @@
+<div class="modal-backdrop" (click)="onClose()"> <div class="modal-content" (click)="$event.stopPropagation()"> <h2>Selecciona una Sucursal para Retiro</h2>
+    <p>Todos los productos de tu pedido se verificarán y reservarán en la sucursal que elijas.</p>
+
+    <div *ngIf="isLoadingBranches" class="loading-branches">
+      Cargando sucursales...
+    </div>
+
+    <div *ngIf="!isLoadingBranches && availableBranches.length === 0" class="no-branches">
+      No hay sucursales disponibles en este momento.
+    </div>
+
+    <div *ngIf="!isLoadingBranches && availableBranches.length > 0" class="branch-list">
+      <label for="branch-select">Sucursal:</label>
+      <select id="branch-select" [(ngModel)]="locallySelectedBranchCode" name="selectedBranch">
+        <option [ngValue]="null" disabled>-- Elige una sucursal --</option>
+        <option *ngFor="let branch of availableBranches" [value]="branch.branch_code">
+          {{ branch.name }} ({{ branch.city }}) - {{ branch.address }}
+        </option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button (click)="confirmSelection()" [disabled]="!locallySelectedBranchCode || isLoadingBranches" class="btn btn-primary">
+        Confirmar Sucursal
+      </button>
+      </div>
+  </div>
+</div>

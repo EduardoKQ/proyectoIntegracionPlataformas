@@ -1,0 +1,127 @@
+<div class="cart-page-container">
+  <div class="main-cart-section">
+    <h2>Carro ({{ (cartItems$ | async)?.length || 0 }} producto<span *ngIf="(cartItems$ | async)?.length !== 1">s</span>)</h2>
+
+    <div *ngIf="(cartItems$ | async) as items; else loadingCart">
+      <div *ngIf="items.length === 0; else cartHasItems" class="empty-cart-message">
+        <p>Tu carrito está vacío.</p>
+        <button class="btn btn-primary" (click)="goToProducts()">Continuar comprando</button>
+      </div>
+
+      <ng-template #cartHasItems>
+        <div class="delivery-pickup-section">
+          <ng-container *ngIf="deliveryMode === 'pickup'">
+            <div class="pickup-info clickable-area" (click)="openDeliveryModal('pickup')" title="Cambiar sucursal de retiro">
+              <span class="icon-pickup">🚗</span>
+              <div>
+                <h3>Retiro en Tienda</h3>
+                <ng-container *ngIf="currentSelectedBranch">
+                  <p class="pickup-branch-name">{{ currentSelectedBranch.name }}</p>
+                  <p class="pickup-branch-address">{{ currentSelectedBranch.address || 'Dirección no disponible' }}</p>
+                </ng-container>
+                <ng-container *ngIf="!currentSelectedBranch">
+                  <p>No has seleccionado una sucursal para el retiro.</p>
+                  <button class="btn btn-link btn-small-action">(Seleccionar Sucursal)</button>
+                </ng-container>
+              </div>
+            </div>
+            <div class="delivery-options">
+              <p class="alternative-delivery" *ngIf="items.length > 0">
+                También se puede hacer envío de {{ items.length }} producto<span *ngIf="items.length !== 1">s</span>.
+              </p>
+              <button class="btn btn-link" (click)="openDeliveryModal('delivery')">🔄 Cambiar a despacho a domicilio</button>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="deliveryMode === 'delivery'">
+            <div class="delivery-info-wrapper">
+              <div class="delivery-main-info clickable-area" (click)="openDeliveryModal('delivery')" title="Modificar dirección de despacho">
+                <span class="icon-delivery">🚚</span>
+                <div>
+                  <h3>Despacho a Domicilio</h3>
+                  <ng-container *ngIf="currentDeliveryAddress">
+                    <p class="delivery-address-street">{{ currentDeliveryAddress.street }} {{ currentDeliveryAddress.number }}</p>
+                    <p class="delivery-address-details" *ngIf="currentDeliveryAddress.apartment">
+                      {{ currentDeliveryAddress.apartment }}
+                    </p>
+                    <p class="delivery-address-instructions" *ngIf="currentDeliveryAddress.instructions">
+                      Instrucciones: {{ currentDeliveryAddress.instructions }}
+                    </p>
+                  </ng-container>
+                  <ng-container *ngIf="!currentDeliveryAddress">
+                    <p>No se ha especificado una dirección de entrega.</p>
+                    <button class="btn btn-link btn-small-action">(Ingresar Dirección)</button>
+                  </ng-container>
+                </div>
+              </div>
+              <div class="origin-branch-info-for-delivery" *ngIf="currentSelectedBranch">
+                <p class="origin-branch-label">Productos despachados desde:</p>
+                <p class="origin-branch-name">{{ currentSelectedBranch.name }}</p>
+                <p class="origin-branch-address">{{ currentSelectedBranch.address || 'N/D' }}</p>
+              </div>
+            </div>
+            <div class="delivery-options">
+              <button class="btn btn-link" (click)="openDeliveryModal('pickup')">🔁 Cambiar a Retiro en Tienda</button>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="cart-items-list">
+          <div class="cart-item-card" *ngFor="let item of items">
+            <img [src]="item.image_url || 'assets/images/placeholder.png'" alt="{{ item.name }}" class="item-image">
+            <div class="item-info">
+              <h4>{{ item.name }}</h4>
+            </div>
+            <div class="item-price-each">
+              <p>{{ item.price | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
+            </div>
+            <div class="item-quantity-controls">
+              <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1">-</button>
+              <input type="number" [value]="item.quantity" (change)="updateQuantityFromInput($event, item)" min="1" [max]="(deliveryMode === 'pickup' && currentSelectedBranch && getProductMaxStock(item.product_code) > 0) ? getProductMaxStock(item.product_code) : null">
+              <button (click)="incrementQuantity(item)" [disabled]="deliveryMode === 'pickup' && currentSelectedBranch && isStockMaxedOut(item.product_code, item.quantity)">+</button>
+            </div>
+            <div class="item-subtotal">
+              <p>{{ (item.price * item.quantity) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
+            </div>
+            <button class="remove-item-button" (click)="removeFromCart(item.product_code, item.branch_code)">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+    <ng-template #loadingCart>
+      <p>Cargando carrito...</p>
+    </ng-template>
+  </div>
+
+  <ng-container *ngIf="(cartItems$ | async) as summaryItems">
+    <div class="cart-summary-section" *ngIf="summaryItems && summaryItems.length > 0">
+      <h3>Resumen</h3>
+      <div class="summary-line">
+        <span>Productos ({{ totalItems$ | async }})</span>
+        <span>{{ (totalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
+      </div>
+      <div class="summary-line">
+        <span>Costo de envío</span>
+        <span>{{ deliveryMode === 'delivery' ? (currentDeliveryAddress ? 'Por calcular' : 'N/A') : 'Sin costo (Retiro)' }}</span>
+      </div>
+      <hr>
+      <div class="summary-total">
+        <span>Total estimado</span>
+        <span>{{ (totalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
+      </div>
+      <button class="btn btn-success btn-block" (click)="proceedToCheckout()" [disabled]="(deliveryMode === 'pickup' && !currentSelectedBranch) || (deliveryMode === 'delivery' && !currentDeliveryAddress)">Continuar</button>
+    </div>
+  </ng-container>
+</div>
+
+<app-address-modal
+  [showModal]="showAddressModal"
+  [initialMode]="addressModalInitialMode"
+  [availableBranches]="(availableBranchesForModal$ | async) || []"
+  [preSelectedBranchCode]="currentSelectedBranch?.branch_code"
+  (closeModal)="handleCloseAddressModal()"
+  (addressSubmitted)="handleAddressSubmitted($event)"
+  (pickupBranchSelected)="handlePickupBranchSelected($event)">
+</app-address-modal>

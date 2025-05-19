@@ -12,6 +12,7 @@ import { rolesGuard } from './guards/rol.guard';
 import { CatalogoComponent } from './store/catalogo/catalogo.component';
 import { StoryViewComponent } from './store/components/story-view/story-view.component';
 import { ProductDetailComponent } from './store/product-detail/product-detail.component';
+import { CartComponent } from './store/components/cart/cart.component';
 // Bodeguero
 import { ProductListComponentB } from './pages/bodeguero/product-list-b/product-list-b.component';
 import { ProductEditComponentB } from './pages/bodeguero/product-edit-b/product-edit-b.component';
@@ -29,6 +30,7 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent, data: { showStoreHeader: true } },
   { path: 'producto/:codigo_producto', component: ProductDetailComponent, data: { showStoreHeader: true } },
   { path: 'story/:id', component: StoryViewComponent },
+   { path: 'cart', component: CartComponent, data: { showStoreHeader: true } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
   //1 Administrador
