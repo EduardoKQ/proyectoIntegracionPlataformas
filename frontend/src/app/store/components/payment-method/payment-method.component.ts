@@ -22,13 +22,13 @@ export interface BankDetailsObject {
   styleUrls: ['./payment-method.component.scss']
 })
 export class PaymentMethodComponent implements OnInit, OnDestroy {
-
   totalAmount: number = 0;
   private priceSubscription!: Subscription;
   selectedPaymentMethod: 'webpay' | 'transferencia' | null = null;
   isProcessingPayment: boolean = false;
   paymentError: string | null = null;
   bankDetails: string = "Banco Santander - Ferremas - Cuenta Corriente: 75344988 - RUT: 69.924-337-1 - Email: pagos@ferremas.com";
+
   subtotalAmount: number = 0;
   shippingCost: number = 0;
 
@@ -62,7 +62,10 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
       this.paymentError = "Por favor, selecciona un método de pago.";
       return;
     }
-    if (this.totalAmount <= 0) {
+
+    const amountToPay = this.totalAmount;
+
+    if (amountToPay <= 0) {
         this.paymentError = "El monto a pagar debe ser mayor a cero.";
         return;
     }
@@ -70,16 +73,17 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     const orderNumber = this.generateOrderNumber();
 
     if (this.selectedPaymentMethod === 'webpay') {
-      this.proceedToWebpay(orderNumber);
+      this.proceedToWebpay(orderNumber, amountToPay);
     } else if (this.selectedPaymentMethod === 'transferencia') {
       this.isProcessingPayment = true;
+
       setTimeout(() => {
         this.cartService.clearCart();
         this.router.navigate(['/payment-result'], {
           queryParams: {
             status: 'transfer_pending',
             orden_compra: orderNumber,
-            monto: this.totalAmount.toString()
+            monto: amountToPay.toString()
           }
         });
         this.isProcessingPayment = false;
@@ -87,13 +91,14 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     }
   }
 
-  private proceedToWebpay(orderNumber: string): void {
+  private proceedToWebpay(orderNumber: string, amountToPay: number): void {
     this.isProcessingPayment = true;
     this.paymentError = null;
 
     localStorage.setItem('webpay_payment_status', 'pending');
     localStorage.setItem('webpay_order_id', orderNumber);
-    this.webpayService.initTransaction(this.totalAmount, orderNumber).subscribe(
+
+    this.webpayService.initTransaction(amountToPay, orderNumber).subscribe(
       (response: WebpayInitResponse) => {
         if (response && response.token && response.url) {
           localStorage.setItem('webpay_token', response.token);
