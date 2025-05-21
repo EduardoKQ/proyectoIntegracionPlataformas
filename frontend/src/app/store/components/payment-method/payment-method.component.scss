@@ -1,0 +1,340 @@
+@use 'sass:color';
+
+$color-primario-azul: rgb(22, 59, 102);
+$color-primario-naranja: #f57c00;
+$color-primario-naranja-claro: color.adjust($color-primario-naranja, $lightness: 20%);
+$fuente-principal: 'Roboto', sans-serif;
+$color-texto-general: #333;
+$color-texto-secundario: #555;
+$color-texto-claro: #777;
+$color-texto-blanco: #fff;
+$color-error: #d32f2f;
+$color-borde-suave: #e0e0e0;
+$color-borde-input: #ced4da;
+$color-fondo-tarjeta: #fff;
+$color-fondo-pagina: #f4f6f8;
+$color-fondo-seleccionado-ligero: color.adjust($color-primario-naranja, $lightness: 45%);
+$color-enlace-resumen: $color-primario-azul;
+$color-fondo-detalle-banco: #f0f2f5;
+
+:host {
+  font-family: 'Roboto', sans-serif;
+}
+
+.checkout-page-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 20px;
+  font-family: $fuente-principal;
+  background-color: $color-fondo-pagina;
+}
+
+.payment-selection-column {
+  flex: 2;
+  min-width: 300px;
+}
+
+.summary-column {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-method-card {
+  background-color: $color-fondo-tarjeta;
+  border-radius: 10px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  h2 {
+    color: $color-primario-azul;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  > p.intro-text {
+    font-size: 0.9rem;
+    color: $color-texto-secundario;
+    margin-bottom: 25px;
+  }
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+
+  .payment-option-button {
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    background-color: $color-fondo-tarjeta;
+    color: $color-primario-azul;
+    border: 1px solid $color-borde-input;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: $fuente-principal;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: left;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s, outline 0.2s;
+    width: 100%;
+
+    .icon {
+      margin-right: 15px;
+      font-size: 1.8rem;
+      color: $color-primario-azul;
+      min-width: 35px;
+      max-width: 35px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .payment-text-details {
+      display: flex;
+      flex-direction: column;
+      .main-text {
+        font-weight: 500;
+      }
+      .sub-text {
+        font-size: 0.8rem;
+        color: $color-texto-secundario;
+        margin-top: 3px;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      border-color: $color-primario-naranja;
+    }
+
+    &.selected {
+      border-color: $color-primario-naranja;
+      background-color: $color-fondo-tarjeta;
+      outline: 2px solid $color-primario-naranja;
+      outline-offset: -2px;
+
+      .icon {
+        color: $color-primario-naranja;
+      }
+      .payment-text-details .main-text {
+        font-weight: 600;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      background-color: color.adjust($color-borde-suave, $lightness: 5%);
+      &:hover {
+        border-color: $color-borde-input;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.transfer-details {
+  margin-top: 20px;
+  margin-bottom: 25px;
+
+  h4 {
+    color: $color-primario-azul;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    font-weight: 500;
+  }
+
+  .bank-account-details-card {
+    background-color: $color-fondo-detalle-banco;
+    padding: 20px;
+    border-radius: 8px;
+
+    .bank-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+
+      .bank-logo-placeholder {
+        margin-right: 12px;
+        font-size: 2rem;
+        color: $color-primario-azul;
+      }
+      .bank-name-text {
+        font-size: 1rem;
+        color: $color-texto-secundario;
+        font-weight: 500;
+      }
+    }
+
+    .account-holder-name {
+      font-size: 1.1rem;
+      color: $color-primario-azul;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .account-detail-line {
+      font-size: 0.95rem;
+      color: $color-texto-secundario;
+      margin-bottom: 6px;
+      display: flex;
+
+      .detail-value {
+        font-weight: 600;
+        color: $color-texto-general;
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .post-transfer-instructions {
+    font-size: 0.9rem;
+    color: $color-texto-secundario;
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: color.adjust($color-borde-suave, $lightness: 8%);
+    border-radius: 6px;
+  }
+}
+
+.purchase-summary-card {
+  background-color: $color-fondo-tarjeta;
+  border-radius: 10px;
+  padding: 20px 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid $color-primario-azul;
+
+  h3 {
+    color: $color-primario-azul;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  > p.summary-subtitle {
+    font-size: 0.85rem;
+    color: $color-texto-secundario;
+    margin-bottom: 20px;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 0.95rem;
+    color: $color-texto-secundario;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid $color-borde-suave;
+    }
+
+    .value {
+      font-weight: 600;
+      color: $color-texto-general;
+      &.currency-link {
+        color: $color-enlace-resumen;
+        text-decoration: none;
+        font-weight: normal;
+      }
+      &.total-amount {
+        color: $color-primario-azul;
+        font-size: 1.2em;
+        font-weight: 700;
+      }
+    }
+  }
+  .total-final-info {
+    text-align: right;
+    font-size: 0.9rem;
+    color: $color-primario-naranja;
+    margin-top: 15px;
+    font-weight: 500;
+  }
+}
+
+.confirm-payment-section {
+  text-align: center;
+
+  .confirm-button {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background-color: $color-primario-naranja;
+    color: $color-texto-blanco;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primario-naranja, $lightness: -10%);
+    }
+
+    &:disabled {
+      background-color: $color-primario-naranja-claro;
+      color: color.adjust($color-texto-blanco, $lightness: -10%);
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    span {
+      display: inline-block;
+    }
+  }
+}
+
+.payment-method-card .error-message {
+  background-color: color.adjust($color-error, $lightness: 35%);
+  color: color.adjust($color-error, $lightness: -10%);
+  border: 1px solid color.adjust($color-error, $lightness: 20%);
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.95rem;
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+.empty-cart-or-error-section {
+    width: 100%;
+    text-align: center;
+    color: $color-texto-secundario;
+    font-size: 1rem;
+    padding: 30px 20px;
+    background-color: $color-fondo-tarjeta;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 20px;
+
+  a {
+    color: $color-primario-naranja;
+    text-decoration: underline;
+    font-weight: 500;
+    &:hover {
+      color: color.adjust($color-primario-naranja, $lightness: -10%);
+    }
+  }
+}
+
+@media (max-width: 850px) {
+  .checkout-page-container {
+    flex-direction: column;
+  }
+  .payment-selection-column,
+  .summary-column {
+    flex: 1 1 100%;
+  }
+}

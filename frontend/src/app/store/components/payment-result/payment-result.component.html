@@ -1,0 +1,50 @@
+<div class="payment-result-container">
+  <div *ngIf="paymentStatus === 'success'" class="status-message success">
+    <span class="icon success-icon">✔️</span>
+    <h2>¡Pago Completado Exitosamente!</h2>
+    <p>{{ message }}</p>
+    <p>Gracias por tu compra. Serás redirigido al inicio en unos segundos...</p>
+    <div class="actions">
+      <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio Ahora</button>
+    </div>
+  </div>
+
+  <div *ngIf="paymentStatus === 'failure'" class="status-message failure">
+    <span class="icon failure-icon">❌</span>
+    <h2>Pago Fallido o Cancelado</h2>
+    <p>{{ message }}</p>
+    <p>Lamentamos los inconvenientes.</p>
+    <div class="actions">
+      <button (click)="goToCart()" class="btn btn-primary">Volver al Carrito</button>
+      <button (click)="goToHome()" class="btn btn-secondary">Ir al Inicio</button>
+    </div>
+  </div>
+
+  <div *ngIf="paymentStatus === 'transfer_pending'" class="status-message transfer-pending">
+    <span class="icon pending-icon">⏳</span> <h2>Transferencia Pendiente de Validación</h2>
+    <p>{{ message }}</p>
+    <p>Tu orden ha sido recibida. Te notificaremos por correo electrónico una vez que tu transferencia haya sido confirmada.</p>
+    <div class="actions">
+      <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio</button>
+    </div>
+  </div>
+
+  <div *ngIf="paymentStatus === 'error'" class="status-message error-page">
+    <span class="icon error-icon">⚠️</span>
+    <h2>Error en el Proceso de Pago</h2>
+    <p>{{ message }}</p>
+    <p>Por favor, contacta a soporte si el problema persiste.</p>
+    <div class="actions">
+      <button (click)="goToHome()" class="btn btn-info">Ir al Inicio</button>
+    </div>
+  </div>
+
+  <div *ngIf="paymentStatus === 'unknown' && !isTransferPendingInitially" class="status-message info-message">
+    <span class="icon info-icon">ℹ️</span>
+    <h2>Estado del Pago</h2>
+    <p>{{ message }}</p>
+    <div class="actions">
+      <button (click)="goToHome()" class="btn btn-info">Ir al Inicio</button>
+    </div>
+  </div>
+</div>

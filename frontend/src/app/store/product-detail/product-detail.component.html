@@ -1,13 +1,13 @@
-<div *ngIf="isLoading; else content" class="loading-container">
+<div *ngIf="isLoading && !product; else content" class="loading-container">
   <p>Cargando detalles del producto...</p>
 </div>
 
 <ng-template #content>
-  <div *ngIf="errorMessage" class="error-message-container">
+  <div *ngIf="errorMessage && !isLoading && !product" class="error-message-container global-error">
     <p>{{ errorMessage }}</p>
   </div>
 
-  <div *ngIf="product && !errorMessage" class="product-detail-container">
+  <div *ngIf="product" class="product-detail-container">
 
     <section class="product-image-section">
       <img
@@ -19,9 +19,10 @@
     <section class="product-availability-section">
       <div class="availability-header">
         <h2><span class="title-available">Disponibilidad</span></h2>
-        <span class="header-total-stock">{{ totalStock }} unidades</span>
+        <span class="header-total-stock" *ngIf="!isLoading && productInventory.length > 0">{{ totalStockGeneral }}</span>
+        <span class="header-total-stock" *ngIf="!isLoading && productInventory.length === 0 && product">No disponible en general</span>
       </div>
-      <div *ngIf="productInventory.length > 0; else noStockInfo">
+      <div *ngIf="!isLoading && productInventory.length > 0; else noGeneralStockInfo">
         <ul>
           <li *ngFor="let item of productInventory">
             <span>{{ item.branch_name || item.branch_code }}</span>
@@ -29,16 +30,16 @@
           </li>
         </ul>
       </div>
-      <ng-template #noStockInfo>
-        <p>No hay información de stock disponible para este producto o se encuentra agotado.</p>
+      <ng-template #noGeneralStockInfo>
+        <p *ngIf="!isLoading">No hay información de stock para este producto en nuestras sucursales o está agotado.</p>
       </ng-template>
     </section>
 
     <section class="product-info-section">
       <a class="product-brand-link" style="text-decoration: none;"
-         *ngIf="product.marca"
-         [routerLink]="['/catalogo']"
-         [queryParams]="{ brands: product.marca }">
+          *ngIf="product.marca"
+          [routerLink]="['/catalogo']"
+          [queryParams]="{ brands: product.marca }">
         <p class="product-brand">{{ product.marca }}</p>
       </a>
       <p *ngIf="!product.marca" class="product-brand">Marca no disponible</p>
@@ -56,12 +57,12 @@
           <p *ngSwitchCase="'USD'" class="product-price">
             <ng-container *ngIf="product.precio.precio_dolares != null; else priceCLPOnlyForUSDView">
               {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
-              </ng-container>
+            </ng-container>
             <ng-template #priceCLPOnlyForUSDView>
-              <span *ngIf="product.precio.precio_actual != null; else noPriceAtAll">
+              <span *ngIf="product.precio.precio_actual != null; else noPriceAtAllForUSD">
                 {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} (Precio en CLP)
               </span>
-              <ng-template #noPriceAtAll>Precio no disponible</ng-template>
+              <ng-template #noPriceAtAllForUSD><span class="price-not-available">Precio no disponible</span></ng-template>
             </ng-template>
           </p>
 
@@ -71,10 +72,10 @@
               <span class="vat-included">IVA incluido.</span>
             </ng-container>
             <ng-template #priceUSDOnlyForCLPView>
-              <span *ngIf="product.precio.precio_dolares != null; else noPriceAtAll">
-                 {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} (Precio en USD)
+              <span *ngIf="product.precio.precio_dolares != null; else noPriceAtAllForCLP">
+                  {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} (Precio en USD)
               </span>
-              <ng-template #noPriceAtAll>Precio no disponible</ng-template>
+              <ng-template #noPriceAtAllForCLP><span class="price-not-available">Precio no disponible</span></ng-template>
             </ng-template>
           </p>
         </ng-container>
@@ -85,19 +86,29 @@
         <p *ngIf="currentSelectedCurrency === 'USD' && product.precio.precio_actual != null && product.precio.precio_dolares != null" class="product-price-reference">
           Aprox. {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} CLP
         </p>
-
       </ng-container>
       <ng-template #noPriceAvailable>
-        <p class="product-price">Precio no disponible</p>
+        <p class="product-price price-not-available">Precio no disponible</p>
       </ng-template>
 
+      <div *ngIf="infoMessage && !showBranchModal" class="info-message-inline">{{ infoMessage }}</div>
+      <div *ngIf="errorMessage && isLoading == false && product" class="error-message-inline">{{ errorMessage }}</div>
+
       <div class="quantity-selector-cart">
-        <div class="quantity-selector">
-          <button type="button" (click)="decreaseQuantity()" [disabled]="(selectedQuantity <= 1 && totalStock > 0) || totalStock === 0">-</button>
-          <input type="number" [(ngModel)]="selectedQuantity" min="0" [max]="totalStock" (change)="onQuantityChange($event)" [disabled]="totalStock === 0">
-          <button type="button" (click)="increaseQuantity()" [disabled]="selectedQuantity >= totalStock || totalStock === 0">+</button>
+        <div class="quantity-selector" [class.disabled]="!currentSelectedBranchForCart || stockInSelectedBranch === 0 || isLoadingStock">
+          <button type="button" (click)="decreaseQuantity()"
+                  [disabled]="selectedQuantity <= 1 || !currentSelectedBranchForCart || stockInSelectedBranch === 0 || isLoadingStock">-</button>
+          <input type="number" [(ngModel)]="selectedQuantity"
+                  min="0"
+                  [max]="stockInSelectedBranch > 0 ? stockInSelectedBranch : 0"
+                  (change)="onQuantityChange($event)"
+                  [disabled]="!currentSelectedBranchForCart || stockInSelectedBranch === 0 || isLoadingStock">
+          <button type="button" (click)="increaseQuantity()"
+                  [disabled]="selectedQuantity >= stockInSelectedBranch || !currentSelectedBranchForCart || stockInSelectedBranch === 0 || isLoadingStock">+</button>
         </div>
-        <button type="button" class="add-to-cart-button" (click)="addToCart()" [disabled]="totalStock <= 0 || selectedQuantity <=0">
+        <button type="button" class="add-to-cart-button"
+                (click)="addToCart()"
+                [disabled]="isLoadingStock || (currentSelectedBranchForCart && (stockInSelectedBranch === 0 || selectedQuantity <= 0))">
           AGREGAR AL CARRO
         </button>
       </div>
@@ -108,7 +119,7 @@
 
       <div class="product-description">
         <h3 class="section-title">Descripción</h3>
-        <p [innerHTML]="product.descripcion || 'No hay descripción disponible.'"></p>
+        <p class="description-content">{{ product.descripcion || 'No hay descripción disponible.' }}</p>
       </div>
 
       <div class="delivery-options-container">
@@ -130,13 +141,15 @@
           </div>
         </div>
       </div>
-        <button *ngIf="product && product.marca" type="button" class="more-products-button" [routerLink]="['/catalogo']" [queryParams]="{ brands: product.marca }">
-          Ver más productos <span class="button-brand-name">{{ product.marca }}</span>
-        </button>
+
+      <button *ngIf="product && product.marca" type="button" class="more-products-button"
+              [routerLink]="['/catalogo']" [queryParams]="{ brands: product.marca }">
+        Ver más productos <span class="button-brand-name">{{ product.marca }}</span>
+      </button>
     </section>
   </div>
 
-  <section class="productos-similares-section" *ngIf="featuredProducts.length > 0">
+  <section class="productos-similares-section" *ngIf="product && featuredProducts.length > 0">
     <div class="productos-relacionados">
       <h2>Productos similares</h2>
     </div>
@@ -150,13 +163,13 @@
       <div class="products-carousel-wrapper" #productsCarouselContainer>
         <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
           <div class="product-card-featured" *ngFor="let featuredProd of featuredProducts">
-            <a [routerLink]="['/store/product-detail', featuredProd.codigo_producto]" class="product-link">
+            <a [routerLink]="['/producto', featuredProd.codigo_producto]" (click)="(featuredProd.codigo_producto)" class="product-link">
               <div class="product-image-container">
                 <img [src]="featuredProd.imageUrl || 'assets/images/placeholder.png'" [alt]="featuredProd.nombre" class="product-image">
               </div>
               <div class="product-info">
                 <h3 class="product-name-featured">{{ featuredProd.nombre }}</h3>
-                <ng-container *ngIf="featuredProd.precio">
+                <ng-container *ngIf="featuredProd.precio; else noFeaturedPrice">
                   <ng-container [ngSwitch]="currentSelectedCurrency">
                     <p *ngSwitchCase="'USD'" class="product-price-featured">
                       <ng-container *ngIf="featuredProd.precio.precio_dolares != null">
@@ -165,9 +178,7 @@
                       <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual != null">
                         {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
                       </ng-container>
-                       <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual == null">
-                        N/A
-                      </ng-container>
+                       <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual == null">N/A</ng-container>
                     </p>
                     <p *ngSwitchDefault class="product-price-featured">
                        <ng-container *ngIf="featuredProd.precio.precio_actual != null">
@@ -176,13 +187,13 @@
                       <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares != null">
                         {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
                       </ng-container>
-                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares == null">
-                        N/A
-                      </ng-container>
+                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares == null">N/A</ng-container>
                     </p>
                   </ng-container>
                 </ng-container>
-                <p *ngIf="!featuredProd.precio" class="product-price-featured">Precio no disponible</p>
+                <ng-template #noFeaturedPrice>
+                  <p class="product-price-featured price-not-available">Precio no disponible</p>
+                </ng-template>
               </div>
             </a>
           </div>
@@ -203,6 +214,12 @@
   </section>
 
   <div *ngIf="!product && !isLoading && !errorMessage" class="no-product-found">
-    <p>Producto no encontrado con el código especificado.</p>
+    <p>Producto no encontrado o no disponible.</p>
   </div>
+
+  <app-branch-selector-modal *ngIf="showBranchModal"
+    (branchSelected)="handleBranchSelectedFromModal($event)"
+    (modalClosed)="handleModalClosed()">
+  </app-branch-selector-modal>
+
 </ng-template>

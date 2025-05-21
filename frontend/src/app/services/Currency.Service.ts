@@ -25,7 +25,6 @@ export class CurrencyService {
     }
     this.selectedCurrencySubject.next(currency);
     localStorage.setItem(CurrencyService.CURRENCY_STORAGE_KEY, currency);
-    console.log(`Moneda cambiada a: ${currency}`);
   }
 
   getCurrentCurrency(): SupportedCurrency {

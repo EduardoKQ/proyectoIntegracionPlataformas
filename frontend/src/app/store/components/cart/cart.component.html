@@ -72,9 +72,6 @@
             <div class="item-info">
               <h4>{{ item.name }}</h4>
             </div>
-            <div class="item-price-each">
-              <p>{{ item.price | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
-            </div>
             <div class="item-quantity-controls">
               <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1">-</button>
               <input type="number" [value]="item.quantity" (change)="updateQuantityFromInput($event, item)" min="1" [max]="(deliveryMode === 'pickup' && currentSelectedBranch && getProductMaxStock(item.product_code) > 0) ? getProductMaxStock(item.product_code) : null">
@@ -84,7 +81,7 @@
               <p>{{ (item.price * item.quantity) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
             </div>
             <button class="remove-item-button" (click)="removeFromCart(item.product_code, item.branch_code)">
-              Eliminar
+              <span class="material-symbols-outlined">delete_sweep</span>
             </button>
           </div>
         </div>
@@ -106,12 +103,11 @@
         <span>Costo de envío</span>
         <span>{{ deliveryMode === 'delivery' ? (currentDeliveryAddress ? 'Por calcular' : 'N/A') : 'Sin costo (Retiro)' }}</span>
       </div>
-      <hr>
       <div class="summary-total">
         <span>Total estimado</span>
         <span>{{ (totalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
       </div>
-      <button class="btn btn-success btn-block" (click)="proceedToCheckout()" [disabled]="(deliveryMode === 'pickup' && !currentSelectedBranch) || (deliveryMode === 'delivery' && !currentDeliveryAddress)">Continuar</button>
+       <button class="btn btn-success btn-block" (click)="proceedToCheckout()" [disabled]="(deliveryMode === 'pickup' && !currentSelectedBranch) || (deliveryMode === 'delivery' && !currentDeliveryAddress)">Continuar</button>
     </div>
   </ng-container>
 </div>

@@ -37,7 +37,6 @@ export class InventoryService {
   getInventory(): Observable<InventoryItem[]> {
     return this.http.get<InventoryItem[]>(this.inventoryBaseApiUrl)
       .pipe(
-        tap(data => console.log('Inventario completo recibido (InventoryService):', data)),
         catchError(this.handleError)
       );
   }
@@ -48,7 +47,6 @@ export class InventoryService {
     return this.http.put<UpdateStockResponse>(url, payload)
       .pipe(
         tap(response => {
-          console.log(`Inventario actualizado para producto ${productCode} en sucursal ${branchCode} a ${quantity}. Respuesta:`, response);
         }),
         catchError(this.handleError)
       );
@@ -58,7 +56,6 @@ export class InventoryService {
     const url = `${this.inventoryBaseApiUrl}/${branchCode}/${productCode}`;
     return this.http.get<InventoryItem>(url)
       .pipe(
-        tap(data => console.log(`Stock para producto ${productCode} en sucursal ${branchCode}:`, data)),
         catchError(this.handleError)
       );
   }
@@ -84,8 +81,6 @@ export class InventoryService {
         errorMessage = `Error del servidor ${error.status} (${error.statusText || ''}). Por favor, intente más tarde.`;
       }
     }
-    console.error('Error en InventoryService:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
-
 }

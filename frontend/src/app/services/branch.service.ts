@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 export interface Branch {
@@ -21,16 +21,27 @@ export class BranchService {
   getBranches(): Observable<Branch[]> {
     return this.http.get<Branch[]>(this.branchesApiUrl)
       .pipe(
-        tap(data => console.log('Sucursales recibidas (BranchService):', data)),
+        tap(data => {}),
         catchError(this.handleError)
       );
   }
 
-  getBranchByCode(branchCode: string): Observable<Branch> {
-    return this.http.get<Branch>(`${this.branchesApiUrl}/${branchCode}/`)
+  getBranchByCode(branchCode: string): Observable<Branch | null> {
+    const url = `${this.branchesApiUrl}/${branchCode}`;
+
+    return this.http.get<Branch>(url)
       .pipe(
-        tap(data => console.log(`Sucursal ${branchCode} obtenida:`, data)),
-        catchError(this.handleError)
+        tap(data => {
+          if (data) {
+          } else {
+          }
+        }),
+        catchError(error => {
+          if (error.status === 404) {
+            return of(null);
+          }
+          return this.handleError(error);
+        })
       );
   }
 
@@ -42,16 +53,15 @@ export class BranchService {
       if (error.status === 0) {
         errorMessage = 'No se pudo conectar con el servidor. Verifique su red e inténtelo de nuevo.';
       } else if (error.error && typeof error.error.detail === 'string') {
-        errorMessage = `Error ${error.status} (${error.statusText}): ${error.error.detail}`;
+        errorMessage = `Error ${error.status} (${error.statusText || 'Error'}): ${error.error.detail}`;
       } else if (error.error && typeof error.error === 'string') {
-        errorMessage = `Error ${error.status} (${error.statusText}): ${error.error}`;
+        errorMessage = `Error ${error.status} (${error.statusText || 'Error'}): ${error.error}`;
       } else if (error.message) {
-        errorMessage = `Error ${error.status} (${error.statusText}): ${error.message}. Es posible que la URL sea incorrecta o el servidor no esté disponible.`;
+        errorMessage = `Error ${error.status} (${error.statusText || 'Error'}): ${error.message}.`;
       } else {
-        errorMessage = `Error del servidor ${error.status} (${error.statusText}). Por favor, intente más tarde.`;
+        errorMessage = `Error del servidor ${error.status} (${error.statusText || 'Error'}). Por favor, intente más tarde.`;
       }
     }
-    console.error('Error en BranchService:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
 }

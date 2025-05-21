@@ -4,6 +4,7 @@ from .user import views as user_views
 from .products import views as product_views
 from .inventory import views as inventory_views
 from rest_framework_simplejwt.views import TokenRefreshView
+from .webpay.views_webpay import iniciar_pago_webpay, retorno_pago_webpay
 
 # all API endpoints
 urlpatterns = [
@@ -56,6 +57,8 @@ urlpatterns = [
         inventory_views.inventory_get_update_quantity,
         name="inventory_get_update_quantity",
     ),
+    path('webpay/iniciar_pago/', iniciar_pago_webpay, name='webpay_iniciar_pago'),
+    path('webpay/retorno/', retorno_pago_webpay, name='webpay_retorno_pago'),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

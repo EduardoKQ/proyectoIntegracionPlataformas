@@ -1,0 +1,104 @@
+<div class="checkout-page-container" *ngIf="totalAmount > 0 || (cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length > 0)">
+  <div class="payment-selection-column">
+    <div class="payment-method-card">
+      <h2>Selecciona la forma de pago que prefieras</h2>
+      <p class="intro-text">En [TuTienda] tenemos muchas formas de pago disponibles.</p>
+
+      <div class="payment-options">
+        <button
+          type="button"
+          class="payment-option-button"
+          [class.selected]="selectedPaymentMethod === 'webpay'"
+          (click)="selectPaymentMethod('webpay')"
+          [disabled]="isProcessingPayment">
+          <span class="icon">💳</span>
+          <div class="payment-text-details">
+            <span class="main-text">Tarjeta de Crédito, Débito o Prepaga</span>
+            <span class="sub-text">Paga seguro con Webpay</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          class="payment-option-button"
+          [class.selected]="selectedPaymentMethod === 'transferencia'"
+          (click)="selectPaymentMethod('transferencia')"
+          [disabled]="isProcessingPayment">
+          <span class="icon">🏦</span>
+          <div class="payment-text-details">
+            <span class="main-text">Transferencia Bancaria o Depósito</span>
+            </div>
+        </button>
+      </div>
+
+      <div *ngIf="selectedPaymentMethod === 'transferencia'" class="transfer-details">
+        <h4>Instrucciones para Transferencia Bancaria:</h4>
+
+        <div class="bank-account-details-card">
+          <div class="bank-header">
+            <span class="bank-logo-placeholder">
+              🏦 </span>
+            <span class="bank-name-text">{{ parseBankDetail(bankDetails, 'bankName', 'Banco Santander') }}</span>
+          </div>
+          <div class="account-holder-name">{{ parseBankDetail(bankDetails, 'accountHolder', 'Ferremas') }}</div>
+          <div class="account-detail-line">
+            <span class="detail-label">Cuenta corriente:</span>
+            <span class="detail-value">{{ parseBankDetail(bankDetails, 'accountNumber', '75344988') }}</span>
+          </div>
+          <div class="account-detail-line">
+            <span class="detail-label">Rut:</span>
+            <span class="detail-value">{{ parseBankDetail(bankDetails, 'rut', '69.924-337-1') }}</span>
+          </div>
+          <div class="account-detail-line" *ngIf="parseBankDetail(bankDetails, 'email')">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ parseBankDetail(bankDetails, 'email', 'pagos@ferremas.com') }}</span>
+          </div>
+        </div>
+
+        <p class="post-transfer-instructions">Una vez realizada la transferencia, por favor envía el comprobante a indicando tu número de pedido.</p>
+      </div>
+
+      <div *ngIf="paymentError" class="error-message">
+        <strong>Error de Pago:</strong> {{ paymentError }}
+      </div>
+
+    </div> </div> <div class="summary-column">
+    <div class="purchase-summary-card">
+      <h3>Resumen de tu compra</h3>
+      <p class="summary-subtitle">Revisa los detalles de tu compra.</p>
+
+      <div class="summary-item">
+        <span class="label">Moneda:</span>
+        <span class="value currency-link">Peso Chileno</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Total por los items:</span>
+        <span class="value">{{ totalAmount | currency:'CLP':'symbol':'3.0-0' }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Costo de envío:</span>
+        <span class="value">N/A</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Total compra:</span>
+        <span class="value total-amount">{{ totalAmount | currency:'CLP':'symbol':'3.0-0' }}</span>
+      </div>
+    </div> <div class="confirm-payment-section" *ngIf="totalAmount > 0">
+      <button
+        type="button"
+        class="confirm-button"
+        (click)="confirmPayment()"
+        [disabled]="!selectedPaymentMethod || isProcessingPayment || totalAmount <= 0">
+        <span *ngIf="!selectedPaymentMethod && !isProcessingPayment">Selecciona un método</span>
+        <span *ngIf="selectedPaymentMethod === 'webpay' && isProcessingPayment">Procesando para Webpay...</span>
+        <span *ngIf="selectedPaymentMethod === 'webpay' && !isProcessingPayment">Ir a Pagar a Webpay</span>
+        <span *ngIf="selectedPaymentMethod === 'transferencia' && isProcessingPayment">Procesando Pedido...</span>
+        <span *ngIf="selectedPaymentMethod === 'transferencia' && !isProcessingPayment">Confirmar Pedido con Transferencia</span>
+      </button>
+    </div>
+  </div>
+</div>
+<div *ngIf="(cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length === 0) || (totalAmount <= 0 && !paymentError)" class="empty-cart-or-error-section">
+  <p *ngIf="cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length === 0">Tu carrito está vacío. Por favor, <a routerLink="/catalogo">añade productos</a> antes de pagar.</p>
+  <p *ngIf="cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length > 0 && totalAmount <= 0 && !paymentError">El monto total del carrito es inválido o cero. Por favor, revisa tu selección.</p>
+</div>

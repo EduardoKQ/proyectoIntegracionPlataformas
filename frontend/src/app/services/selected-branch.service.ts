@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { Branch, BranchService } from './branch.service';
 
 @Injectable({
@@ -20,6 +20,7 @@ export class SelectedBranchService {
 
   private loadSelectedBranchFromStorage(): void {
     const storedBranchCode = localStorage.getItem(this.storageKey);
+
     if (storedBranchCode) {
       this.branchService.getBranchByCode(storedBranchCode).pipe(
         tap(branch => {
@@ -27,35 +28,43 @@ export class SelectedBranchService {
             this.selectedBranchSubject.next(branch);
           } else {
             localStorage.removeItem(this.storageKey);
+            this.selectedBranchSubject.next(null);
           }
         }),
         catchError(err => {
-          console.error('Error al cargar sucursal desde localStorage y API:', err);
           localStorage.removeItem(this.storageKey);
           this.selectedBranchSubject.next(null);
           return of(null);
         })
-      ).subscribe();
+      ).subscribe({
+        next: branchOrNull => {
+            if (!branchOrNull && storedBranchCode) {
+            } else if (branchOrNull) {
+            }
+        },
+        error: () => {  }
+    });
     } else {
       this.selectedBranchSubject.next(null);
     }
   }
 
-  setSelectedBranch(branch: Branch | null): void {
-    if (branch) {
+  public setSelectedBranch(branch: Branch | null): void {
+    if (branch && branch.branch_code) {
       localStorage.setItem(this.storageKey, branch.branch_code);
       this.selectedBranchSubject.next(branch);
     } else {
+      const currentBranchCodeInStorage = localStorage.getItem(this.storageKey);
       localStorage.removeItem(this.storageKey);
       this.selectedBranchSubject.next(null);
     }
   }
 
-  clearSelectedBranch(): void {
+  public clearSelectedBranch(): void {
     this.setSelectedBranch(null);
   }
 
-  getSelectedBranchValue(): Branch | null {
+  public getSelectedBranchValue(): Branch | null {
     return this.selectedBranchSubject.value;
   }
 }

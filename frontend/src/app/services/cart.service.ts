@@ -45,13 +45,16 @@ export class CartService implements OnDestroy {
     this.branchSubscription = this.selectedBranchService.selectedBranch$.subscribe(branch => {
       const previousBranchCode = this.currentBranch?.branch_code;
       this.currentBranch = branch;
-      if (branch && previousBranchCode && branch.branch_code !== previousBranchCode) {
-        this.revalidateCartForNewBranch(branch);
-      } else if (branch && !previousBranchCode && this.cartItemsSubject.value.length > 0) {
-        this.revalidateCartForNewBranch(branch);
-      } else if (!branch && this.cartItemsSubject.value.length > 0) {
-        console.warn('CartService: No hay sucursal seleccionada, vaciando carrito.');
-        this.clearCartLocalOnly();
+
+      if (branch) {
+        if (this.cartItemsSubject.value.length > 0) {
+          this.revalidateCartForNewBranch(branch);
+        } else {
+        }
+      } else {
+        if (this.cartItemsSubject.value.length > 0) {
+        } else {
+        }
       }
     });
   }
@@ -63,45 +66,44 @@ export class CartService implements OnDestroy {
         const items = JSON.parse(storedCart) as CartItem[];
         this.cartItemsSubject.next(items);
       } catch (e) {
-        console.error('Error al cargar carrito desde localStorage:', e);
         localStorage.removeItem(this.cartStorageKey);
       }
+    } else {
     }
   }
 
   private saveCartToLocalStorage(): void {
     try {
-      localStorage.setItem(this.cartStorageKey, JSON.stringify(this.cartItemsSubject.value));
+      const cartToSave = this.cartItemsSubject.value;
+      localStorage.setItem(this.cartStorageKey, JSON.stringify(cartToSave));
     } catch (e) {
-      console.error('Error al guardar carrito en localStorage:', e);
     }
   }
 
-  private clearCartLocalOnly(): void {
-    this.cartItemsSubject.next([]);
-  }
-
-
   private revalidateCartForNewBranch(newBranch: Branch): void {
-    const currentCart = [...this.cartItemsSubject.value];
-    if (currentCart.length === 0) {
-      this.saveCartToLocalStorage();
+    const currentCartInMemory = [...this.cartItemsSubject.value];
+
+    if (currentCartInMemory.length === 0) {
       return;
     }
 
-    const stockChecks$: Observable<InventoryItem | null>[] = currentCart.map(item =>
+    const stockChecks$: Observable<InventoryItem | null>[] = currentCartInMemory.map(item =>
       this.inventoryService.getProductStockInBranch(newBranch.branch_code, item.product_code)
         .pipe(
+          tap(stockData => {}),
           catchError(err => {
-            console.warn(`Error obteniendo stock para ${item.product_code} en ${newBranch.name}, se asumirá 0.`, err);
             return of(null);
           })
         )
     );
 
+    if (stockChecks$.length === 0) {
+        return;
+    }
+
     forkJoin(stockChecks$).subscribe(inventoryResults => {
       const updatedCart: CartItem[] = [];
-      currentCart.forEach((item, index) => {
+      currentCartInMemory.forEach((item, index) => {
         const stockInfo = inventoryResults[index];
         const stockAvailable = stockInfo ? stockInfo.quantity : 0;
 
@@ -115,12 +117,11 @@ export class CartService implements OnDestroy {
               branch_name: newBranch.name
             });
           } else {
-             console.log(`Producto ${item.name} con cantidad 0 después de revalidación en ${newBranch.name}, no se añade.`);
           }
         } else {
-          console.log(`Producto ${item.name} eliminado del carrito por no tener stock en ${newBranch.name}`);
         }
       });
+
       this.cartItemsSubject.next(updatedCart);
       this.saveCartToLocalStorage();
     });
@@ -132,7 +133,6 @@ export class CartService implements OnDestroy {
       return;
     }
     if (this.currentBranch.branch_code !== branchCodeFromComponent) {
-      console.warn('La sucursal del componente no coincide con la sucursal activa del servicio. Usando la sucursal activa.');
     }
 
     const activeBranchCode = this.currentBranch.branch_code;
@@ -145,20 +145,18 @@ export class CartService implements OnDestroy {
 
     const productPrice = product.precio.precio_actual;
     if (typeof productPrice !== 'number' || isNaN(productPrice)) {
-      console.error('Precio del producto no es un número válido al agregar:', product);
       return;
     }
 
     this.inventoryService.getProductStockInBranch(activeBranchCode, product.codigo_producto).subscribe({
       next: stockItem => {
         const stockAvailable = stockItem ? stockItem.quantity : 0;
-        let quantityToAdd = quantity;
         let finalQuantityInCart: number;
 
         if (existingItemIndex > -1) {
-          finalQuantityInCart = currentCart[existingItemIndex].quantity + quantityToAdd;
+          finalQuantityInCart = currentCart[existingItemIndex].quantity + quantity;
         } else {
-          finalQuantityInCart = quantityToAdd;
+          finalQuantityInCart = quantity;
         }
 
         if (stockAvailable >= finalQuantityInCart) {
@@ -179,82 +177,75 @@ export class CartService implements OnDestroy {
           this.cartItemsSubject.next(currentCart);
           this.saveCartToLocalStorage();
         } else {
-          alert(`No hay suficiente stock para ${product.nombre} en ${activeBranchName}. Disponible: ${stockAvailable}, En carrito ya hay: ${existingItemIndex > -1 ? currentCart[existingItemIndex].quantity : 0}.`);
+          alert(`No hay suficiente stock para ${product.nombre} en ${activeBranchName}. Disponible: ${stockAvailable}, Solicitado (total): ${finalQuantityInCart}.`);
         }
       },
       error: err => {
-        alert(`Error al verificar stock para ${product.nombre}. Intente nuevamente.`);
-        console.error(err);
+        alert(`Error al verificar stock para ${product.nombre} al añadir al carrito. Intente nuevamente.`);
       }
     });
   }
 
-  updateQuantity(productCode: string, branchCodeFromComponent: string, newQuantity: number): void {
+  updateQuantity(productCode: string, branchCodeFromItem: string, newQuantity: number): void {
     if (!this.currentBranch) {
       alert('Error: No hay una sucursal activa para actualizar la cantidad.');
       return;
     }
-     if (this.currentBranch.branch_code !== branchCodeFromComponent) {
-      console.warn('La sucursal del componente no coincide con la sucursal activa del servicio. Usando la sucursal activa para la actualización.');
-    }
-
     const activeBranchCode = this.currentBranch.branch_code;
 
-    if (newQuantity < 0) return;
+    if (newQuantity < 0) {
+        return;
+    }
 
     const currentCart = [...this.cartItemsSubject.value];
     const itemToUpdateIndex = currentCart.findIndex(item =>
-      item.product_code === productCode && item.branch_code === activeBranchCode
+      item.product_code === productCode && item.branch_code === branchCodeFromItem
     );
 
     if (itemToUpdateIndex > -1) {
+      const itemBeingUpdated = currentCart[itemToUpdateIndex];
       if (newQuantity === 0) {
-        const updatedCart = currentCart.filter((_, index) => index !== itemToUpdateIndex);
-        this.cartItemsSubject.next(updatedCart);
+        currentCart.splice(itemToUpdateIndex, 1);
+        this.cartItemsSubject.next(currentCart);
         this.saveCartToLocalStorage();
       } else {
-        this.inventoryService.getProductStockInBranch(activeBranchCode, productCode).subscribe({
+        this.inventoryService.getProductStockInBranch(itemBeingUpdated.branch_code, productCode).subscribe({
           next: stockItem => {
             const stockAvailable = stockItem ? stockItem.quantity : 0;
             if (stockAvailable >= newQuantity) {
               currentCart[itemToUpdateIndex].quantity = newQuantity;
-              this.cartItemsSubject.next(currentCart);
-              this.saveCartToLocalStorage();
             } else {
               currentCart[itemToUpdateIndex].quantity = stockAvailable;
-              this.cartItemsSubject.next(currentCart);
-              this.saveCartToLocalStorage();
               if (stockAvailable > 0) {
-                alert(`Cantidad ajustada al stock máximo disponible (${stockAvailable}) para el producto en ${this.currentBranch?.name}.`);
+                alert(`Cantidad ajustada al stock máximo disponible (${stockAvailable}) para ${itemBeingUpdated.name} en ${itemBeingUpdated.branch_name}.`);
               } else {
-                 const updatedCart = currentCart.filter((item) => item.product_code !== productCode || item.branch_code !== activeBranchCode );
-                 this.cartItemsSubject.next(updatedCart);
-                 this.saveCartToLocalStorage();
-                 alert(`Producto sin stock en ${this.currentBranch?.name}. Se eliminó del carrito.`);
+                alert(`Producto ${itemBeingUpdated.name} sin stock en ${itemBeingUpdated.branch_name}. Se eliminó del carrito.`);
+                currentCart.splice(itemToUpdateIndex, 1);
               }
             }
+            this.cartItemsSubject.next(currentCart);
+            this.saveCartToLocalStorage();
           },
           error: err => {
-            alert(`Error al verificar stock para ${productCode}. Intente nuevamente.`);
-            console.error(err);
+            alert(`Error al verificar stock para actualizar cantidad de ${productCode}. Intente nuevamente.`);
           }
         });
       }
+    } else {
     }
   }
 
-  removeFromCart(productCode: string, branchCodeFromComponent: string): void {
-    if (!this.currentBranch) { return; }
-    const activeBranchCode = this.currentBranch.branch_code;
-     if (activeBranchCode !== branchCodeFromComponent) {
-      console.warn('Intento de eliminar de sucursal no activa. Operación cancelada o usar sucursal activa.');
-    }
-
+  removeFromCart(productCode: string, branchCodeOfItem: string): void {
+    const initialCartLength = this.cartItemsSubject.value.length;
     const updatedCart = this.cartItemsSubject.value.filter(item =>
-      !(item.product_code === productCode && item.branch_code === activeBranchCode)
+      !(item.product_code === productCode && item.branch_code === branchCodeOfItem)
     );
-    this.cartItemsSubject.next(updatedCart);
-    this.saveCartToLocalStorage();
+
+    if (updatedCart.length < initialCartLength) {
+        this.cartItemsSubject.next(updatedCart);
+        this.saveCartToLocalStorage();
+    } else {
+    }
   }
 
   clearCart(): void {
@@ -267,11 +258,20 @@ export class CartService implements OnDestroy {
   }
 
   getTotalPrice(): Observable<number> {
-    return this.cartItems$.pipe(map(items => items.reduce((total, item) => total + (item.price * item.quantity), 0)));
+    return this.cartItems$.pipe(
+        map(items => {
+          return items.reduce((total, item) => {
+            if (typeof item.price === 'number' && typeof item.quantity === 'number') {
+                return total + (item.price * item.quantity);
+            }
+            return total;
+          }, 0);
+        })
+    );
   }
 
   getCurrentCartItems(): CartItem[] {
-    return this.cartItemsSubject.value;
+    return [...this.cartItemsSubject.value];
   }
 
   ngOnDestroy(): void {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
+import {Component,EventEmitter,Output,Input,OnInit,OnChanges,SimpleChanges,inject,ChangeDetectorRef} from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Branch } from '../../../../services/branch.service';
@@ -30,11 +30,14 @@ export class AddressModalComponent implements OnInit, OnChanges {
 
   addressForm: FormGroup;
   pickupForm: FormGroup;
-  activeMode: ModalSelectionType = 'delivery';
+  activeMode: ModalSelectionType;
 
   private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor() {
+    this.activeMode = this.initialMode;
+
     this.addressForm = this.fb.group({
       street: ['', Validators.required],
       number: ['', Validators.required],
@@ -63,20 +66,56 @@ export class AddressModalComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.activeMode = this.initialMode;
-    if (this.activeMode === 'pickup' && this.preSelectedBranchCode) {
-      this.pickupForm.get('selectedBranchCode')?.setValue(this.preSelectedBranchCode);
+    if (this.activeMode === 'pickup') {
+      this.setDefaultPickupSelection();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    let modeChangedToPickup = false;
     if (changes['initialMode']) {
-      this.activeMode = this.initialMode;
+      const newMode = changes['initialMode'].currentValue;
+      if (this.activeMode !== newMode) {
+        this.activeMode = newMode;
+        if (this.activeMode === 'pickup') {
+          modeChangedToPickup = true;
+        }
+      }
     }
-    if (changes['preSelectedBranchCode'] && this.activeMode === 'pickup') {
-        this.pickupForm.get('selectedBranchCode')?.setValue(this.preSelectedBranchCode || '');
+
+    if (this.activeMode === 'pickup' && (modeChangedToPickup || changes['availableBranches'] || changes['preSelectedBranchCode'])) {
+      this.setDefaultPickupSelection();
     }
-     if (changes['availableBranches'] && this.availableBranches.length === 0 && this.activeMode === 'pickup') {
-      console.warn("Modal en modo pickup pero no hay sucursales disponibles.")
+  }
+
+  private setDefaultPickupSelection(): void {
+    if (!this.pickupForm) {
+        return;
+    }
+    const selectedBranchControl = this.pickupForm.get('selectedBranchCode');
+    if (!selectedBranchControl) {
+        return;
+    }
+
+    let newBranchCodeToSelect: string | null = null;
+
+    if (this.preSelectedBranchCode && this.availableBranches.some(b => b.branch_code === this.preSelectedBranchCode)) {
+      newBranchCodeToSelect = this.preSelectedBranchCode;
+    } else if (this.availableBranches && this.availableBranches.length > 0) {
+      newBranchCodeToSelect = this.availableBranches[0].branch_code;
+    } else {
+      newBranchCodeToSelect = null;
+    }
+
+    selectedBranchControl.setValue(newBranchCodeToSelect);
+    this.cdr.detectChanges();
+  }
+
+  switchToMode(mode: ModalSelectionType): void {
+    if (this.activeMode === mode) return;
+    this.activeMode = mode;
+    if (mode === 'pickup') {
+      this.setDefaultPickupSelection();
     }
   }
 
@@ -87,7 +126,7 @@ export class AddressModalComponent implements OnInit, OnChanges {
   onSubmit(): void {
     if (this.activeMode === 'delivery') {
       if (this.addressForm.valid) {
-        const formData = this.addressForm.value;
+        const formData = this.addressForm.getRawValue();
         const address: DeliveryAddress = {
           street: formData.street,
           number: formData.isStreetWithoutNumber ? 'S/N' : formData.number,
@@ -102,24 +141,18 @@ export class AddressModalComponent implements OnInit, OnChanges {
     } else if (this.activeMode === 'pickup') {
       if (this.pickupForm.valid) {
         const selectedCode = this.pickupForm.get('selectedBranchCode')?.value;
+        if (!selectedCode) {
+            this.pickupForm.markAllAsTouched();
+            return;
+        }
         const selectedBranch = this.availableBranches.find(b => b.branch_code === selectedCode);
         if (selectedBranch) {
           this.pickupBranchSelected.emit(selectedBranch);
           this.onClose();
-        } else {
-          console.error('Sucursal seleccionada no encontrada en la lista de disponibles');
         }
       } else {
         this.pickupForm.markAllAsTouched();
       }
-    }
-  }
-
-  switchToMode(mode: ModalSelectionType): void {
-    this.activeMode = mode;
-    if (mode === 'pickup' && this.preSelectedBranchCode) {
-        this.pickupForm.get('selectedBranchCode')?.setValue(this.preSelectedBranchCode);
-    } else if (mode === 'pickup') {
     }
   }
 

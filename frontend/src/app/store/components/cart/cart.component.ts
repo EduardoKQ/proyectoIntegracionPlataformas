@@ -71,9 +71,9 @@ export class CartComponent implements OnInit, OnDestroy {
         this.cartItems$.pipe(
           take(1)
         ).subscribe((items: CartItem[]) => {
-            if (items) {
-                this.updateStockForCartItems(items, branch.branch_code);
-            }
+          if (items) {
+              this.updateStockForCartItems(items, branch.branch_code);
+          }
         });
       } else if (!branch && this.deliveryMode === 'pickup') {
         this.productStockMap.clear();
@@ -151,7 +151,7 @@ export class CartComponent implements OnInit, OnDestroy {
 
   incrementQuantity(item: CartItem): void {
     const maxStock = this.getProductMaxStock(item.product_code);
-     if (this.deliveryMode === 'delivery' || !this.currentSelectedBranch || (maxStock === 0 && !this.productStockMap.has(item.product_code)) || item.quantity < maxStock) {
+      if (this.deliveryMode === 'delivery' || !this.currentSelectedBranch || (maxStock === 0 && !this.productStockMap.has(item.product_code)) || item.quantity < maxStock) {
         this.cartService.updateQuantity(item.product_code, item.branch_code, item.quantity + 1);
     }
   }
@@ -167,7 +167,20 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   proceedToCheckout(): void {
-    this.router.navigate(['/checkout']);
+    const currentCartItems = this.cartService.getCurrentCartItems();
+    if (!currentCartItems || currentCartItems.length === 0) {
+        alert("Tu carrito está vacío. Por favor, añade productos antes de continuar.");
+        return;
+    }
+    if (this.deliveryMode === 'pickup' && !this.currentSelectedBranch) {
+      alert('Por favor, selecciona una sucursal para el retiro antes de continuar.');
+      return;
+    }
+    if (this.deliveryMode === 'delivery' && !this.currentDeliveryAddress) {
+      alert('Por favor, ingresa una dirección de despacho antes de continuar.');
+      return;
+    }
+    this.router.navigate(['/payment-method']);
   }
 
   goToProducts(): void {

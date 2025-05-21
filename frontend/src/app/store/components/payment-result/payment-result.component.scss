@@ -1,0 +1,194 @@
+@use 'sass:color';
+
+$color-primario-azul: rgb(22, 59, 102);
+$color-primario-naranja: #f57c00;
+$color-primario-naranja-claro: color.adjust($color-primario-naranja, $lightness: 20%);
+$fuente-principal: 'Roboto', sans-serif;
+$color-texto-general: #333;
+$color-texto-secundario: #555;
+$color-texto-claro: #777;
+$color-texto-blanco: #fff;
+$color-borde-suave: #e0e0e0;
+$color-fondo-tarjeta: #fff;
+$color-fondo-pagina: #fff;
+$color-exito: #28a745;
+$color-fallo: #dc3545;
+$color-error-pagina: #b32500;
+$color-info: #17a2b8;
+$color-pendiente-texto: #856404;
+$color-pendiente-fondo: #fff3cd;
+$color-pendiente-borde: #ffeeba;
+$color-pendiente-icono: #ffc107;
+
+:host {
+  font-family: 'Roboto', sans-serif;
+}
+
+.payment-result-container {
+  max-width: 650px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: $fuente-principal;
+  background-color: $color-fondo-pagina;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 160px);
+}
+
+.status-message {
+  background-color: $color-fondo-tarjeta;
+  padding: 30px 40px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 100%;
+
+  .icon {
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+  }
+
+  p {
+    font-size: 1rem;
+    color: $color-texto-secundario;
+    line-height: 1.6;
+    margin-bottom: 10px;
+
+    &:last-of-type {
+      margin-bottom: 25px;
+    }
+  }
+
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .btn {
+    padding: 10px 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn-primary {
+    background-color: $color-primario-naranja;
+    color: $color-texto-blanco;
+    border-color: $color-primario-naranja;
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primario-naranja, $lightness: -10%);
+      border-color: color.adjust($color-primario-naranja, $lightness: -10%);
+    }
+  }
+
+  .btn-secondary {
+    background-color: $color-borde-suave;
+    color: $color-texto-general;
+    border-color: $color-borde-suave;
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-borde-suave, $lightness: -10%);
+      border-color: color.adjust($color-borde-suave, $lightness: -10%);
+    }
+  }
+  .btn-info {
+    background-color: $color-info;
+    color: $color-texto-blanco;
+    border-color: $color-info;
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-info, $lightness: -10%);
+      border-color: color.adjust($color-info, $lightness: -10%);
+    }
+  }
+
+  &.success {
+    border-top: 5px solid $color-exito;
+    .icon.success-icon { color: $color-exito; }
+    h2 { color: $color-exito; }
+  }
+
+  &.failure {
+    border-top: 5px solid $color-fallo;
+    .icon.failure-icon { color: $color-fallo; }
+    h2 { color: $color-fallo; }
+  }
+
+  &.transfer-pending {
+    border-top: 5px solid $color-pendiente-icono;
+    background-color: $color-pendiente-fondo;
+    border-color: $color-pendiente-borde;
+
+    .icon.pending-icon {
+      color: $color-pendiente-icono;
+    }
+    h2 { color: $color-pendiente-texto; }
+    p { color: color.adjust($color-pendiente-texto, $lightness: -10%);}
+    .btn-primary {
+        background-color: $color-pendiente-icono;
+        border-color: $color-pendiente-icono;
+        color: $color-texto-general;
+        &:hover:not(:disabled) {
+          background-color: color.adjust($color-pendiente-icono, $lightness: -10%);
+          border-color: color.adjust($color-pendiente-icono, $lightness: -10%);
+        }
+    }
+  }
+
+  &.error-page {
+    border-top: 5px solid $color-error-pagina;
+    .icon.error-icon { color: $color-error-pagina; }
+    h2 { color: $color-error-pagina; }
+  }
+
+  &.info-message {
+    border-top: 5px solid $color-info;
+    .icon.info-icon { color: $color-info; }
+    h2 { color: $color-info; }
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-result-container {
+    margin: 20px auto;
+    padding: 15px;
+    min-height: auto;
+  }
+  .status-message {
+    padding: 20px;
+    .icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+    h2 {
+      font-size: 1.5rem;
+    }
+    p {
+      font-size: 0.9rem;
+    }
+    .actions {
+        flex-direction: column;
+        .btn {
+            width: 100%;
+        }
+    }
+  }
+}
