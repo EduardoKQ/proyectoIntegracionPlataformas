@@ -96,28 +96,22 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     this.paymentError = null;
 
     localStorage.setItem('webpay_payment_status', 'pending');
-    localStorage.setItem('webpay_order_id', orderNumber);
 
     this.webpayService.initTransaction(amountToPay, orderNumber).subscribe(
       (response: WebpayInitResponse) => {
         if (response && response.token && response.url) {
-          localStorage.setItem('webpay_token', response.token);
           const redirectUrl = `${response.url}?token_ws=${response.token}`;
           window.location.href = redirectUrl;
         } else {
           this.isProcessingPayment = false;
           this.paymentError = response.details || response.error || 'Error al iniciar el pago Webpay. Respuesta inválida.';
           localStorage.removeItem('webpay_payment_status');
-          localStorage.removeItem('webpay_token');
-          localStorage.removeItem('webpay_order_id');
         }
       },
       (error) => {
         this.isProcessingPayment = false;
         this.paymentError = error.message || 'Error de comunicación al intentar iniciar pago Webpay.';
         localStorage.removeItem('webpay_payment_status');
-        localStorage.removeItem('webpay_token');
-        localStorage.removeItem('webpay_order_id');
         console.error('Error Webpay Init:', error);
       }
     );
