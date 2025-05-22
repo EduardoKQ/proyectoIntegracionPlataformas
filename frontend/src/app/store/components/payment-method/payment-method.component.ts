@@ -141,6 +141,10 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     }
   }
 
+  volverAtras(): void {
+    this.router.navigate(['/cart']);
+  }
+
   ngOnDestroy(): void {
     if (this.priceSubscription) {
       this.priceSubscription.unsubscribe();

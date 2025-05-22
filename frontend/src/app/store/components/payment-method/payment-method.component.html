@@ -2,7 +2,7 @@
   <div class="payment-selection-column">
     <div class="payment-method-card">
       <h2>Selecciona la forma de pago que prefieras</h2>
-      <p class="intro-text">En [TuTienda] tenemos muchas formas de pago disponibles.</p>
+      <p class="intro-text">En Ferremas tenemos muchas formas de pago disponibles.</p>
 
       <div class="payment-options">
         <button
@@ -61,6 +61,8 @@
       <div *ngIf="paymentError" class="error-message">
         <strong>Error de Pago:</strong> {{ paymentError }}
       </div>
+
+      <button (click)="volverAtras()" class="back-button">Volver</button>
 
     </div> </div> <div class="summary-column">
     <div class="purchase-summary-card">

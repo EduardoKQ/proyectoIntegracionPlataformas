@@ -32,6 +32,20 @@ $color-fondo-detalle-banco: #f0f2f5;
   background-color: $color-fondo-pagina;
 }
 
+.back-button {
+    align-items: center;
+    padding: 7px 15px;
+    background-color: red;
+    color: white;
+    border: 1px solid $color-borde-input;
+    border-radius: 15px;
+    font-size: 1rem;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    -ms-border-radius: 15px;
+    -o-border-radius: 15px;
+}
+
 .payment-selection-column {
   flex: 2;
   min-width: 300px;
