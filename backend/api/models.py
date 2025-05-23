@@ -4,6 +4,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from api.orders.interfaces import OrderStatus
 
 
 # Custom WebUser Manager
@@ -179,7 +180,7 @@ class Order(models.Model):
         blank=True,
         related_name="pickup_orders",
     )
-    order_status = models.CharField(max_length=50, default="pending")
+    order_status = models.CharField(max_length=50, default=OrderStatus.PAYMMENT_PENDING)
     creation_date = models.DateTimeField(auto_now_add=True)
     delivery_date = models.DateTimeField(null=True, blank=True)
 

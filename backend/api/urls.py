@@ -3,6 +3,7 @@ from .system import views as system_views
 from .user import views as user_views
 from .products import views as product_views
 from .inventory import views as inventory_views
+from .orders import views as order_views
 from rest_framework_simplejwt.views import TokenRefreshView
 from .webpay.views_webpay import iniciar_pago_webpay, retorno_pago_webpay
 
@@ -57,8 +58,17 @@ urlpatterns = [
         inventory_views.inventory_get_update_quantity,
         name="inventory_get_update_quantity",
     ),
+    # webpay endpoints
     path('webpay/iniciar_pago/', iniciar_pago_webpay, name='webpay_iniciar_pago'),
     path('webpay/retorno/', retorno_pago_webpay, name='webpay_retorno_pago'),
+
+    # orders endpoints
+    path("orders", order_views.orders_list_create, name="orders_list_create"),
+    path(
+        "orders/<str:order_code>",
+        order_views.orders_get_delete_by_id,
+        name="orders_get_delete_by_id",
+    ),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [
