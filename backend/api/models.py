@@ -173,6 +173,7 @@ class Order(models.Model):
     payment_type = models.CharField(max_length=50)
     retrieval_type = models.CharField(max_length=50)
     shipping_address = models.CharField(max_length=255, null=True, blank=True)
+    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     pickup_branch = models.ForeignKey(
         Branch,
         on_delete=models.SET_NULL,

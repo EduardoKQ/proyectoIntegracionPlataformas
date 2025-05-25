@@ -186,3 +186,8 @@ FRONTEND_URL_BASE = os.getenv('FRONTEND_URL_BASE', 'http://localhost:4200')
 FRONTEND_URL_SUCCESS = f'{FRONTEND_URL_BASE}/payment-result'
 FRONTEND_URL_FAILURE = f'{FRONTEND_URL_BASE}/payment-result'
 FRONTEND_URL_ERROR = f'{FRONTEND_URL_BASE}/payment-result'
+
+# Maps API settings
+MAPS_API_KEY = os.getenv('MAPS_API_KEY')
+if not MAPS_API_KEY:
+    print("ADVERTENCIA: MAPS_API_KEY no está definida.")

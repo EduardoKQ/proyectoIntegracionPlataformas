@@ -1,8 +1,7 @@
-<div class="checkout-page-container" *ngIf="totalAmount > 0 || (cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length > 0)">
-  <div class="payment-selection-column">
+<div class="checkout-page-container" *ngIf="(totalAmount$ | async)! > 0"> <div class="payment-selection-column">
     <div class="payment-method-card">
-      <h2>Selecciona la forma de pago que prefieras</h2>
-      <p class="intro-text">En Ferremas tenemos muchas formas de pago disponibles.</p>
+      <h2>Selecciona la forma de pago</h2>
+      <p class="intro-text">Elige cómo quieres pagar tu pedido.</p>
 
       <div class="payment-options">
         <button
@@ -17,7 +16,6 @@
             <span class="sub-text">Paga seguro con Webpay</span>
           </div>
         </button>
-
         <button
           type="button"
           class="payment-option-button"
@@ -26,48 +24,47 @@
           [disabled]="isProcessingPayment">
           <span class="icon">🏦</span>
           <div class="payment-text-details">
-            <span class="main-text">Transferencia Bancaria o Depósito</span>
-            </div>
+            <span class="main-text">Transferencia Bancaria</span>
+          </div>
         </button>
       </div>
 
       <div *ngIf="selectedPaymentMethod === 'transferencia'" class="transfer-details">
         <h4>Instrucciones para Transferencia Bancaria:</h4>
-
         <div class="bank-account-details-card">
           <div class="bank-header">
-            <span class="bank-logo-placeholder">
-              🏦 </span>
-            <span class="bank-name-text">{{ parseBankDetail(bankDetails, 'bankName', 'Banco Santander') }}</span>
-          </div>
-          <div class="account-holder-name">{{ parseBankDetail(bankDetails, 'accountHolder', 'Ferremas') }}</div>
-          <div class="account-detail-line">
-            <span class="detail-label">Cuenta corriente:</span>
-            <span class="detail-value">{{ parseBankDetail(bankDetails, 'accountNumber', '75344988') }}</span>
-          </div>
-          <div class="account-detail-line">
-            <span class="detail-label">Rut:</span>
-            <span class="detail-value">{{ parseBankDetail(bankDetails, 'rut', '69.924-337-1') }}</span>
-          </div>
-          <div class="account-detail-line" *ngIf="parseBankDetail(bankDetails, 'email')">
-            <span class="detail-label">Email:</span>
-            <span class="detail-value">{{ parseBankDetail(bankDetails, 'email', 'pagos@ferremas.com') }}</span>
-          </div>
+             <span class="bank-logo-placeholder">🏦</span>
+             <span class="bank-name-text">{{ parseBankDetail(bankDetails, 'bankName', 'Banco Santander') }}</span>
+           </div>
+           <div class="account-holder-name">{{ parseBankDetail(bankDetails, 'accountHolder', 'Ferremas') }}</div>
+           <div class="account-detail-line">
+             <span class="detail-label">Cuenta corriente:</span>
+             <span class="detail-value">{{ parseBankDetail(bankDetails, 'accountNumber', '75344988') }}</span>
+           </div>
+           <div class="account-detail-line">
+             <span class="detail-label">Rut:</span>
+             <span class="detail-value">{{ parseBankDetail(bankDetails, 'rut', '69.924-337-1') }}</span>
+           </div>
+           <div class="account-detail-line" *ngIf="parseBankDetail(bankDetails, 'email')">
+             <span class="detail-label">Email:</span>
+             <span class="detail-value">{{ parseBankDetail(bankDetails, 'email', 'pagos@ferremas.com') }}</span>
+           </div>
         </div>
-
-        <p class="post-transfer-instructions">Una vez realizada la transferencia, por favor envía el comprobante a indicando tu número de pedido.</p>
+        <p class="post-transfer-instructions">Una vez realizada la transferencia, por favor envía el comprobante indicando tu número de pedido.</p>
       </div>
 
       <div *ngIf="paymentError" class="error-message">
-        <strong>Error de Pago:</strong> {{ paymentError }}
+        <strong>Error:</strong> {{ paymentError }}
       </div>
 
-      <button (click)="volverAtras()" class="back-button">Volver</button>
+      <button (click)="volverAtras()" class="back-button">Volver al Carrito</button>
+    </div>
+  </div>
 
-    </div> </div> <div class="summary-column">
+  <div class="summary-column">
     <div class="purchase-summary-card">
       <h3>Resumen de tu compra</h3>
-      <p class="summary-subtitle">Revisa los detalles de tu compra.</p>
+      <p class="summary-subtitle">Revisa los detalles.</p>
 
       <div class="summary-item">
         <span class="label">Moneda:</span>
@@ -75,32 +72,37 @@
       </div>
       <div class="summary-item">
         <span class="label">Total por los items:</span>
-        <span class="value">{{ totalAmount | currency:'CLP':'symbol':'3.0-0' }}</span>
+        <span class="value">{{ (subtotalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
       </div>
       <div class="summary-item">
         <span class="label">Costo de envío:</span>
-        <span class="value">N/A</span>
+        <span class="value">
+            <ng-container *ngIf="(deliveryMode$ | async) === 'delivery'">
+              {{ (shippingCost$ | async) | currency:'CLP':'symbol':'1.0-0' }}
+            </ng-container>
+            <ng-container *ngIf="(deliveryMode$ | async) === 'pickup'">Sin costo</ng-container>
+        </span>
       </div>
-      <div class="summary-item">
-        <span class="label">Total compra:</span>
-        <span class="value total-amount">{{ totalAmount | currency:'CLP':'symbol':'3.0-0' }}</span>
+      <div class="summary-item total-line"> <span class="label">Total compra:</span>
+        <span class="value total-amount">{{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
       </div>
-    </div> <div class="confirm-payment-section" *ngIf="totalAmount > 0">
+    </div>
+    <div class="confirm-payment-section" *ngIf="(totalAmount$ | async)! > 0">
       <button
         type="button"
         class="confirm-button"
         (click)="confirmPayment()"
-        [disabled]="!selectedPaymentMethod || isProcessingPayment || totalAmount <= 0">
+        [disabled]="!selectedPaymentMethod || isProcessingPayment">
         <span *ngIf="!selectedPaymentMethod && !isProcessingPayment">Selecciona un método</span>
-        <span *ngIf="selectedPaymentMethod === 'webpay' && isProcessingPayment">Procesando para Webpay...</span>
-        <span *ngIf="selectedPaymentMethod === 'webpay' && !isProcessingPayment">Ir a Pagar a Webpay</span>
-        <span *ngIf="selectedPaymentMethod === 'transferencia' && isProcessingPayment">Procesando Pedido...</span>
-        <span *ngIf="selectedPaymentMethod === 'transferencia' && !isProcessingPayment">Confirmar Pedido con Transferencia</span>
+        <span *ngIf="selectedPaymentMethod === 'webpay' && isProcessingPayment">Procesando...</span>
+        <span *ngIf="selectedPaymentMethod === 'webpay' && !isProcessingPayment">Pagar {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }} con Webpay</span>
+        <span *ngIf="selectedPaymentMethod === 'transferencia' && isProcessingPayment">Procesando...</span>
+        <span *ngIf="selectedPaymentMethod === 'transferencia' && !isProcessingPayment">Confirmar Pedido por {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
       </button>
     </div>
   </div>
 </div>
-<div *ngIf="(cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length === 0) || (totalAmount <= 0 && !paymentError)" class="empty-cart-or-error-section">
-  <p *ngIf="cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length === 0">Tu carrito está vacío. Por favor, <a routerLink="/catalogo">añade productos</a> antes de pagar.</p>
-  <p *ngIf="cartService.getCurrentCartItems() && cartService.getCurrentCartItems().length > 0 && totalAmount <= 0 && !paymentError">El monto total del carrito es inválido o cero. Por favor, revisa tu selección.</p>
+
+<div *ngIf="(totalAmount$ | async)! <= 0" class="empty-cart-or-error-section">
+  <p>Parece que tu carrito está vacío o hubo un problema al cargar. <a routerLink="/cart">Vuelve al carrito</a>.</p>
 </div>

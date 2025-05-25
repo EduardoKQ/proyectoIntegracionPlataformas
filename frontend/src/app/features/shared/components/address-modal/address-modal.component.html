@@ -4,71 +4,53 @@
     <h2>Elige un modo de entrega</h2>
 
     <div class="delivery-mode-selector">
-      <button
-        class="mode-button"
-        [class.active]="activeMode === 'delivery'"
-        (click)="switchToMode('delivery')">
+      <button class="mode-button"[class.active]="activeMode === 'delivery'"(click)="switchToMode('delivery')">
         🚚 A Domicilio
       </button>
-      <button
-        class="mode-button"
-        [class.active]="activeMode === 'pickup'"
-        (click)="switchToMode('pickup')">
+      <button class="mode-button"[class.active]="activeMode === 'pickup'"(click)="switchToMode('pickup')">
         📍 Retiro Pickup
       </button>
     </div>
-
     <form [formGroup]="addressForm" (ngSubmit)="onSubmit()" *ngIf="activeMode === 'delivery'">
-      <div class="form-group">
-        <label for="street">Ingresa tu dirección completa <span>*</span></label>
-        <div class="input-icon-wrapper">
-          <span class="icon">📍</span>
-          <input type="text" id="street" formControlName="street" placeholder="Ej: Pasaje la tonada">
-        </div>
-        <div *ngIf="addressForm.get('street')?.invalid && addressForm.get('street')?.touched" class="error-message">
-          La dirección es requerida.
-        </div>
+      <div *ngIf="mapOptions" class="map-container mb-3">
+        <google-map #mapRef height="250px"  width="100%" [options]="mapOptions" [center]="mapCenter" [zoom]="mapZoom">
+          <map-marker *ngIf="markerPosition"  [position]="markerPosition" [options]="markerOptions" (mapDragend)="onMarkerDragEnd($event)">
+          </map-marker>
+        </google-map>
       </div>
 
-      <div class="form-group">
-        <label for="number">Número <span *ngIf="!addressForm.get('isStreetWithoutNumber')?.value">*</span></label>
-        <input type="text" id="number" formControlName="number" placeholder="Ej: 123">
-        <div *ngIf="addressForm.get('number')?.invalid && addressForm.get('number')?.touched && !addressForm.get('isStreetWithoutNumber')?.value" class="error-message">
-          El número es requerido.
-        </div>
-      </div>
+      <p class="text-muted small">Ingresa tu dirección:</p>
 
-      <div class="form-group checkbox-group">
-        <input type="checkbox" id="isStreetWithoutNumber" formControlName="isStreetWithoutNumber">
-        <label for="isStreetWithoutNumber">Calle sin número (Agregar instrucciones adicionales)</label>
+      <div class="form-group">
+        <label for="autocomplete-input">Dirección Completa <span>*</span></label>
+        <input  type="text" id="autocomplete-input" #autocompleteInput class="form-control" placeholder="Ej: Av. Providencia 123, Providencia, Santiago"
+          formControlName="fullAddress">
+        <div
+          *ngIf="addressForm.get('fullAddress')?.invalid && addressForm.get('fullAddress')?.touched" class="error-message">
+          Requerido.
+        </div>
       </div>
 
       <div class="form-group">
         <label for="apartment">Depto / oficina / piso</label>
-        <input type="text" id="apartment" formControlName="apartment" placeholder="Ej: 4 piso, depto 4">
+        <input  type="text"  id="apartment" formControlName="apartment" placeholder="Ej: 4 piso, depto 4">
       </div>
-
       <div class="form-group">
         <label for="instructions">Instrucciones adicionales</label>
-        <textarea id="instructions" formControlName="instructions" placeholder="Ej: Vivo en la parcela 7 al sur-oeste"></textarea>
+        <textarea   id="instructions" formControlName="instructions"  placeholder="Ej: Vivo en la parcela 7 al sur-oeste"></textarea>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-guardar" [disabled]="addressForm.invalid">Guardar Dirección</button>
+      <button type="submit" class="btn btn-primary btn-guardar" [disabled]="addressForm.invalid">
+        Guardar Dirección
+      </button>
     </form>
 
     <form [formGroup]="pickupForm" (ngSubmit)="onSubmit()" *ngIf="activeMode === 'pickup'">
       <div class="pickup-options-list" *ngIf="availableBranches.length > 0; else noBranches">
         <label class="pickup-list-title">Selecciona una sucursal para retirar:</label>
-        <div
-          *ngFor="let branch of availableBranches"
-          class="pickup-branch-item"
-          (click)="pickupForm.get('selectedBranchCode')?.setValue(branch.branch_code)"
+        <div *ngFor="let branch of availableBranches" class="pickup-branch-item" (click)="pickupForm.get('selectedBranchCode')?.setValue(branch.branch_code)"
           [class.selected]="pickupForm.get('selectedBranchCode')?.value === branch.branch_code">
-          <input
-            type="radio"
-            name="selectedBranch"
-            [value]="branch.branch_code"
-            formControlName="selectedBranchCode"
+          <input type="radio" name="selectedBranchCode" [value]="branch.branch_code" formControlName="selectedBranchCode"
             [id]="'branch-' + branch.branch_code">
           <div class="branch-details">
             <label [for]="'branch-' + branch.branch_code" class="branch-name">{{ branch.name }}</label>
@@ -76,16 +58,18 @@
             <p class="branch-pickup-info">✓ Retiro en local</p>
           </div>
         </div>
-         <div *ngIf="pickupForm.get('selectedBranchCode')?.hasError('required') && pickupForm.get('selectedBranchCode')?.touched" class="error-message">
+        <div
+          *ngIf="pickupForm.get('selectedBranchCode')?.hasError('required') && pickupForm.get('selectedBranchCode')?.touched"
+          class="error-message">
           Debes seleccionar una sucursal.
         </div>
       </div>
       <ng-template #noBranches>
         <p>No hay sucursales de retiro disponibles en este momento.</p>
       </ng-template>
-
-      <button type="submit" class="btn btn-primary btn-guardar" [disabled]="pickupForm.invalid || availableBranches.length === 0">Confirmar Retiro</button>
+      <button type="submit" class="btn btn-primary btn-guardar" [disabled]="pickupForm.invalid || availableBranches.length === 0">
+        Confirmar Retiro
+      </button>
     </form>
-
   </div>
 </div>

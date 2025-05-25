@@ -69,6 +69,9 @@ urlpatterns = [
         order_views.orders_get_delete_by_id,
         name="orders_get_delete_by_id",
     ),
+    
+    # maps endpoints
+    path('maps/', include('api.maps.urls_map')),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [
