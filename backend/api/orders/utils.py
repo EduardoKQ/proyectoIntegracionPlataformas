@@ -2,6 +2,7 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from api.orders.order_filters import parse_orders_for
 
 # interface
 from api.orders.interfaces import OrderStatus, OrderPaymentMethod
@@ -57,7 +58,8 @@ def orders_create(request):
                 retrieval_type=data["retrieval_type"],
                 shipping_address=data.get("shipping_address"),
                 pickup_branch=order_branch,
-                order_status=order_status
+                order_status=order_status,
+                shipping_cost=data.get("shipping_cost", 0.00),
             )
             order_items_to_create = []
             ### create the order items
@@ -108,6 +110,31 @@ def orders_create(request):
 
 def orders_list(request):
 
+    def getOrdersByRole(user_role, request):
+        """
+        Get orders based on the user's role.
+        """
+        if user_role == WebRoleNames.ADMIN_TIENDA:
+            # Admin role: return all orders
+            return Order.objects.all().order_by('-creation_date')
+        
+        if user_role == WebRoleNames.CLIENTE:
+            # Client role: return orders for the client
+            try:
+                client_instance = Client.objects.get(user_account=request.user)
+                return Order.objects.filter(client=client_instance).order_by('-creation_date')
+            except Client.DoesNotExist:
+                return Order.objects.none()
+        
+        # orders for internal users depdens of their status and branch
+        user_webuser = request.user
+        try:
+            worker_orders = parse_orders_for(user_webuser)
+            return JsonResponse(worker_orders, safe=False)
+        except Exception as e:
+            raise ValueError(f"MAQUINA DE ESTDOS. Error al obtener las ordenes para el usuario: {str(e)}")
+    
+    # MAIN LOGIC
     user_role = None
     # Safely access role; request.user might be AnonymousUser or have no role attribute
     if hasattr(request.user, 'role') and request.user.role:
@@ -115,22 +142,11 @@ def orders_list(request):
 
     orders_queryset = Order.objects.none() # Default to an empty queryset
 
-    if user_role == WebRoleNames.CLIENTE:
-        try:
-            client_instance = Client.objects.get(user_account=request.user)
-            orders_queryset = Order.objects.filter(client=client_instance).order_by('-creation_date')
-        except Client.DoesNotExist:
-            # This specific client user does not have a Client profile.
-            return JsonResponse({"error": "Client profile not found for the authenticated user."}, status=403)
-    # Check for admin roles (e.g., 'admin_tienda') or superuser status
-    elif user_role == WebRoleNames.ADMIN_TIENDA:
-        orders_queryset = Order.objects.all().order_by('-creation_date')
-    else:
-        # For any other authenticated roles not explicitly handled,
-        # or if user_role is None (e.g., AnonymousUser somehow passed auth, or user has no role set)
-        # they get an empty list. Or you could return a 403 Forbidden.
-        # For now, an empty list is returned by default as orders_queryset is Order.objects.none()
-        pass
+    try:
+        orders_queryset = getOrdersByRole(user_role, request)
+    except Exception as e:
+        # Handle any exceptions that occur during order retrieval
+        return JsonResponse({"error": str(e)}, status=500)
 
     if not orders_queryset.exists():
         return JsonResponse([], safe=False, status=200)

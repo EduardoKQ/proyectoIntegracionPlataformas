@@ -37,6 +37,9 @@ class OrderCreateSerializer(serializers.Serializer):
             })
     shipping_address = serializers.CharField(max_length=255, allow_null=True, required=False)
     branch_code = serializers.CharField(max_length=50, required=True)
+    shipping_cost = serializers.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00, required=False
+    )
     items = OrderItemCreateSerializer(many=True, allow_empty=False)
 
     def validate_branch_code(self, value):
@@ -54,12 +57,16 @@ class OrderCreateSerializer(serializers.Serializer):
         """
         retrieval_type = data.get("retrieval_type")
         shipping_address = data.get("shipping_address")
-        branch_code = data.get("branch_code")
+        shipping_cost = data.get("shipping_cost")
 
-        if retrieval_type == "domicilio":
+        if retrieval_type == OrderType.DELIVERY.value:
             if not shipping_address:
                 raise serializers.ValidationError(
                     {"shipping_address": "Este campo es requerido para entregas a 'domicilio'."}
+                )
+            if not shipping_cost or shipping_cost <= 0:
+                raise serializers.ValidationError(
+                    {"shipping_cost": "El costo de envío es obligatorio y debe ser mayor que 0 para entregas a 'domicilio'."}
                 )
             
         if not data.get('items'):
@@ -81,7 +88,8 @@ class OrderListSerializer(serializers.ModelSerializer):
     order_items = OrderItemListSerializer(many=True, read_only=True)
     pickup_branch_name = serializers.CharField(source='pickup_branch.name', allow_null=True, read_only=True)
     client_email = serializers.EmailField(source='client.user_account.email', read_only=True)
-
+    total_amount = serializers.SerializerMethodField()
+    
     class Meta:
         model = Order
         fields = [
@@ -94,6 +102,20 @@ class OrderListSerializer(serializers.ModelSerializer):
             'order_status', 
             'creation_date', 
             'delivery_date',
+            'shipping_cost',
+            'total_amount',
             'order_items'
         ]
+
+    def get_total_amount(self, obj: Order) -> float:
+        """
+        Calculate the total amount for the order.
+        Sum of (item.quantity * item.transaction_price) for all items + order.shipping_cost.
+        """
+        items_total = sum(item.quantity * item.transaction_price for item in obj.order_items.all())
+        
+        shipping_cost = obj.shipping_cost if obj.shipping_cost is not None else 0.00
+        
+        total = float(items_total) + float(shipping_cost)
+        return round(total, 2)
 # --- End New Serializers ---
