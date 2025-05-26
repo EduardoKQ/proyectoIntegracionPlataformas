@@ -65,6 +65,11 @@ urlpatterns = [
     # orders endpoints
     path("orders", order_views.orders_list_create, name="orders_list_create"),
     path(
+        "orders/statuses",
+        order_views.order_get_statuses,
+        name="order_get_statuses",
+    ),
+    path(
         "orders/<str:order_code>",
         order_views.orders_get_delete_by_id,
         name="orders_get_delete_by_id",

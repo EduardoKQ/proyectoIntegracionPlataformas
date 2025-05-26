@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from api.user.role_permision import require_roles, check_auth_allowed_role
 from api.user.web_role_names import WebRoleNames
+from api.models import OrderStatus
 
 
 from .utils import (
@@ -50,3 +51,23 @@ def orders_get_delete_by_id(request, order_code):
         if auth_response is not None:
             return auth_response
         return orders_delete_by_id(order_code)
+
+@api_view(["GET"])
+def order_get_statuses(request):
+    """
+    Process GET request for order statuses by ID. Only web admin use
+    """
+    if request.method == "GET":
+        allowed_roles = [
+            WebRoleNames.ADMIN_TIENDA,
+        ]
+        auth_response = check_auth_allowed_role(request, allowed_roles)
+        if auth_response is not None:
+            return auth_response
+        order_statuses = OrderStatus.ALL.value
+        # Convert the order statuses to a list of dictionaries, excluding "ALL"
+        order_statuses_json = [
+            {"internal-name": status.name, "value": status.value}
+            for status in OrderStatus if status.name != "ALL"
+        ]
+        return JsonResponse(order_statuses_json, safe=False, status=200)
