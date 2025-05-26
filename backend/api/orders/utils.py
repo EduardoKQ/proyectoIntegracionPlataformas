@@ -181,3 +181,38 @@ def orders_delete_by_id(order_code):
         return JsonResponse({"error": f"No se encontro la orden con id {order_code}"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+def orders_update_status_by_id(request, order_code):
+    """
+    Process PUT request to update order status by ID.
+    """
+    try:
+        order = Order.objects.get(order_id=order_code)
+        data = json.loads(request.body)
+        new_status = data.get("order_status")
+        
+        if not new_status:
+            return JsonResponse({"error": "El nuevo estado de la orden es requerido."}, status=400)
+
+        # check if OrderStatus[new_status] is a valid OrderStatus
+        if not hasattr(OrderStatus, new_status):
+            print(f"DEBUG: New status provided: {new_status}")
+            print(f"DEBUG: Valid statuses are: {[status.name for status in OrderStatus]}")
+            return JsonResponse({"error": f"Estado de orden '{new_status}' no válido."}, status=400)
+
+        # Validate the new status
+        if OrderStatus[new_status] not in OrderStatus.ALL:
+            print(f"DEBUG: New status provided: {new_status}")
+            print(f"DEBUG: Valid statuses are: {OrderStatus.ALL}")
+            return JsonResponse({"error": f"Estado de orden '{new_status}' no válido."}, status=400)
+
+        # Update the order status
+        order.order_status = OrderStatus[new_status]
+        order.save()
+
+        return JsonResponse({"message": "Estado de la orden actualizado con éxito"}, status=200)
+    
+    except Order.DoesNotExist:
+        return JsonResponse({"error": f"No se encontro la orden con id {order_code}"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

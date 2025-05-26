@@ -11,6 +11,7 @@ from .utils import (
     orders_list,
     orders_get_by_id,
     orders_delete_by_id,
+    orders_update_status_by_id,
 )
 
 
@@ -34,14 +35,24 @@ def orders_list_create(request):
         
         return orders_create(request)
 
-@api_view(["DELETE", "GET"])
+@api_view(["DELETE", "GET", "PUT"])
 def orders_get_delete_by_id(request, order_code):
     # public endpoint for all users
     # depending of the user role, this endpoint will return different data
     if request.method == "GET":
         return JsonResponse(
             {"message": "TOBE IMPLEMENTED: GET request to orders_get_delete_by_id endpoint", "order_code": order_code}, status=200)
-        
+    
+    # only web admin can update order status directly
+    if request.method == "PUT":
+        allowed_roles = [
+            WebRoleNames.ADMIN_TIENDA,
+        ]
+        auth_response = check_auth_allowed_role(request, allowed_roles)
+        if auth_response is not None:
+            return auth_response
+        return orders_update_status_by_id(request, order_code)
+    
     # only admin can delete orders
     if request.method == "DELETE":
         allowed_roles = [
