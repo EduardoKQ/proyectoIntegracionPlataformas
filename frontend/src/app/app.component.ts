@@ -7,6 +7,8 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 import { HeaderComponent } from './shared/components/header/header.component';
 import { CartService } from './services/cart.service';
 import { LoginRequiredModalComponent } from './client/login-required-modal/login-required-modal.component';
+import { FooterComponent } from './shared/components/footer/footer.component';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -15,7 +17,8 @@ import { LoginRequiredModalComponent } from './client/login-required-modal/login
     RouterOutlet,
     SidebarComponent,
     HeaderComponent,
-    LoginRequiredModalComponent
+    LoginRequiredModalComponent,
+    FooterComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -24,6 +27,7 @@ export class AppComponent implements OnInit {
   title = 'frontend';
   showSidebar: boolean = false;
   showStoreHeader: boolean = false;
+  showFooter: boolean = false;
   showLoginModal$: Observable<boolean>;
 
   constructor(
@@ -49,6 +53,7 @@ export class AppComponent implements OnInit {
     ).subscribe((data) => {
       this.showSidebar = data?.['showSidebar'] === true;
       this.showStoreHeader = data?.['showStoreHeader'] === true;
+      this.showFooter = data?.['showFooter'] === true;
     });
   }
 }
