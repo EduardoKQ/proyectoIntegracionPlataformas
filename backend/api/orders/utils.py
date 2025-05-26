@@ -21,7 +21,7 @@ def orders_create(request):
         # get the inventory for the given branch
         branch_inventory_items = Inventory.objects.filter(branch__branch_code=branch_code)
         if not branch_inventory_items.exists():
-            return False
+            raise ValueError(f"ERROR: No se encontro inventario para la sucursal: {branch_code}")
         # check if the inventory has enough quantity for each item
         print(items) #!!!
         for item in items:
@@ -33,8 +33,8 @@ def orders_create(request):
             
             print(f"order: {product_code_to_check}, req_quantity:{required_quantity}, inventory: {product_inventory_item.quantity if product_inventory_item else 'Not Found'}") #!!!
             if not product_inventory_item or product_inventory_item.quantity < required_quantity:
-                return False
-        return True
+                raise ValueError(f"NO HAY SUFICIENTE STOCK: Producto de codigo {product_code_to_check}. Se requiere {required_quantity} pero solo hay {product_inventory_item.quantity if product_inventory_item else 0}.")
+        return None
     
     def create_db_order(client, data):
         """
@@ -76,6 +76,17 @@ def orders_create(request):
                     transaction_price = product.current_price,
                 )
                 order_items_to_create.append(order_item)
+                # update the inventory
+                inventory_item = Inventory.objects.filter(
+                    branch=order_branch,
+                    product=product
+                ).first()
+                if inventory_item:
+                    # reduce the inventory quantity
+                    if inventory_item.quantity < item["quantity"]:
+                        raise ValueError(f"No hay suficiente cantidad de {product.name} en inventario. Se requiere {item['quantity']} pero solo hay {inventory_item.quantity}.")
+                    inventory_item.quantity -= item["quantity"]
+                    inventory_item.save()
 
             OrderItem.objects.bulk_create(order_items_to_create)
 
@@ -90,11 +101,7 @@ def orders_create(request):
             # return 400 with the errors
             return JsonResponse({"errors": serializer.errors}, status=400)
         # validation: check if the inventory has enough quantity
-        if not inventory_has_enough_quantity(serializer.validated_data["branch_code"],serializer.validated_data["items"]):
-            return JsonResponse(
-                {"error": "No hay suficiente cantidad de productos en inventario."},
-                status=400,
-            )
+        inventory_has_enough_quantity(serializer.validated_data["branch_code"],serializer.validated_data["items"])
         # with all validated, create the order
         # but first we get the client from the request
         client_webuser = request.user
