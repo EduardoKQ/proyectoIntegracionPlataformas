@@ -89,7 +89,9 @@
       </div>
 
       <div class="product-grid" *ngIf="!isLoading && productsToDisplay.length > 0">
-        <div class="product-card" *ngFor="let product of paginatedProducts">
+        <div class="product-card"
+             *ngFor="let product of paginatedProducts"
+             [class.out-of-stock]="currentSelectedBranch && getProductMaxStock(product.codigo_producto) === 0">
           <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
             <div class="product-image-container">
               <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
@@ -112,7 +114,7 @@
                       </ng-container>
                       <ng-template #catPriceCLPOnlyUSD>
                         <span *ngIf="product.precio.precio_actual != null; else catNoPrice">
-                            {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
                         </span>
                         <ng-template #catNoPrice>N/A</ng-template>
                       </ng-template>
@@ -123,7 +125,7 @@
                       </ng-container>
                       <ng-template #catPriceUSDOnlyCLP>
                         <span *ngIf="product.precio.precio_dolares != null; else catNoPrice">
-                            {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
                         </span>
                         <ng-template #catNoPrice>N/A</ng-template>
                       </ng-template>
