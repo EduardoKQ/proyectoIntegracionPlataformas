@@ -1,6 +1,6 @@
 <div class="cart-page-container">
   <div class="main-cart-section">
-    <h2>Carro ({{ (cartItems$ | async)?.length || 0 }} producto<span *ngIf="(cartItems$ | async)?.length !== 1">s</span>)</h2>
+    <h2>Carro ({{ (totalItems$ | async) || 0 }} producto<span *ngIf="(totalItems$ | async) !== 1">s</span>)</h2>
 
     <div *ngIf="(cartItems$ | async) as items; else loadingCart">
       <div *ngIf="items.length === 0; else cartHasItems" class="empty-cart-message">
@@ -10,7 +10,7 @@
 
       <ng-template #cartHasItems>
         <div class="delivery-pickup-section">
-          <ng-container *ngIf="deliveryMode === 'pickup'">
+          <ng-container *ngIf="(deliveryMode$ | async) === 'pickup'">
             <div class="pickup-info clickable-area" (click)="openDeliveryModal('pickup')" title="Cambiar sucursal de retiro">
               <span class="icon-pickup">🚗</span>
               <div>
@@ -20,44 +20,39 @@
                   <p class="pickup-branch-address">{{ currentSelectedBranch.address || 'Dirección no disponible' }}</p>
                 </ng-container>
                 <ng-container *ngIf="!currentSelectedBranch">
-                  <p>No has seleccionado una sucursal para el retiro.</p>
+                  <p>No has seleccionado sucursal.</p>
                   <button class="btn btn-link btn-small-action">(Seleccionar Sucursal)</button>
                 </ng-container>
               </div>
             </div>
             <div class="delivery-options">
-              <p class="alternative-delivery" *ngIf="items.length > 0">
-                También se puede hacer envío de {{ items.length }} producto<span *ngIf="items.length !== 1">s</span>.
-              </p>
               <button class="btn btn-link" (click)="openDeliveryModal('delivery')">🔄 Cambiar a despacho a domicilio</button>
             </div>
           </ng-container>
 
-          <ng-container *ngIf="deliveryMode === 'delivery'">
+          <ng-container *ngIf="(deliveryMode$ | async) === 'delivery'">
             <div class="delivery-info-wrapper">
               <div class="delivery-main-info clickable-area" (click)="openDeliveryModal('delivery')" title="Modificar dirección de despacho">
                 <span class="icon-delivery">🚚</span>
                 <div>
                   <h3>Despacho a Domicilio</h3>
-                  <ng-container *ngIf="currentDeliveryAddress">
-                    <p class="delivery-address-street">{{ currentDeliveryAddress.street }} {{ currentDeliveryAddress.number }}</p>
-                    <p class="delivery-address-details" *ngIf="currentDeliveryAddress.apartment">
-                      {{ currentDeliveryAddress.apartment }}
-                    </p>
-                    <p class="delivery-address-instructions" *ngIf="currentDeliveryAddress.instructions">
-                      Instrucciones: {{ currentDeliveryAddress.instructions }}
-                    </p>
+                  <ng-container *ngIf="(currentDeliveryAddress$ | async) as address">
+                    <p class="delivery-address-street">{{ address.fullAddress }}</p>
+                    <p class="delivery-address-details" *ngIf="address.apartment">{{ address.apartment }}</p>
+                    <p class="delivery-address-instructions" *ngIf="address.instructions">Instrucciones: {{ address.instructions }}</p>
                   </ng-container>
-                  <ng-container *ngIf="!currentDeliveryAddress">
-                    <p>No se ha especificado una dirección de entrega.</p>
+                  <ng-container *ngIf="!(currentDeliveryAddress$ | async)">
+                    <p>No has ingresado dirección.</p>
                     <button class="btn btn-link btn-small-action">(Ingresar Dirección)</button>
                   </ng-container>
                 </div>
               </div>
               <div class="origin-branch-info-for-delivery" *ngIf="currentSelectedBranch">
-                <p class="origin-branch-label">Productos despachados desde:</p>
+                <p class="origin-branch-label">Despachado desde:</p>
                 <p class="origin-branch-name">{{ currentSelectedBranch.name }}</p>
-                <p class="origin-branch-address">{{ currentSelectedBranch.address || 'N/D' }}</p>
+              </div>
+               <div class="origin-branch-info-for-delivery" *ngIf="!currentSelectedBranch">
+                <p class="origin-branch-label">Despachado desde: Sucursal Principal</p>
               </div>
             </div>
             <div class="delivery-options">
@@ -73,9 +68,9 @@
               <h4>{{ item.name }}</h4>
             </div>
             <div class="item-quantity-controls">
-              <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1">-</button>
-              <input type="number" [value]="item.quantity" (change)="updateQuantityFromInput($event, item)" min="1" [max]="(deliveryMode === 'pickup' && currentSelectedBranch && getProductMaxStock(item.product_code) > 0) ? getProductMaxStock(item.product_code) : null">
-              <button (click)="incrementQuantity(item)" [disabled]="deliveryMode === 'pickup' && currentSelectedBranch && isStockMaxedOut(item.product_code, item.quantity)">+</button>
+                <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1">-</button>
+                <input type="number" [value]="item.quantity" (change)="updateQuantityFromInput($event, item)" min="1" [max]="((deliveryMode$ | async) === 'pickup' && currentSelectedBranch && getProductMaxStock(item.product_code) > 0) ? getProductMaxStock(item.product_code) : null">
+                <button (click)="incrementQuantity(item)" [disabled]="(deliveryMode$ | async) === 'pickup' && currentSelectedBranch && isStockMaxedOut(item.product_code, item.quantity)">+</button>
             </div>
             <div class="item-subtotal">
               <p>{{ (item.price * item.quantity) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
@@ -97,17 +92,36 @@
       <h3>Resumen</h3>
       <div class="summary-line">
         <span>Productos ({{ totalItems$ | async }})</span>
-        <span>{{ (totalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
+        <span>{{ (productSubtotalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
       </div>
+
       <div class="summary-line">
         <span>Costo de envío</span>
-        <span>{{ deliveryMode === 'delivery' ? (currentDeliveryAddress ? 'Por calcular' : 'N/A') : 'Sin costo (Retiro)' }}</span>
+        <ng-container *ngIf="(deliveryMode$ | async) === 'delivery'">
+            <span *ngIf="isCalculatingShipping">Calculando...</span>
+            <span *ngIf="!isCalculatingShipping && (shippingCost$ | async) !== null">
+                {{ (shippingCost$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}
+            </span>
+            <span *ngIf="!isCalculatingShipping && (shippingCost$ | async) === null">
+                <span *ngIf="shippingCalculationError" class="error-message small">{{ shippingCalculationError }}</span>
+                <span *ngIf="!shippingCalculationError && (currentDeliveryAddress$ | async)">Calcular</span>
+                <span *ngIf="!(currentDeliveryAddress$ | async)">Ingresa dirección</span>
+            </span>
+        </ng-container>
+        <span *ngIf="(deliveryMode$ | async) === 'pickup'">Sin costo (Retiro)</span>
       </div>
+
       <div class="summary-total">
         <span>Total estimado</span>
-        <span>{{ (totalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
+        <span>{{ (grandTotalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
       </div>
-       <button class="btn btn-success btn-block" (click)="proceedToCheckout()" [disabled]="(deliveryMode === 'pickup' && !currentSelectedBranch) || (deliveryMode === 'delivery' && !currentDeliveryAddress)">Continuar</button>
+      <button class="btn btn-success btn-block" (click)="proceedToCheckout()"
+            [disabled]="((deliveryMode$ | async) === 'pickup' && !currentSelectedBranch) ||
+                        ((deliveryMode$ | async) === 'delivery' && !(currentDeliveryAddress$ | async)) ||
+                        ((deliveryMode$ | async) === 'delivery' && (shippingCost$ | async) === null && !!(currentDeliveryAddress$ | async) && !shippingCalculationError) ||
+                        isCalculatingShipping">
+        Continuar
+      </button>
     </div>
   </ng-container>
 </div>
