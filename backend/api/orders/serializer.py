@@ -57,9 +57,9 @@ class OrderCreateSerializer(serializers.Serializer):
         """
         retrieval_type = data.get("retrieval_type")
         shipping_address = data.get("shipping_address")
-        shipping_cost = data.get("shipping_cost")
 
         if retrieval_type == OrderType.DELIVERY.value:
+            shipping_cost = data.get("shipping_cost") 
             if not shipping_address:
                 raise serializers.ValidationError(
                     {"shipping_address": "Este campo es requerido para entregas a 'domicilio'."}

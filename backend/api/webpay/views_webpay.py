@@ -5,11 +5,14 @@ from django.conf import settings
 import uuid
 import json
 
+
 # Importaciones de Transbank SDK
 from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.common.options import WebpayOptions
 from transbank.common.integration_type import IntegrationType
 
+from api.models import Order
+from api.orders.interfaces import OrderStatus
 
 # --- Función Helper para obtener la transacción de Webpay ---
 def get_webpay_plus_transaction():
@@ -36,16 +39,33 @@ def iniciar_pago_webpay(request):
         try:
             data = json.loads(request.body)
             amount_to_pay = int(data.get('amount'))
+            order_id = data.get('order_id', None)            
             
             if amount_to_pay is None or amount_to_pay <= 0:
                 print(f"[ERROR] Monto inválido o no proporcionado: {data.get('amount')}")
                 return JsonResponse({'error': 'Monto inválido o no proporcionado.'}, status=400)
 
+            # check that order_id is currently created and not paid
+            if order_id:
+                try:
+                    order = Order.objects.get(order_id=order_id)
+                    order_status = order.order_status
+                    print(f"[INFO] Orden encontrada: {order_id}, Estado: {order_status}")
+                    if order_status != OrderStatus.PAYMMENT_PENDING.value:
+                        print(f"[ERROR] Orden con ID {order_id} no está en estado 'PAYMMENT_PENDING'. Estado actual: {order_status}")
+                        return JsonResponse({'error': f'Orden con ID {order_id} no está en estado "{OrderStatus.PAYMMENT_PENDING.value}". Estado actual: {order_status}'}, status=400)
+                except Order.DoesNotExist:
+                    print(f"[ERROR] Orden con ID {order_id} no encontrada o no está en estado 'pago pendiente'.")
+                    return JsonResponse({'error': f'Orden con ID {order_id} no encontrada o no está en estado "pago pendiente".'}, status=404)
+            else:
+                print("[ERROR] No se proporcionó un order_id válido.")
+                return JsonResponse({'error': 'No se proporcionó un order_id válido.'}, status=400)
+                
         except (json.JSONDecodeError, TypeError, ValueError) as e:
             print(f"[ERROR] Error al procesar el cuerpo de la solicitud (amount): {e}. Cuerpo recibido: {request.body}")
             return JsonResponse({'error': 'Error al procesar el monto. Se esperaba un JSON con un campo "amount" numérico válido.'}, status=400)
         
-        buy_order = str(uuid.uuid4())[:26]
+        buy_order = order_id
         
         if not request.session.session_key:
             request.session.create()
@@ -118,6 +138,15 @@ def retorno_pago_webpay(request):
                 print(f"[SUCCESS] PAGO EXITOSO: Orden {buy_order_from_webpay}, Monto {amount_from_webpay}")
                 redirect_url_base = settings.FRONTEND_URL_SUCCESS
                 status_param_for_frontend = "success"
+                # update order status to PAID
+                try:
+                    order = Order.objects.get(order_id=buy_order_from_webpay)
+                    order.order_status = OrderStatus.SHOP_PENDING.value
+                    order.save()
+                    print(f"[INFO] Orden {buy_order_from_webpay} actualizada a estado '{OrderStatus.SHOP_PENDING.value}'.")
+                except Order.DoesNotExist:
+                    print(f"[ERROR] Orden con ID {buy_order_from_webpay} no encontrada para actualizar estado.")
+                    query_params_dict["motivo"] = "orden_no_encontrada_para_actualizar_estado"
             else:
                 print(f"[FAILURE] PAGO FALLIDO o RECHAZADO: Estado {webpay_status}, Código Resp {response_code}")
                 redirect_url_base = settings.FRONTEND_URL_FAILURE

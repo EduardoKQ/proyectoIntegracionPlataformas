@@ -21,13 +21,13 @@ export class WebpayService {
   /**
    * Inicia una transacción de Webpay.
    * @param amount El monto a pagar.
-   * @param internalBuyOrder (Opcional) Un ID de orden de tu sistema, si quieres enviarlo al backend.
-   * El backend actualmente genera su propio UUID para la 'buy_order' de Transbank.
+   * @param internalBuyOrder La ID de orden generada por el backend.
    * @returns Observable con la respuesta del backend (token y URL de Transbank).
    */
-  initTransaction(amount: number, internalBuyOrder?: string): Observable<WebpayInitResponse> {
+  initTransaction(amount: number, internalBuyOrder: string): Observable<WebpayInitResponse> {
     const payload = {
       amount: amount,
+      order_id: internalBuyOrder
     };
 
     console.log('WebpayService: Enviando para iniciar transacción:', payload);

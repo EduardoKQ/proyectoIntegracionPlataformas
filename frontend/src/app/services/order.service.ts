@@ -7,7 +7,6 @@ const API_BASE_URL = 'http://localhost:8100/api'
 export interface OrderItemPayload {
   product_code: string;
   quantity: number;
-  transaction_price: number;
 }
 
 export interface OrderPayload {

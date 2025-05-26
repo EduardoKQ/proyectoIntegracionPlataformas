@@ -96,6 +96,7 @@ def orders_create(request):
     try:
         # serialize the request data and check if it is valid
         data = json.loads(request.body)
+        print(f"DEBUG: Received order creation data: {data}")  # Debugging line
         serializer = OrderCreateSerializer(data=data)
         if not serializer.is_valid():
             # return 400 with the errors

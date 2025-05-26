@@ -109,14 +109,15 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     const orderItemsPayload: OrderItemPayload[] = cartItems.map(item => ({
       product_code: item.product_code,
       quantity: item.quantity,
-      transaction_price: item.price
+      // not needed
+      // transaction_price: item.price
     }));
 
     const orderPayload: OrderPayload = {
       payment_type: this.selectedPaymentMethod === 'webpay' ? 'pasarela de pago' : 'transferencia bancaria',
       retrieval_type: deliveryMode === 'delivery' ? 'envio a domicilio' : 'retiro en tienda',
       shipping_address: deliveryAddress ? deliveryAddress.fullAddress : null,
-      shipping_cost: shippingCost,
+      shipping_cost: shippingCost? shippingCost : 0,
       branch_code: currentBranch.branch_code,
       items: orderItemsPayload
     };
@@ -124,7 +125,7 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     this.orderService.createOrder(orderPayload).subscribe({
       next: (createdOrder: OrderResponse) => {
         console.log('Orden creada exitosamente en backend:', createdOrder);
-        const buyOrderForPayment = createdOrder.order_id ? `BE-ORD-${createdOrder.order_id}` : this.generateFrontendOrderNumber();
+        const buyOrderForPayment = createdOrder.order_id ? `${createdOrder.order_id}` : this.generateFrontendOrderNumber();
 
         if (this.selectedPaymentMethod === 'webpay') {
           this.proceedToWebpay(buyOrderForPayment, amountToPay);
