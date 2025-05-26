@@ -39,7 +39,7 @@ def orders_get_delete_by_id(request, order_code):
     # depending of the user role, this endpoint will return different data
     if request.method == "GET":
         return JsonResponse(
-            {"message": "GET request to orders_get_delete_by_id endpoint", "order_code": order_code}, status=200)
+            {"message": "TOBE IMPLEMENTED: GET request to orders_get_delete_by_id endpoint", "order_code": order_code}, status=200)
         
     # only admin can delete orders
     if request.method == "DELETE":
@@ -49,7 +49,4 @@ def orders_get_delete_by_id(request, order_code):
         auth_response = check_auth_allowed_role(request, allowed_roles)
         if auth_response is not None:
             return auth_response
-        return JsonResponse(
-            {
-                "message": "DELETE request to orders_get_delete_by_id endpoint",
-                "order_code": order_code}, status=200)
+        return orders_delete_by_id(order_code)

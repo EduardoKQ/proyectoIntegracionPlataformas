@@ -169,8 +169,15 @@ def orders_get_by_id(request, order_code):
     """
     return None
 
-def orders_delete_by_id(request, order_code):
+def orders_delete_by_id(order_code):
     """
     Process GET request for order by ID.
     """
-    return None
+    try:
+        order = Order.objects.get(order_id=order_code)
+        order.delete()
+        return JsonResponse({"message": "Orden eliminada con éxito"}, status=204)
+    except Order.DoesNotExist:
+        return JsonResponse({"error": f"No se encontro la orden con id {order_code}"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
