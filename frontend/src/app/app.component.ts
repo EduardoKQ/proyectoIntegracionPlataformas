@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter, map, mergeMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { HeaderComponent } from './shared/components/header/header.component';
-
+import { CartService } from './services/cart.service';
+import { LoginRequiredModalComponent } from './client/login-required-modal/login-required-modal.component';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -12,7 +14,8 @@ import { HeaderComponent } from './shared/components/header/header.component';
     CommonModule,
     RouterOutlet,
     SidebarComponent,
-    HeaderComponent
+    HeaderComponent,
+    LoginRequiredModalComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -21,8 +24,15 @@ export class AppComponent implements OnInit {
   title = 'frontend';
   showSidebar: boolean = false;
   showStoreHeader: boolean = false;
+  showLoginModal$: Observable<boolean>;
 
-  constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
+  constructor(
+    private router: Router,
+    private activatedRoute: ActivatedRoute,
+    private cartService: CartService
+  ) {
+    this.showLoginModal$ = this.cartService.showLoginModal$;
+  }
 
   ngOnInit() {
     this.router.events.pipe(

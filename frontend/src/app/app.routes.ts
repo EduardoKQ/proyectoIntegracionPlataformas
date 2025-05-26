@@ -34,7 +34,7 @@ export const routes: Routes = [
   { path: 'story/:id', component: StoryViewComponent },
   { path: 'cart', component: CartComponent, data: { showStoreHeader: true } },
   { path: 'payment-method', component: PaymentMethodComponent, data: { showStoreHeader: true } },
-  { path: 'payment-result', component: PaymentResultComponent, data: { showStoreHeader: true } },
+  { path: 'payment-result', component: PaymentResultComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
   //1 Administrador

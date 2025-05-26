@@ -2,193 +2,196 @@
 
 $color-primario-azul: rgb(22, 59, 102);
 $color-primario-naranja: #f57c00;
-$color-primario-naranja-claro: color.adjust($color-primario-naranja, $lightness: 20%);
-$fuente-principal: 'Roboto', sans-serif;
-$color-texto-general: #333;
-$color-texto-secundario: #555;
-$color-texto-claro: #777;
+
 $color-texto-blanco: #fff;
-$color-borde-suave: #e0e0e0;
-$color-fondo-tarjeta: #fff;
-$color-fondo-pagina: #fff;
-$color-exito: #28a745;
+$color-fondo: $color-primario-azul;
+$color-exito: $color-primario-naranja;
 $color-fallo: #dc3545;
-$color-error-pagina: #b32500;
-$color-info: #17a2b8;
-$color-pendiente-texto: #856404;
-$color-pendiente-fondo: #fff3cd;
-$color-pendiente-borde: #ffeeba;
-$color-pendiente-icono: #ffc107;
+$color-pendiente: #ffc107;
+$color-error: #b32500;
+$color-desconocido: #6c757d;
+$color-spinner: $color-primario-naranja;
+$color-btn-secundario-bg: #6c757d;
+$color-btn-secundario-hover: color.adjust($color-btn-secundario-bg, $lightness: -10%);
+$color-progreso: $color-primario-naranja;
 
 :host {
-  font-family: 'Roboto', sans-serif;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-.payment-result-container {
-  max-width: 650px;
-  margin: 40px auto;
-  padding: 20px;
-  font-family: $fuente-principal;
-  background-color: $color-fondo-pagina;
+.result-background {
+  background-color: $color-fondo;
+  color: $color-texto-blanco;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 160px);
+  padding: 20px;
+  box-sizing: border-box;
 }
 
-.status-message {
-  background-color: $color-fondo-tarjeta;
-  padding: 30px 40px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+.result-container {
   text-align: center;
+  padding: 3rem 2rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  max-width: 550px;
+  width: 95%;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
+}
 
-  .icon {
-    display: block;
-    font-size: 4rem;
-    margin-bottom: 20px;
+.icon-container {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: $color-fondo;
+
+  &.success-icon { background-color: $color-exito; }
+  &.failure-icon { background-color: $color-fallo; }
+  &.pending-icon { background-color: $color-pendiente; font-size: 2rem; }
+  &.error-icon { background-color: $color-error; font-size: 2rem; }
+  &.unknown-icon { background-color: $color-desconocido; }
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.description {
+  opacity: 0.9;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  min-height: 40px;
+
+  &.small {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-bottom: 2rem;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 1rem;
+}
+
+.btn {
+  background-color: $color-texto-blanco;
+  color: $color-fondo;
+  border: none;
+  border-radius: 5px;
+  padding: 0.85rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  &:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
-  h2 {
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-top: 0;
-    margin-bottom: 15px;
-  }
-
-  p {
-    font-size: 1rem;
-    color: $color-texto-secundario;
-    line-height: 1.6;
-    margin-bottom: 10px;
-
-    &:last-of-type {
-      margin-bottom: 25px;
-    }
-  }
-
-  .actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-  }
-
-  .btn {
-    padding: 10px 25px;
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
-    text-decoration: none;
-    border: 1px solid transparent;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-
-    &:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-  }
-
-  .btn-primary {
+  &.btn-primary {
     background-color: $color-primario-naranja;
     color: $color-texto-blanco;
-    border-color: $color-primario-naranja;
-    &:hover:not(:disabled) {
-      background-color: color.adjust($color-primario-naranja, $lightness: -10%);
-      border-color: color.adjust($color-primario-naranja, $lightness: -10%);
+    &:hover {
+        background-color: color.adjust($color-primario-naranja, $lightness: -8%);
     }
   }
 
-  .btn-secondary {
-    background-color: $color-borde-suave;
-    color: $color-texto-general;
-    border-color: $color-borde-suave;
-    &:hover:not(:disabled) {
-      background-color: color.adjust($color-borde-suave, $lightness: -10%);
-      border-color: color.adjust($color-borde-suave, $lightness: -10%);
-    }
-  }
-  .btn-info {
-    background-color: $color-info;
+   &.btn-secondary {
+    background-color: $color-btn-secundario-bg;
     color: $color-texto-blanco;
-    border-color: $color-info;
-    &:hover:not(:disabled) {
-      background-color: color.adjust($color-info, $lightness: -10%);
-      border-color: color.adjust($color-info, $lightness: -10%);
+     &:hover {
+        background-color: $color-btn-secundario-hover;
     }
   }
+}
 
-  &.success {
-    border-top: 5px solid $color-exito;
-    .icon.success-icon { color: $color-exito; }
-    h2 { color: $color-exito; }
-  }
+.loading-spinner {
+  margin-bottom: 1.5rem;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1.5rem;
+}
 
-  &.failure {
-    border-top: 5px solid $color-fallo;
-    .icon.failure-icon { color: $color-fallo; }
-    h2 { color: $color-fallo; }
-  }
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid $color-spinner;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
 
-  &.transfer-pending {
-    border-top: 5px solid $color-pendiente-icono;
-    background-color: $color-pendiente-fondo;
-    border-color: $color-pendiente-borde;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
-    .icon.pending-icon {
-      color: $color-pendiente-icono;
-    }
-    h2 { color: $color-pendiente-texto; }
-    p { color: color.adjust($color-pendiente-texto, $lightness: -10%);}
-    .btn-primary {
-        background-color: $color-pendiente-icono;
-        border-color: $color-pendiente-icono;
-        color: $color-texto-general;
-        &:hover:not(:disabled) {
-          background-color: color.adjust($color-pendiente-icono, $lightness: -10%);
-          border-color: color.adjust($color-pendiente-icono, $lightness: -10%);
-        }
-    }
-  }
+.progress-bar-container {
+  height: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 2rem;
+  width: 80%;
+}
 
-  &.error-page {
-    border-top: 5px solid $color-error-pagina;
-    .icon.error-icon { color: $color-error-pagina; }
-    h2 { color: $color-error-pagina; }
-  }
-
-  &.info-message {
-    border-top: 5px solid $color-info;
-    .icon.info-icon { color: $color-info; }
-    h2 { color: $color-info; }
-  }
+.progress-bar {
+  height: 100%;
+  background-color: $color-progreso;
+  border-radius: 5px;
+  width: 0%;
+  transition: width 0.15s linear;
 }
 
 @media (max-width: 768px) {
-  .payment-result-container {
-    margin: 20px auto;
-    padding: 15px;
-    min-height: auto;
-  }
-  .status-message {
-    padding: 20px;
-    .icon {
-      font-size: 3rem;
-      margin-bottom: 15px;
+    .result-container {
+        padding: 2rem 1rem;
     }
-    h2 {
-      font-size: 1.5rem;
+    .title {
+        font-size: 1.5rem;
     }
-    p {
-      font-size: 0.9rem;
+    .description {
+        font-size: 0.95rem;
+    }
+    .icon-container {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
     }
     .actions {
         flex-direction: column;
+        width: 100%;
         .btn {
             width: 100%;
         }
     }
-  }
+    .progress-bar-container {
+      width: 90%;
+    }
 }

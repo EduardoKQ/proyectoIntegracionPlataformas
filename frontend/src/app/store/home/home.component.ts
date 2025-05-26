@@ -200,6 +200,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   addToCartFromHome(product: ApiProduct): void {
+    if (!this.authService.isLoggedIn()) {
+      this.cartService.openLoginModal();
+      return;
+    }
+
     if (!this.currentSelectedBranch) {
       this.productToAddAfterBranchSelection = product;
       this.showBranchModal = true;
@@ -236,10 +241,16 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   updateQuantityFromHome(productCode: string, newQuantity: number): void {
+    if (!this.authService.isLoggedIn()) {
+        this.cartService.openLoginModal();
+        return;
+    }
+
     if (!this.currentSelectedBranch) {
       console.warn("Intento de actualizar cantidad sin sucursal seleccionada.");
       return;
     }
+
     const branch = this.currentSelectedBranch;
     if (newQuantity < 0) return;
     if (newQuantity === 0) {

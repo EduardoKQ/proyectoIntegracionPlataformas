@@ -6,3 +6,5 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<app-login-required-modal *ngIf="showLoginModal$ | async"></app-login-required-modal>
