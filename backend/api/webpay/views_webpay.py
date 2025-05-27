@@ -223,7 +223,7 @@ def delete_update_order(buy_order_from_webpay):
     if order_items:
         for item in order_items:
             item_quantity = item.quantity
-            item_product_code = item.product_code
+            item_product_code = item.product.product_code
                         # update inventory
             inventory_item = Inventory.objects.filter(
                             branch__branch_code=order_branch_code,
