@@ -173,7 +173,6 @@ def retorno_pago_webpay(request):
                 "orden_compra": buy_order_from_webpay,
                 "motivo": "abortado_por_usuario_en_webpay"
             }
-            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
 
         elif tbk_orden_compra_post_abandono: # Flujo de abandono (POST sin token_ws pero con TBK_ORDEN_COMPRA)
             print(f"[INFO] PAGO ABANDONADO (POST sin token_ws, con TBK_ORDEN_COMPRA): {tbk_orden_compra_post_abandono}")
@@ -184,13 +183,11 @@ def retorno_pago_webpay(request):
                 "orden_compra": buy_order_from_webpay,
                 "motivo": "flujo_abandonado_o_interrumpido"
             }
-            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
             
         else: # No se encontró ningún token o identificador esperado.
             print(f"[ERROR] RESPUESTA DESCONOCIDA o INCOMPLETA de Webpay: GET={request.GET}, POST={request.POST}")
             redirect_url_base = settings.FRONTEND_URL_ERROR
             status_param_for_frontend = "unknown_response"
-            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
             query_params_dict = {"motivo": "respuesta_inesperada_o_incompleta_de_webpay"}
 
     except Exception as e:
