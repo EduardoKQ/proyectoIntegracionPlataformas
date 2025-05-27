@@ -11,7 +11,7 @@ from transbank.webpay.webpay_plus.transaction import Transaction
 from transbank.common.options import WebpayOptions
 from transbank.common.integration_type import IntegrationType
 
-from api.models import Order
+from api.models import Inventory, Order, OrderItem
 from api.orders.interfaces import OrderStatus
 
 # --- Función Helper para obtener la transacción de Webpay ---
@@ -159,6 +159,29 @@ def retorno_pago_webpay(request):
                     query_params_dict["motivo"] = "orden_no_encontrada_para_actualizar_estado"
             else:
                 print(f"[FAILURE] PAGO FALLIDO o RECHAZADO: Estado {webpay_status}, Código Resp {response_code}")
+                # eliminar la orden de compra de laa sesion
+                order = Order.objects.get(order_id=buy_order_from_webpay)
+                order_branch_code = order.pickup_branch.branch_code
+                # update inventory and then delete the order
+                order_items = OrderItem.objects.filter(order=order)
+                if order_items:
+                    for item in order_items:
+                        item_quantity = item.quantity
+                        item_product_code = item.product_code
+                        # update inventory
+                        inventory_item = Inventory.objects.filter(
+                            branch__branch_code=order_branch_code,
+                            product__product_code=item_product_code
+                        ).first()
+                        if inventory_item:
+                            print(f"[INFO] Actualizando inventario: Producto {item_product_code}, Cantidad {item_quantity} en sucursal {order_branch_code}.")
+                            inventory_item.quantity += item_quantity
+                            inventory_item.save()
+                    order_items.delete()
+                order.delete()
+
+
+
                 redirect_url_base = settings.FRONTEND_URL_FAILURE
                 status_param_for_frontend = "failure"
         
