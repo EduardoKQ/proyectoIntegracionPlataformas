@@ -1,8 +1,12 @@
 <app-header *ngIf="showStoreHeader"></app-header>
 
 <div class="page-body-container">
-  <app-sidebar *ngIf="showSidebar"></app-sidebar>
-  <main class="content-area">
+  <app-sidebar
+      *ngIf="showSidebar"
+      (collapsedStateChanged)="onSidebarToggle($event)">
+  </app-sidebar>
+
+  <main class="content-area" [class.sidebar-is-collapsed]="isSidebarCollapsed">
     <router-outlet></router-outlet>
   </main>
 </div>

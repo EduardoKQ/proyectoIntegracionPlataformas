@@ -1,0 +1,22 @@
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 80px;
+$transition-speed: 0.3s;
+
+.page-body-container {
+  display: flex;
+  padding-top: 0;
+}
+
+.content-area {
+  flex-grow: 1;
+  margin-left: $sidebar-width;
+  transition: margin-left $transition-speed ease-in-out;
+  width: calc(100% - #{$sidebar-width});
+  background-color: #f8f9fa;
+  min-height: 100vh;
+
+  &.sidebar-is-collapsed {
+    margin-left: $sidebar-collapsed-width;
+    width: calc(100% - #{$sidebar-collapsed-width});
+  }
+}

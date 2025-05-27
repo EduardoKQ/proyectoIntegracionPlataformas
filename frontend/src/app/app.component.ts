@@ -29,6 +29,7 @@ export class AppComponent implements OnInit {
   showStoreHeader: boolean = false;
   showFooter: boolean = false;
   showLoginModal$: Observable<boolean>;
+  isSidebarCollapsed: boolean = false;
 
   constructor(
     private router: Router,
@@ -55,5 +56,9 @@ export class AppComponent implements OnInit {
       this.showStoreHeader = data?.['showStoreHeader'] === true;
       this.showFooter = data?.['showFooter'] === true;
     });
+  }
+
+  onSidebarToggle(collapsed: boolean): void {
+    this.isSidebarCollapsed = collapsed;
   }
 }
