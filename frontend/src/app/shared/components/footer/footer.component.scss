@@ -1,0 +1,113 @@
+@use 'sass:color';
+
+$footer-background: #f8f9fa;
+$footer-text-color: #495057;
+$footer-border-color: #dee2e6;
+$primary-brand-color: #007bff;
+
+:host {
+  display: block;
+}
+
+.payment-footer-container {
+  background-color: $footer-background;
+  color: $footer-text-color;
+  padding: 30px 20px 15px 20px;
+  border-top: 1px solid $footer-border-color;
+  font-family: 'Roboto', sans-serif;
+}
+
+.payment-footer-content {
+  max-width: 1100px;
+  margin: 0 auto 20px auto;
+  text-align: center;
+}
+
+.footer-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #343a40;
+}
+
+.payment-logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.payment-logo {
+  height: 45px;
+  max-width: 200px;
+  object-fit: contain;
+  opacity: 0.85;
+  transition: opacity 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.webpay {
+    height: 100px;
+  }
+}
+
+.secure-payment-info {
+  font-size: 0.85rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+
+  .lock-icon {
+    font-size: 1.1rem;
+    vertical-align: middle;
+  }
+}
+
+.payment-footer-bottom {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+  padding-top: 15px;
+  border-top: 1px solid $footer-border-color;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .payment-footer-container {
+    padding: 20px 15px 10px 15px;
+  }
+
+  .footer-title {
+    font-size: 1rem;
+    margin-bottom: 15px;
+  }
+
+  .payment-logo {
+    height: 30px;
+    max-width: 75px;
+
+    &.webpay {
+      height: 50px;
+    }
+  }
+
+  .payment-logos {
+    gap: 10px;
+  }
+
+  .secure-payment-info {
+    font-size: 0.8rem;
+  }
+
+  .payment-footer-bottom {
+    font-size: 0.75rem;
+  }
+}

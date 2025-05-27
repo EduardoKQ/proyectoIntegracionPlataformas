@@ -498,6 +498,49 @@ $cart-button-height: 2.2rem;
       box-sizing: border-box;
     }
   }
+
+  &.out-of-stock {
+    opacity: 0.65;
+    filter: grayscale(70%);
+    background-color: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: none;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .product-link {
+        cursor: default;
+    }
+
+    .add-to-cart-btn {
+      background-color: $dark-gray;
+      cursor: not-allowed;
+      pointer-events: none;
+
+      &:hover {
+        background-color: $dark-gray;
+      }
+    }
+
+    &::before {
+        content: 'Sin Stock';
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background-color: rgba(50, 50, 50, 0.8);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 5;
+        pointer-events: none;
+    }
+  }
 }
 
 .add-to-cart-btn {

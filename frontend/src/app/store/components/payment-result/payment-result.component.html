@@ -1,50 +1,57 @@
-<div class="payment-result-container">
-  <div *ngIf="paymentStatus === 'success'" class="status-message success">
-    <span class="icon success-icon">✔️</span>
-    <h2>¡Pago Completado Exitosamente!</h2>
-    <p>{{ message }}</p>
-    <p>Gracias por tu compra. Serás redirigido al inicio en unos segundos...</p>
-    <div class="actions">
+<div class="result-background">
+  <div class="result-container">
+
+    <div *ngIf="paymentStatus === 'processing'" class="status-content processing">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+        <h2 class="title">{{ loadingTitle }}</h2>
+        <p class="description">{{ loadingDescription }}</p>
+        <div class="progress-bar-container">
+            <div class="progress-bar" [style.width.%]="progress"></div>
+        </div>
+    </div>
+
+    <div *ngIf="paymentStatus === 'success'" class="status-content success">
+      <div class="icon-container success-icon">✓</div>
+      <h2 class="title">¡Pago Completado Exitosamente!</h2>
+      <p class="description">{{ message }}</p>
+      <p class="description small">Gracias por tu compra. Serás redirigido al inicio...</p>
       <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio Ahora</button>
     </div>
-  </div>
 
-  <div *ngIf="paymentStatus === 'failure'" class="status-message failure">
-    <span class="icon failure-icon">❌</span>
-    <h2>Pago Fallido o Cancelado</h2>
-    <p>{{ message }}</p>
-    <p>Lamentamos los inconvenientes.</p>
-    <div class="actions">
-      <button (click)="goToCart()" class="btn btn-primary">Volver al Carrito</button>
-      <button (click)="goToHome()" class="btn btn-secondary">Ir al Inicio</button>
+    <div *ngIf="paymentStatus === 'failure'" class="status-content failure">
+      <div class="icon-container failure-icon">✕</div>
+      <h2 class="title">Pago Fallido o Cancelado</h2>
+      <p class="description">{{ message }}</p>
+      <p class="description small">Lamentamos los inconvenientes.</p>
+      <div class="actions">
+        <button (click)="goToCart()" class="btn btn-secondary">Volver al Carrito</button>
+        <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio</button>
+      </div>
     </div>
-  </div>
 
-  <div *ngIf="paymentStatus === 'transfer_pending'" class="status-message transfer-pending">
-    <span class="icon pending-icon">⏳</span> <h2>Transferencia Pendiente de Validación</h2>
-    <p>{{ message }}</p>
-    <p>Tu orden ha sido recibida. Te notificaremos por correo electrónico una vez que tu transferencia haya sido confirmada.</p>
-    <div class="actions">
+    <div *ngIf="paymentStatus === 'transfer_pending'" class="status-content pending">
+      <div class="icon-container pending-icon">⏳</div>
+      <h2 class="title">Transferencia Pendiente</h2>
+      <p class="description">{{ message }}</p> <p class="description small">Te notificaremos cuando se confirme.</p>
       <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio</button>
     </div>
-  </div>
 
-  <div *ngIf="paymentStatus === 'error'" class="status-message error-page">
-    <span class="icon error-icon">⚠️</span>
-    <h2>Error en el Proceso de Pago</h2>
-    <p>{{ message }}</p>
-    <p>Por favor, contacta a soporte si el problema persiste.</p>
-    <div class="actions">
-      <button (click)="goToHome()" class="btn btn-info">Ir al Inicio</button>
+    <div *ngIf="paymentStatus === 'error'" class="status-content error">
+      <div class="icon-container error-icon">⚠️</div>
+      <h2 class="title">Error en el Proceso</h2>
+      <p class="description">{{ message }}</p>
+      <p class="description small">Contacta a soporte si persiste.</p>
+      <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio</button>
     </div>
-  </div>
 
-  <div *ngIf="paymentStatus === 'unknown' && !isTransferPendingInitially" class="status-message info-message">
-    <span class="icon info-icon">ℹ️</span>
-    <h2>Estado del Pago</h2>
-    <p>{{ message }}</p>
-    <div class="actions">
-      <button (click)="goToHome()" class="btn btn-info">Ir al Inicio</button>
+    <div *ngIf="paymentStatus === 'unknown' && !isTransferPendingInitially" class="status-content unknown">
+      <div class="icon-container unknown-icon">?</div>
+      <h2 class="title">Estado Desconocido</h2>
+      <p class="description">{{ message }}</p>
+      <button (click)="goToHome()" class="btn btn-primary">Ir al Inicio</button>
     </div>
+
   </div>
 </div>

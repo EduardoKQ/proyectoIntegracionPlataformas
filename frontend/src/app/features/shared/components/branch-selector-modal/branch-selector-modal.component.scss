@@ -16,6 +16,9 @@ $color-borde-suave: #e0e0e0;
 $color-borde-input: #ced4da;
 $color-fondo-tarjeta: #fff;
 
+:host {
+  font-family: 'Roboto', sans-serif;
+}
 
 .modal-backdrop {
   position: fixed;

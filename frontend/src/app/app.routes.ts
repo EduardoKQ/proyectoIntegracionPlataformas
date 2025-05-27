@@ -28,13 +28,17 @@ import { OrdenesPagoComponent } from './pages/contador/ordenes-pago/ordenes-pago
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [rolesGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [rolesGuard] },
-  { path: 'catalogo', component: CatalogoComponent, data: { showStoreHeader: true } },
-  { path: 'home', component: HomeComponent, data: { showStoreHeader: true } },
-  { path: 'producto/:codigo_producto', component: ProductDetailComponent, data: { showStoreHeader: true } },
+  { path: 'catalogo', component: CatalogoComponent, data: { showStoreHeader: true, showSidebar: false, showFooter: true } },
+  { path: 'home', component: HomeComponent, data: { showStoreHeader: true, showSidebar: false, showFooter: true } },
+  {
+    path: 'producto/:codigo_producto',
+    component: ProductDetailComponent,
+    data: { showStoreHeader: true, showSidebar: false, showFooter: true }
+  },
   { path: 'story/:id', component: StoryViewComponent },
-  { path: 'cart', component: CartComponent, data: { showStoreHeader: true } },
-  { path: 'payment-method', component: PaymentMethodComponent, data: { showStoreHeader: true } },
-  { path: 'payment-result', component: PaymentResultComponent, data: { showStoreHeader: true } },
+  { path: 'cart', component: CartComponent, data: { showStoreHeader: true, showSidebar: false} },
+  { path: 'payment-method', component: PaymentMethodComponent, data: { showStoreHeader: true, showSidebar: false } },
+  { path: 'payment-result', component: PaymentResultComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
   //1 Administrador

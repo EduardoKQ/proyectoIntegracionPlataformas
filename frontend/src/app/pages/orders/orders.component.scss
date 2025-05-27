@@ -1,11 +1,230 @@
-.text-align-container {
-  text-align: center;
-  width: 100%;
-  padding: 20px 0;
+@use 'sass:color';
+
+$primary-color: #007bff;
+$danger-color: #dc3545;
+$card-background: #fff;
+$card-border-color: #e0e0e0;
+$text-color: #333;
+$text-muted: #6c757d;
+$button-color: #F57C00;
+$button-hover-color: color.adjust($button-color, $lightness: -10%);
+$underline-color: #F57C00;
+$badge-yellow: #ffc107;
+$badge-yellow-text: #333;
+
+:host {
   font-family: 'Roboto', sans-serif;
 }
 
-.text-align-container img {
-  width: 450px;
-  height: auto;
+.orders-list-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+
+  .title-container {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  h1 {
+    display: inline-block;
+    position: relative;
+    font-size: 1.8rem;
+    color: $text-color;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 70px;
+      height: 4px;
+      background-color: $underline-color;
+      border-radius: 2px;
+    }
+  }
+
+  .loading-indicator,
+  .no-orders-message,
+  .alert {
+    margin-top: 2rem;
+    text-align: center;
+  }
+
+  .order-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .order-card {
+    background-color: $card-background;
+    border: 1px solid $card-border-color;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out;
+
+    &:hover {
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header,
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header {
+      .order-id {
+        font-weight: bold;
+        font-size: 1rem;
+        color: $text-color;
+      }
+
+      .order-date {
+        font-size: 0.85rem;
+        color: $text-muted;
+      }
+    }
+
+    .card-body {
+      padding: 0.75rem 0;
+      color: $text-color;
+
+      p {
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+
+        strong {
+          color: $text-muted;
+          margin-right: 5px;
+        }
+      }
+
+      .status-badge {
+          padding: 0.3em 0.7em;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: bold;
+          text-transform: capitalize;
+          background-color: $badge-yellow;
+          color: $badge-yellow-text;
+      }
+
+      .status-selector-row {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+
+        strong {
+          color: $text-muted;
+          margin-right: 10px;
+          flex-shrink: 0;
+        }
+
+        .status-select {
+          flex-grow: 1;
+          padding: 6px 10px;
+          border: 1px solid $card-border-color;
+          border-radius: 4px;
+          background-color: #fff;
+          font-size: 0.9rem;
+          cursor: pointer;
+
+          &:focus {
+            outline: none;
+            border-color: $button-color;
+            box-shadow: 0 0 0 2px rgba($button-color, 0.2);
+          }
+        }
+      }
+
+      .order-error-message {
+          color: $danger-color;
+          font-size: 0.8em;
+          margin-top: 8px;
+          font-weight: bold;
+      }
+    }
+
+    .card-footer {
+      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+      border-top: 1px solid $card-border-color;
+
+      .order-price {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: $text-color;
+      }
+
+      .btn-modify {
+        background-color: $button-color;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s ease-in-out;
+
+        svg {
+            margin-right: 6px;
+        }
+
+        .spinner-border-sm {
+            margin-right: 6px;
+            width: 1em;
+            height: 1em;
+        }
+
+        &:hover {
+          background-color: $button-hover-color;
+        }
+
+        &:disabled {
+            background-color: $text-muted;
+            border-color: $text-muted;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+    .orders-list-container {
+        padding: 0 1rem;
+    }
+    .order-card {
+        padding: 0.75rem;
+        .card-header, .card-footer {
+            flex-direction: column;
+            align-items: flex-start;
+
+            span { margin-bottom: 5px; }
+
+            .order-date, .btn-modify {
+                margin-top: 5px;
+            }
+
+            .btn-modify {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        .card-footer {
+            align-items: center;
+        }
+    }
 }

@@ -13,6 +13,7 @@ import { CartService } from '../../services/cart.service';
 import { SelectedBranchService } from '../../services/selected-branch.service';
 import { Branch } from '../../services/branch.service';
 import { BranchSelectorModalComponent } from '../../features/shared/components/branch-selector-modal/branch-selector-modal.component';
+import { AuthService } from '../../services/auth.service';
 
 interface ProductLoadingResult {
   product: ApiProduct | null;
@@ -50,19 +51,16 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
   productsPerSlide = 4;
   private maxSimilarProductsToShow = 8;
   private featuredProductsIntervalId?: Subscription;
-
   @ViewChild('productsCarouselContainer') featuredWrapperRef!: ElementRef<HTMLDivElement>;
   @ViewChild('featuredProductsInnerContainer') featuredInnerContainerRef!: ElementRef<HTMLDivElement>;
-
   private windowResizeSubscription?: Subscription;
-
   public currentSelectedCurrency: SupportedCurrency = 'CLP';
   private currencySubscription!: Subscription;
   private currencyService = inject(CurrencyService);
-
   private cartService = inject(CartService);
   private selectedBranchService = inject(SelectedBranchService);
   public currentSelectedBranchForCart: Branch | null = null;
+  private authService = inject(AuthService);
 
   showBranchModal: boolean = false;
   private pendingAddToCartOperation: { product: ApiProduct, quantity: number } | null = null;
@@ -258,6 +256,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     this.errorMessage = null;
     this.infoMessage = null;
 
+    if (!this.authService.isLoggedIn()) {
+      this.cartService.openLoginModal();
+      return;
+    }
+
     if (!this.product) {
         this.errorMessage = 'Error: No hay producto seleccionado.';
         return;
@@ -266,7 +269,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     if (!this.currentSelectedBranchForCart) {
         this.pendingAddToCartOperation = { product: this.product, quantity: this.selectedQuantity };
         this.showBranchModal = true;
-        this.infoMessage = 'Por favor, selecciona una sucursal para agregar este producto al carrito.';
         return;
     }
     this.executeAddToCart();
@@ -314,13 +316,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
         this.currentSelectedBranchForCart.name
     );
 
-    this.infoMessage = `${this.product.nombre} (x${this.selectedQuantity}) añadido al carrito para la sucursal ${this.currentSelectedBranchForCart.name}.`;
-    this.pendingAddToCartOperation = null;
+    if (this.authService.isLoggedIn()) {
+        this.infoMessage = `${this.product.nombre} (x${this.selectedQuantity}) añadido al carrito para la sucursal ${this.currentSelectedBranchForCart.name}.`;
+        this.pendingAddToCartOperation = null;
 
-    setTimeout(() => {
-        this.infoMessage = null;
-        this.cdr.detectChanges();
-    }, 3000);
+        setTimeout(() => {
+            this.infoMessage = null;
+            this.cdr.detectChanges();
+        }, 3000);
+    }
   }
 
   public handleBranchSelectedFromModal(selectedBranch: Branch): void {
@@ -330,7 +334,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
     Promise.resolve().then(() => {
         if (this.pendingAddToCartOperation && this.product && this.currentSelectedBranchForCart) {
             if (this.product.codigo_producto === this.pendingAddToCartOperation.product.codigo_producto) {
-                this.executeAddToCart();
+                if (this.authService.isLoggedIn()) {
+                     this.executeAddToCart();
+                } else {
+                    this.cartService.openLoginModal();
+                    this.pendingAddToCartOperation = null;
+                }
             } else {
                 this.pendingAddToCartOperation = null;
                 this.infoMessage = "El producto ha cambiado. Por favor, intenta agregar al carrito de nuevo.";
@@ -346,10 +355,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy, AfterViewInit 
 
   public handleModalClosed(): void {
     this.showBranchModal = false;
-    if (this.pendingAddToCartOperation && !this.currentSelectedBranchForCart) {
+    if (this.pendingAddToCartOperation && !this.currentSelectedBranchForCart && this.authService.isLoggedIn()) {
         this.infoMessage = 'Debes seleccionar una sucursal para poder agregar productos al carrito.';
     }
-    this.pendingAddToCartOperation = null;
+    if (!this.showBranchModal && this.pendingAddToCartOperation && this.authService.isLoggedIn()) {
+        this.pendingAddToCartOperation = null;
+    }
     this.cdr.detectChanges();
   }
 

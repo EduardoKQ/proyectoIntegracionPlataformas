@@ -55,6 +55,9 @@ export class CartService implements OnDestroy {
   private shippingCostSubject = new BehaviorSubject<number | null>(null);
   public shippingCost$: Observable<number | null> = this.shippingCostSubject.asObservable();
 
+  private showLoginModalSubject = new BehaviorSubject<boolean>(false);
+  public showLoginModal$: Observable<boolean> = this.showLoginModalSubject.asObservable();
+
   private currentBranch: Branch | null = null;
   private branchSubscription!: Subscription;
 
@@ -72,6 +75,14 @@ export class CartService implements OnDestroy {
         }
       }
     });
+  }
+
+  public openLoginModal(): void {
+    this.showLoginModalSubject.next(true);
+  }
+
+  public closeLoginModal(): void {
+    this.showLoginModalSubject.next(false);
   }
 
   private loadCartFromLocalStorage(): void {
@@ -146,16 +157,23 @@ export class CartService implements OnDestroy {
   }
 
   addToCart(product: ProductForCart, quantity: number, branchCodeFromComponent: string, branchNameFromComponent: string): void {
+    console.log("addToCart: Verificando login. ¿Está logueado?", this.authService.isLoggedIn());
+
     if (!this.authService.isLoggedIn()) {
-      alert('Debes iniciar sesión para agregar productos al carrito.');
-      this.router.navigate(['/login']);
+      console.log("addToCart: NO está logueado. Abriendo modal y saliendo.");
+      this.openLoginModal();
       return;
     }
 
+    console.log("addToCart: SÍ está logueado. Verificando sucursal.");
+
     if (!this.currentBranch && this.deliveryModeSubject.value === 'pickup') {
+      console.log("addToCart: Sucursal requerida. Mostrando alerta.");
       alert('Por favor, selecciona una sucursal primero para agregar productos al carrito para retiro.');
       return;
     }
+
+    console.log("addToCart: Todo OK. Añadiendo al carrito.");
 
     let activeBranchCode: string;
     let activeBranchName: string;
@@ -223,7 +241,7 @@ export class CartService implements OnDestroy {
 
   updateQuantity(productCode: string, branchCodeFromItem: string, newQuantity: number): void {
     if (!this.authService.isLoggedIn()) {
-        alert('Debes iniciar sesión para modificar tu carrito.');
+        this.openLoginModal();
         this.loadCartFromLocalStorage();
         return;
     }
@@ -251,7 +269,7 @@ export class CartService implements OnDestroy {
                     this.saveCartToLocalStorage();
                 },
                 error: () => {
-                     alert('Error al verificar stock al actualizar cantidad.');
+                    alert('Error al verificar stock al actualizar cantidad.');
                 }
             });
             return;
@@ -263,7 +281,7 @@ export class CartService implements OnDestroy {
 
   removeFromCart(productCode: string, branchCodeOfItem: string): void {
     if (!this.authService.isLoggedIn()) {
-        alert('Debes iniciar sesión para modificar tu carrito.');
+        this.openLoginModal();
         return;
     }
     const updatedCart = this.cartItemsSubject.value.filter(item =>

@@ -13,7 +13,7 @@ import { Branch } from '../../services/branch.service';
 import { SelectedBranchService } from '../../services/selected-branch.service';
 import { InventoryService, InventoryItem } from '../../services/inventory.service';
 import { BranchSelectorModalComponent } from '../../features/shared/components/branch-selector-modal/branch-selector-modal.component';
-
+import { AuthService } from '../../services/auth.service';
 interface BrandFilter {
   name: string;
   selected: boolean;
@@ -43,6 +43,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   private cartService = inject(CartService);
   private selectedBranchService = inject(SelectedBranchService);
   private inventoryService = inject(InventoryService);
+  private authService = inject(AuthService);
 
   private destroy$ = new Subject<void>();
   public currentSelectedCurrency: SupportedCurrency = 'CLP';
@@ -409,11 +410,11 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         const currSelectedBrands = curr.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name).sort().join(',');
         const prevSelectedCatSubs = prev.categories.map((cat: any) => {
           const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).sort().join(',');
-          return `${cat.id}:${cat.selected ? 'T' : 'F'}:${selectedSubs}`;
+          return `<span class="math-inline">\{cat\.id\}\:</span>{cat.selected ? 'T' : 'F'}:${selectedSubs}`;
         }).sort().join(';');
         const currSelectedCatSubs = curr.categories.map((cat: any) => {
           const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).sort().join(',');
-          return `${cat.id}:${cat.selected ? 'T' : 'F'}:${selectedSubs}`;
+          return `<span class="math-inline">\{cat\.id\}\:</span>{cat.selected ? 'T' : 'F'}:${selectedSubs}`;
         }).sort().join(';');
         return prevSelectedBrands === currSelectedBrands && prevSelectedCatSubs === currSelectedCatSubs && prev.sortOrder === curr.sortOrder;
       }),
@@ -783,7 +784,6 @@ export class CatalogoComponent implements OnInit, OnDestroy {
             item => { this.productStockMap.set(p.codigo_producto, item.quantity); },
             err => {
               this.productStockMap.set(p.codigo_producto, 0);
-              console.error(`Error obteniendo stock para ${p.codigo_producto} en ${branchCode}`, err);
             }
           );
       }
