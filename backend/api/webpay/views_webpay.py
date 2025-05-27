@@ -160,28 +160,7 @@ def retorno_pago_webpay(request):
             else:
                 print(f"[FAILURE] PAGO FALLIDO o RECHAZADO: Estado {webpay_status}, Código Resp {response_code}")
                 # eliminar la orden de compra de laa sesion
-                order = Order.objects.get(order_id=buy_order_from_webpay)
-                order_branch_code = order.pickup_branch.branch_code
-                # update inventory and then delete the order
-                order_items = OrderItem.objects.filter(order=order)
-                if order_items:
-                    for item in order_items:
-                        item_quantity = item.quantity
-                        item_product_code = item.product_code
-                        # update inventory
-                        inventory_item = Inventory.objects.filter(
-                            branch__branch_code=order_branch_code,
-                            product__product_code=item_product_code
-                        ).first()
-                        if inventory_item:
-                            print(f"[INFO] Actualizando inventario: Producto {item_product_code}, Cantidad {item_quantity} en sucursal {order_branch_code}.")
-                            inventory_item.quantity += item_quantity
-                            inventory_item.save()
-                    order_items.delete()
-                order.delete()
-
-
-
+                delete_update_order(buy_order_from_webpay)
                 redirect_url_base = settings.FRONTEND_URL_FAILURE
                 status_param_for_frontend = "failure"
         
@@ -194,6 +173,7 @@ def retorno_pago_webpay(request):
                 "orden_compra": buy_order_from_webpay,
                 "motivo": "abortado_por_usuario_en_webpay"
             }
+            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
 
         elif tbk_orden_compra_post_abandono: # Flujo de abandono (POST sin token_ws pero con TBK_ORDEN_COMPRA)
             print(f"[INFO] PAGO ABANDONADO (POST sin token_ws, con TBK_ORDEN_COMPRA): {tbk_orden_compra_post_abandono}")
@@ -204,11 +184,13 @@ def retorno_pago_webpay(request):
                 "orden_compra": buy_order_from_webpay,
                 "motivo": "flujo_abandonado_o_interrumpido"
             }
+            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
             
         else: # No se encontró ningún token o identificador esperado.
             print(f"[ERROR] RESPUESTA DESCONOCIDA o INCOMPLETA de Webpay: GET={request.GET}, POST={request.POST}")
             redirect_url_base = settings.FRONTEND_URL_ERROR
             status_param_for_frontend = "unknown_response"
+            delete_update_order(buy_order_from_webpay) # Eliminar la orden de compra de la sesión
             query_params_dict = {"motivo": "respuesta_inesperada_o_incompleta_de_webpay"}
 
     except Exception as e:
@@ -232,3 +214,24 @@ def retorno_pago_webpay(request):
     final_redirect_url = f"{redirect_url_base}{query_params_string}"
     print(f"[DJANGO_REDIRECT] Redirigiendo a: {final_redirect_url}")
     return redirect(final_redirect_url)
+
+def delete_update_order(buy_order_from_webpay):
+    order = Order.objects.get(order_id=buy_order_from_webpay)
+    order_branch_code = order.pickup_branch.branch_code
+                # update inventory and then delete the order
+    order_items = OrderItem.objects.filter(order=order)
+    if order_items:
+        for item in order_items:
+            item_quantity = item.quantity
+            item_product_code = item.product_code
+                        # update inventory
+            inventory_item = Inventory.objects.filter(
+                            branch__branch_code=order_branch_code,
+                            product__product_code=item_product_code
+                        ).first()
+            if inventory_item:
+                print(f"[INFO] Actualizando inventario: Producto {item_product_code}, Cantidad {item_quantity} en sucursal {order_branch_code}.")
+                inventory_item.quantity += item_quantity
+                inventory_item.save()
+        order_items.delete()
+    order.delete()
