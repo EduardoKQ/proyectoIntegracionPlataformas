@@ -36,8 +36,8 @@ export const routes: Routes = [
     data: { showStoreHeader: true, showSidebar: false, showFooter: true }
   },
   { path: 'story/:id', component: StoryViewComponent },
-  { path: 'cart', component: CartComponent, data: { showStoreHeader: true, showSidebar: false, showFooter: true } },
-  { path: 'payment-method', component: PaymentMethodComponent, data: { showStoreHeader: true, showSidebar: false, showFooter: true } },
+  { path: 'cart', component: CartComponent, data: { showStoreHeader: true, showSidebar: false} },
+  { path: 'payment-method', component: PaymentMethodComponent, data: { showStoreHeader: true, showSidebar: false } },
   { path: 'payment-result', component: PaymentResultComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
 
