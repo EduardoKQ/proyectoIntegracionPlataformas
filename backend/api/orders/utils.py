@@ -176,8 +176,25 @@ def orders_delete_by_id(order_code):
     """
     try:
         order = Order.objects.get(order_id=order_code)
-        order.delete()
-        return JsonResponse({"message": "Orden eliminada con éxito"}, status=204)
+        order_branch_code = order.pickup_branch.branch_code
+                    # update inventory and then delete the order
+        order_items = OrderItem.objects.filter(order=order)
+        if order_items:
+            for item in order_items:
+                item_quantity = item.quantity
+                item_product_code = item.product.product_code
+                            # update inventory
+                inventory_item = Inventory.objects.filter(
+                                branch__branch_code=order_branch_code,
+                                product__product_code=item_product_code
+                            ).first()
+                if inventory_item:
+                    print(f"[INFO] Actualizando inventario: Producto {item_product_code}, Cantidad {item_quantity} en sucursal {order_branch_code}.")
+                    inventory_item.quantity += item_quantity
+                    inventory_item.save()
+            order_items.delete()
+            order.delete()
+        return JsonResponse({"message": "Orden eliminada con éxito e inventario actualizado"}, status=204)
     except Order.DoesNotExist:
         return JsonResponse({"error": f"No se encontro la orden con id {order_code}"}, status=404)
     except Exception as e:
