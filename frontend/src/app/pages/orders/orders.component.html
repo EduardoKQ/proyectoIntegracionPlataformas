@@ -34,6 +34,10 @@
           <strong>Dirección Envío:</strong> {{ order.shipping_address }}
         </p>
 
+        <p *ngIf="order.shipping_address">
+          <strong>Pago Envío:</strong> {{ order.shipping_cost | currency:'CLP':'$':'1.0-0' }}
+        </p>
+
         <div class="product-details" *ngIf="order.order_items && order.order_items.length > 0">
           <strong>Productos:</strong>
           <ul class="product-list">
