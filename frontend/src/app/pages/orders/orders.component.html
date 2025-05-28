@@ -33,6 +33,19 @@
         <p *ngIf="order.shipping_address">
           <strong>Dirección Envío:</strong> {{ order.shipping_address }}
         </p>
+
+        <div class="product-details" *ngIf="order.order_items && order.order_items.length > 0">
+          <strong>Productos:</strong>
+          <ul class="product-list">
+            <li *ngFor="let item of order.order_items" class="product-item">
+              <span class="product-name">{{ item.product_name }}</span>
+              <span class="product-info">
+                ({{ item.quantity }} x {{ item.transaction_price | currency:'CLP':'$':'1.0-0' }})
+              </span>
+            </li>
+          </ul>
+        </div>
+
         <div class="status-selector-row">
             <strong>Estado:</strong>
             <select class="status-select" [(ngModel)]="order.selectedStatusName">
@@ -48,7 +61,7 @@
       </div>
 
       <div class="card-footer">
-        <span class="order-price">{{ order.total_amount | currency:'CLP':'$':'1.0-0' }}</span>
+        <span class="order-price">Total:  {{ order.total_amount | currency:'CLP':'$':'1.0-0' }}</span>
 
         <button
             (click)="updateOrderStatus(order)"

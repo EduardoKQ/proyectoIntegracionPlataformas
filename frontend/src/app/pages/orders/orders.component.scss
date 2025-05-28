@@ -107,6 +107,48 @@ $badge-yellow-text: #333;
         }
       }
 
+      .product-details {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+
+        strong {
+          display: block;
+          margin-bottom: 8px;
+          color: $text-muted;
+        }
+
+        .product-list {
+          list-style: none;
+          padding-left: 10px;
+          margin: 0;
+          border-left: 2px solid $card-border-color;
+        }
+
+        .product-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 5px 0;
+          border-bottom: 1px dashed $card-border-color;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .product-name {
+            flex-grow: 1;
+            margin-right: 10px;
+            color: $text-color;
+          }
+
+          .product-info {
+            flex-shrink: 0;
+            color: $text-muted;
+            font-size: 0.85rem;
+          }
+        }
+      }
+
       .status-badge {
           padding: 0.3em 0.7em;
           border-radius: 12px;

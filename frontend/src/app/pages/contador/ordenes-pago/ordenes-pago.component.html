@@ -1,1 +1,80 @@
-<p>ordenes-pago works!</p>
+<div class="orders-list-container">
+  <div class="title-container">
+    <h1>Gestión de Órdenes</h1>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-indicator">
+    <div class="spinner-border text-primary" role="status"></div>
+    <span>Cargando órdenes...</span>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="!isLoading && !error && orders.length === 0" class="no-orders-message">
+    No hay órdenes para mostrar.
+  </div>
+
+  <ul class="order-list" *ngIf="!isLoading && !error && orders.length > 0">
+    <li class="order-card" *ngFor="let order of orders">
+
+      <div class="card-header">
+        <span class="order-id">Orden {{ order.order_id }}</span>
+        <span class="order-date">{{ order.creation_date | date:'dd-MM-yyyy HH:mm' }}</span>
+      </div>
+
+      <div class="card-body">
+        <p><strong>Correo:</strong> {{ order.client_email }}</p>
+        <p><strong>Tipo entrega:</strong> {{ order.retrieval_type }}</p>
+
+        <p *ngIf="order.pickup_branch_name">
+          <strong>Sucursal:</strong> {{ order.pickup_branch_name }}
+        </p>
+
+        <p *ngIf="order.shipping_address">
+          <strong>Dirección Envío:</strong> {{ order.shipping_address }}
+        </p>
+
+        <div class="product-details" *ngIf="order.order_items && order.order_items.length > 0">
+          <strong>Productos:</strong>
+          <ul class="product-list">
+            <li *ngFor="let item of order.order_items" class="product-item">
+              <span class="product-name">{{ item.product_name }}</span>
+              <span class="product-info">
+                ({{ item.quantity }} x {{ item.transaction_price | currency:'CLP':'$':'1.0-0' }})
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="status-selector-row">
+            <strong>Estado:</strong>
+            <select class="status-select" [(ngModel)]="order.selectedStatusName">
+                <option *ngFor="let status of statuses" [value]="status['internal-name']">
+                    {{ status.value }}
+                </option>
+            </select>
+        </div>
+
+        <div *ngIf="order.updateError" class="order-error-message">
+            {{ order.updateError }}
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span class="order-price">Total:  {{ order.total_amount | currency:'CLP':'$':'1.0-0' }}</span>
+
+        <button
+            (click)="updateOrderStatus(order)"
+            class="btn-modify"
+            [disabled]="isStatusUnchanged(order) || order.isUpdating">
+            <svg *ngIf="!order.isUpdating" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+            </svg>
+            <span *ngIf="order.isUpdating" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            {{ order.isUpdating ? 'Guardando...' : 'Guardar Estado' }}
+        </button>
+      </div>
+
+    </li>
+  </ul>
+</div>
