@@ -126,7 +126,7 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
       next: (createdOrder: OrderResponse) => {
         console.log('Orden creada exitosamente en backend:', createdOrder);
         const buyOrderForPayment = createdOrder.order_id ? `${createdOrder.order_id}` : this.generateFrontendOrderNumber();
-
+        this.saveOrderToLocalStorage(buyOrderForPayment);
         if (this.selectedPaymentMethod === 'webpay') {
           this.proceedToWebpay(buyOrderForPayment, amountToPay);
         } else if (this.selectedPaymentMethod === 'transferencia') {
@@ -139,6 +139,9 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
         this.isProcessingPayment = false;
       }
     });
+  }
+  saveOrderToLocalStorage(buyOrderForPayment: string) {
+    localStorage.setItem('webpay_order_id_pending', buyOrderForPayment);
   }
 
   private handleTransferPayment(orderNumber: string, amountToPay: number, createdOrder: OrderResponse): void {

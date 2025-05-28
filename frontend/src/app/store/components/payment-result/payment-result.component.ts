@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../../services/cart.service';
+import { OrderService } from '../../../services/order.service';
 import { first } from 'rxjs/operators';
 
 @Component({
@@ -32,7 +33,8 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    private orderServive: OrderService
   ) {}
 
   ngOnInit(): void {
@@ -84,7 +86,7 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
   }
 
   processPaymentResult(): void {
-    this.route.queryParamMap.pipe(first()).subscribe(params => {
+    this.route.queryParamMap.pipe(first()).subscribe(async params => {
         const statusParam = params.get('status');
         this.buyOrder = params.get('orden_compra');
         this.amount = params.get('monto');
@@ -118,6 +120,12 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
               if (motivo) failureReason += ` Motivo: ${motivo}.`;
               this.message = failureReason;
               if (this.buyOrder) this.message += ` Orden: ${this.buyOrder}.`;
+              try {
+                await this.orderServive.clearOrder();
+              }
+              catch (error) {
+                console.error('Error al limpiar el carrito:', error);
+              }
               break;
             case 'error':
             case 'exception':

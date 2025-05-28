@@ -71,4 +71,22 @@ export class OrderService {
     const body = { order_status: statusName };
     return this.http.put<{ message: string }>(`${this.orderApiUrl}/${orderId}`, body);
   }
+
+  async clearOrder(): Promise<boolean> {
+    try{
+      let orderId = localStorage.getItem('webpay_order_id_pending');
+      if (!orderId) {
+        console.warn('No order ID found in local storage.');
+        return false;
+      }
+      await this.http.delete<{ message: string }>(`${this.orderApiUrl}/${orderId}`);
+      localStorage.removeItem('webpay_order_id_pending');
+      console.log('Order cleared successfully.');
+      return true;
+    } 
+    catch {
+      return false;
+    }   
+
+  }
 }
