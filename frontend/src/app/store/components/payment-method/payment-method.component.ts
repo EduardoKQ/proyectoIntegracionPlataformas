@@ -142,6 +142,7 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
   }
   saveOrderToLocalStorage(buyOrderForPayment: string) {
     localStorage.setItem('webpay_order_id_pending', buyOrderForPayment);
+    console.log('Orden guardada en localStorage con ID:', buyOrderForPayment);
   }
 
   private handleTransferPayment(orderNumber: string, amountToPay: number, createdOrder: OrderResponse): void {
