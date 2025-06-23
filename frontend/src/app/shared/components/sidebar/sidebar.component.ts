@@ -15,7 +15,7 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  isCollapsed: boolean = false;
+  isCollapsed: boolean = true;
   isSmallScreen: boolean = false;
   private screenWidthBreakpoint: number = 768;
 
@@ -26,7 +26,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.checkScreenSize(window.innerWidth);
