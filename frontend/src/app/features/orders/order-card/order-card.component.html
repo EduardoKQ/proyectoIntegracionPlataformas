@@ -1,0 +1,64 @@
+<div class="card-header">
+    <span class="order-id">Orden {{ order.order_id }}</span>
+    <span class="order-date">{{ order.creation_date | date:'dd-MM-yyyy HH:mm' }}</span>
+</div>
+
+<div class="card-body">
+    <p><strong>Correo:</strong> {{ order.client_email }}</p>
+    <p><strong>Tipo entrega:</strong> {{ order.retrieval_type }}</p>
+
+    <p *ngIf="order.pickup_branch_name">
+        <strong>Sucursal:</strong> {{ order.pickup_branch_name }}
+    </p>
+
+    <p *ngIf="order.shipping_address">
+        <strong>Dirección Envío:</strong> {{ order.shipping_address }}
+    </p>
+
+    <div class="product-details" *ngIf="order.order_items && order.order_items.length > 0">
+        <strong>Productos:</strong>
+        <ul class="product-list">
+            <li *ngFor="let item of order.order_items" class="product-item">
+                <span class="product-name">{{ item.product_name }}</span>
+                <span class="product-info">
+                    ({{ item.quantity }} x {{ item.transaction_price | currency:'CLP':'$':'1.0-0' }})
+                </span>
+            </li>
+        </ul>
+    </div>
+
+
+
+    <div class="status-selector-row">
+        <strong>Estado: {{ order.order_status }}</strong>
+    </div>
+    <p>Costo de envio: {{order.shipping_cost | currency:'CLP':'$':'1.0-0'}}</p>
+</div>
+
+<div class="card-footer">
+    <span class="order-price">Total: {{ order.total_amount | currency:'CLP':'$':'1.0-0' }}</span>
+
+    <div class="action-buttons">
+        <ng-container *ngIf="showContinueButton">
+            <button class="btn-modify" (click)="continueButtonClicked()" [disabled]="isUpdating">
+                <span *ngIf="isUpdating" class="spinner-border spinner-border-sm" role="status"
+                    aria-hidden="true"></span>
+                Continuar
+            </button>
+        </ng-container>
+        <ng-container *ngIf="showCancelButton">
+            <button class="btn-modify" (click)="cancelButtonClicked()" [disabled]="isUpdating">
+                Cancelar
+            </button>
+        </ng-container>
+        <ng-container *ngIf="showConfirmDeliveryButton">
+            <button class="btn-modify" (click)="confirmDeliveryButtonClicked()" [disabled]="isUpdating">
+                Confirmar entrega
+            </button>
+        </ng-container>
+    </div>
+</div>
+<!-- Display error message if update fails -->
+<div *ngIf="updateError" class="card-error-alert">
+    {{ updateError }}
+</div>

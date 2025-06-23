@@ -36,7 +36,7 @@
             "retrieval_type": "envio a domicilio",
             "shipping_address": "Av. Siempre Viva 742, Santiago",
             "shipping_cost": "5000.00",
-            "pickup_branch": null,
+            "pickup_branch": 1,
             "order_status": "transferencia por confirmar",
             "creation_date": "2025-06-23T11:30:00Z",
             "delivery_date": null
@@ -64,7 +64,7 @@
             "retrieval_type": "retiro en tienda",
             "shipping_address": null,
             "shipping_cost": "0.00",
-            "pickup_branch": 2,
+            "pickup_branch": 1,
             "order_status": "esperando confirmacion en tienda",
             "creation_date": "2025-06-22T09:15:00Z",
             "delivery_date": null
@@ -148,7 +148,7 @@
             "retrieval_type": "retiro en tienda",
             "shipping_address": null,
             "shipping_cost": "0.00",
-            "pickup_branch": 2,
+            "pickup_branch": 1,
             "order_status": "preparando pedido en tienda",
             "creation_date": "2025-06-21T18:00:00Z",
             "delivery_date": null
@@ -176,7 +176,7 @@
             "retrieval_type": "envio a domicilio",
             "shipping_address": "Calle Falsa 123, Viña del Mar",
             "shipping_cost": "7500.00",
-            "pickup_branch": null,
+            "pickup_branch": 1,
             "order_status": "pedido enviado a domicilio",
             "creation_date": "2025-06-20T12:00:00Z",
             "delivery_date": "2025-06-21T18:30:00Z"
@@ -232,7 +232,7 @@
             "retrieval_type": "retiro en tienda",
             "shipping_address": null,
             "shipping_cost": "0.00",
-            "pickup_branch": 2,
+            "pickup_branch": 1,
             "order_status": "pedido entregado",
             "creation_date": "2025-06-19T11:05:00Z",
             "delivery_date": "2025-06-20T15:30:00Z"
@@ -260,7 +260,7 @@
             "retrieval_type": "envio a domicilio",
             "shipping_address": "Calle Perdida 404, Santiago",
             "shipping_cost": "3500.00",
-            "pickup_branch": null,
+            "pickup_branch": 1,
             "order_status": "pedido cancelado",
             "creation_date": "2025-06-18T18:10:00Z",
             "delivery_date": null

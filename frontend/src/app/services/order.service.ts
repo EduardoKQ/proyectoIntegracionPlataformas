@@ -73,7 +73,7 @@ export class OrderService {
   }
 
   async clearOrder(): Promise<boolean> {
-    try{
+    try {
       let orderId = localStorage.getItem('webpay_order_id_pending');
       if (!orderId) {
         console.warn('No order ID found in local storage.');
@@ -83,10 +83,50 @@ export class OrderService {
       localStorage.removeItem('webpay_order_id_pending');
       console.log('Order cleared successfully.');
       return true;
-    } 
+    }
     catch {
       return false;
-    }   
+    }
 
+  }
+
+  async nextStatus(orderId: string): Promise<{ status: boolean, message: string }> {
+    try {
+      const result = await this.http.put<{ message: string }>(`${this.orderApiUrl}/${orderId}/next`, {}).toPromise();
+      if (!result) {
+        return { status: false, message: 'No response received from server.' };
+      }
+      return { status: true, message: result.message };
+    } catch (error: any) {
+      let message = 'An error occurred while updating order status.';
+      if (error?.error?.message) {
+        message = error.error.message;
+      } else if (error?.status && error?.statusText) {
+        message = `HTTP ${error.status}: ${error.statusText}`;
+      } else if (error?.message) {
+        message = error.message;
+      }
+      return { status: false, message };
+    }
+  }
+
+  async cancelOrder(orderId: string): Promise<{ status: boolean, message: string }> {
+    try {
+      const result = await this.http.put<{ message: string }>(`${this.orderApiUrl}/${orderId}/cancel`, {}).toPromise();
+      if (!result) {
+        return { status: false, message: 'No response received from server.' };
+      }
+      return { status: true, message: result.message };
+    } catch (error: any) {
+      let message = 'An error occurred while updating order status.';
+      if (error?.error?.message) {
+        message = error.error.message;
+      } else if (error?.status && error?.statusText) {
+        message = `HTTP ${error.status}: ${error.statusText}`;
+      } else if (error?.message) {
+        message = error.message;
+      }
+      return { status: false, message };
+    }
   }
 }

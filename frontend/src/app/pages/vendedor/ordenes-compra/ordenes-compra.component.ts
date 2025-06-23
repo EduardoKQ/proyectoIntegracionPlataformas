@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { OrderService, OrderResponse, OrderStatus } from '../../../services/order.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { OrderCardComponent } from '../../../features/orders/order-card/order-card.component';
 
 export interface OrderWithState extends OrderResponse {
   selectedStatusName: string;
@@ -12,7 +13,7 @@ export interface OrderWithState extends OrderResponse {
 @Component({
   selector: 'app-ordenes-compra',
   standalone: true,
-  imports: [ CommonModule, FormsModule ],
+  imports: [CommonModule, FormsModule, OrderCardComponent],
   templateUrl: './ordenes-compra.component.html',
   styleUrl: './ordenes-compra.component.scss'
 })
@@ -35,15 +36,15 @@ export class OrdenesCompraComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     this.orderService.getOrderStatuses().subscribe({
-        next: (statusData) => {
-            this.statuses = statusData;
-            this.loadOrders();
-        },
-        error: (err) => {
-            console.error('Error fetching statuses:', err);
-            this.error = 'Disponible en proximas versiones. Sea paciente 🙏.';
-            this.isLoading = false;
-        }
+      next: (statusData) => {
+        this.statuses = statusData;
+        this.loadOrders();
+      },
+      error: (err) => {
+        console.error('Error fetching statuses:', err);
+        this.error = 'error estados.';
+        this.isLoading = false;
+      }
     });
   }
 
@@ -69,32 +70,32 @@ export class OrdenesCompraComponent implements OnInit {
 
   updateOrderStatus(orderToUpdate: OrderWithState): void {
     if (!orderToUpdate || !orderToUpdate.selectedStatusName) {
-        console.warn("No hay estado seleccionado para actualizar.");
-        return;
+      console.warn("No hay estado seleccionado para actualizar.");
+      return;
     }
 
     orderToUpdate.isUpdating = true;
     orderToUpdate.updateError = null;
 
     this.orderService.updateOrderStatus(orderToUpdate.order_id, orderToUpdate.selectedStatusName).subscribe({
-        next: (response) => {
-            console.log(`Orden ${orderToUpdate.order_id} actualizada:`, response.message);
-            const updatedStatus = this.statuses.find(s => s['internal-name'] === orderToUpdate.selectedStatusName);
-            if (updatedStatus) {
-                orderToUpdate.order_status = updatedStatus.value;
-            }
-            orderToUpdate.isUpdating = false;
-        },
-        error: (err) => {
-            console.error(`Error updating order ${orderToUpdate.order_id}:`, err);
-            orderToUpdate.updateError = err.error?.error || 'Error al actualizar.';
-            orderToUpdate.isUpdating = false;
+      next: (response) => {
+        console.log(`Orden ${orderToUpdate.order_id} actualizada:`, response.message);
+        const updatedStatus = this.statuses.find(s => s['internal-name'] === orderToUpdate.selectedStatusName);
+        if (updatedStatus) {
+          orderToUpdate.order_status = updatedStatus.value;
         }
+        orderToUpdate.isUpdating = false;
+      },
+      error: (err) => {
+        console.error(`Error updating order ${orderToUpdate.order_id}:`, err);
+        orderToUpdate.updateError = err.error?.error || 'Error al actualizar.';
+        orderToUpdate.isUpdating = false;
+      }
     });
   }
 
   isStatusUnchanged(order: OrderWithState): boolean {
-      const currentStatus = this.statuses.find(s => s.value === order.order_status);
-      return currentStatus ? order.selectedStatusName === currentStatus['internal-name'] : true;
+    const currentStatus = this.statuses.find(s => s.value === order.order_status);
+    return currentStatus ? order.selectedStatusName === currentStatus['internal-name'] : true;
   }
 }
