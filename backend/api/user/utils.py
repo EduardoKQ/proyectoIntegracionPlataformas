@@ -1,6 +1,7 @@
 from api.models import Worker
 from django.shortcuts import get_object_or_404
 
+
 # get worker branch
 def get_worker_branch(user):
     """

@@ -83,7 +83,7 @@ def parse_orders_for(user_webuser: WebUser) -> QuerySet[Order]:
         )
 
     user_branch_code = get_worker_branch(user_webuser)
-    print(user_branch_code)
+    print(user_webuser.role.role, user_branch_code)
 
     if not user_branch_code:
         # Worker not assigned to a branch, or role doesn't use branches (e.g., contador)
@@ -104,16 +104,25 @@ def parse_orders_for(user_webuser: WebUser) -> QuerySet[Order]:
         )
 
     # General case: worker sees orders in their branch that are in an actionable state.
-    orders_queryset = (
-        Order.objects.filter(
-            Q(
-                pickup_branch=branch_instance
-            ),  # If VENDEDOR also handles deliveries not tied to their branch
-            order_status__in=actionable_statuses,
+    if user_role_str == WebRoleNames.CONTADOR:
+        # Contador can see orders from all branches in their actionable statuses
+        orders_queryset = (
+            Order.objects.filter(
+                order_status__in=actionable_statuses,
+            )
+            .distinct()
+            .order_by("-creation_date")
         )
-        .distinct()
-        .order_by("-creation_date")
-    )
+    else:
+        # General case: worker sees orders in their branch that are in an actionable state.
+        orders_queryset = (
+            Order.objects.filter(
+                Q(pickup_branch=branch_instance),
+                order_status__in=actionable_statuses,
+            )
+            .distinct()
+            .order_by("-creation_date")
+        )
 
     return orders_queryset
 
