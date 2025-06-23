@@ -12,6 +12,7 @@ from .utils import (
     orders_get_by_id,
     orders_delete_by_id,
     orders_update_status_by_id,
+    u_orders_next_status,
 )
 
 
@@ -94,3 +95,33 @@ def order_get_statuses(request):
             if status.name != "ALL"
         ]
         return JsonResponse(order_statuses_json, safe=False, status=200)
+
+
+@api_view(["POST"])
+def orders_next_status(request, order_code):
+    """
+    Process POST request to move the order to the next status.
+    """
+    print(f"orders_next_status called with order_code: {order_code}")
+    if request.method == "POST":
+        return u_orders_next_status(request, order_code)
+
+
+@api_view(["POST"])
+def orders_cancel(request, order_code):
+    """
+    Process POST request to cancel an order.
+    """
+    print(f"orders_cancel called with order_code: {order_code}")
+    if request.method == "POST":
+        allowed_roles = [
+            WebRoleNames.ADMIN_TIENDA,
+            WebRoleNames.VENDEDOR,
+            WebRoleNames.BODEGUERO,
+            WebRoleNames.CONTADOR,
+        ]
+        auth_response = check_auth_allowed_role(request, allowed_roles)
+        if auth_response is not None:
+            return auth_response
+
+    return u_orders_next_status(request, order_code, cancel=True)

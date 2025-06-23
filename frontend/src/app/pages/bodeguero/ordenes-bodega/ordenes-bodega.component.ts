@@ -1,98 +1,71 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { OrderService, OrderResponse, OrderStatus } from '../../../services/order.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { OrderCardComponent } from '../../../features/orders/order-card/order-card.component';
 
-export interface OrderWithState extends OrderResponse {
-  selectedStatusName: string;
-  isUpdating?: boolean;
-  updateError?: string | null;
-}
 @Component({
   selector: 'app-ordenes-bodega',
   standalone: true,
-  imports: [ CommonModule, FormsModule ],
+  imports: [CommonModule, FormsModule, OrderCardComponent],
   templateUrl: './ordenes-bodega.component.html',
   styleUrl: './ordenes-bodega.component.scss'
 })
 export class OrdenesBodegaComponent implements OnInit {
-  orders: OrderWithState[] = [];
-    statuses: OrderStatus[] = [];
-    isLoading = true;
-    error: string | null = null;
+  orders: OrderResponse[] = [];
+  statuses: OrderStatus[] = [];
+  isLoading = true;
+  error: string | null = null;
 
-    constructor(
-      private orderService: OrderService,
-    ) { }
+  constructor(
+    private orderService: OrderService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
-    ngOnInit(): void {
-      this.loadStatusesAndOrders();
-    }
+  ngOnInit(): void {
+    this.loadStatusesAndOrders();
+  }
 
-    loadStatusesAndOrders(): void {
-      this.isLoading = true;
-      this.error = null;
-      this.orderService.getOrderStatuses().subscribe({
-          next: (statusData) => {
-              this.statuses = statusData;
-              this.loadOrders();
-          },
-          error: (err) => {
-              console.error('Error fetching statuses:', err);
-              this.error = 'No se pudieron cargar los estados de orden. No se puede continuar.';
-              this.isLoading = false;
-          }
-      });
-    }
-
-    loadOrders(): void {
-      this.orderService.getOrders().subscribe({
-        next: (data) => {
-          this.orders = data.map(order => {
-            const currentStatus = this.statuses.find(s => s.value === order.order_status);
-            return {
-              ...order,
-              selectedStatusName: currentStatus ? currentStatus['internal-name'] : ''
-            };
-          });
-          this.isLoading = false;
-        },
-        error: (err) => {
-          console.error('Error fetching orders:', err);
-          this.error = 'No se pudieron cargar las órdenes. Intente más tarde.';
-          this.isLoading = false;
-        }
-      });
-    }
-
-    updateOrderStatus(orderToUpdate: OrderWithState): void {
-      if (!orderToUpdate || !orderToUpdate.selectedStatusName) {
-          console.warn("No hay estado seleccionado para actualizar.");
-          return;
+  loadStatusesAndOrders(): void {
+    this.isLoading = true;
+    this.error = null;
+    this.orderService.getOrderStatuses().subscribe({
+      next: (statusData) => {
+        this.statuses = statusData;
+        this.loadOrders();
+      },
+      error: (err) => {
+        console.error('Error fetching statuses:', err);
+        this.error = 'No se pudieron cargar los estados de orden. No se puede continuar.';
+        this.isLoading = false;
+        this.cdr.markForCheck();
       }
+    });
+  }
 
-      orderToUpdate.isUpdating = true;
-      orderToUpdate.updateError = null;
+  loadOrders(): void {
+    this.isLoading = true;
+    this.orderService.getOrders().subscribe({
+      next: (data) => {
+        this.orders = data;
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error fetching orders:', err);
+        this.error = 'No se pudieron cargar las órdenes. Intente más tarde.';
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
-      this.orderService.updateOrderStatus(orderToUpdate.order_id, orderToUpdate.selectedStatusName).subscribe({
-          next: (response) => {
-              console.log(`Orden ${orderToUpdate.order_id} actualizada:`, response.message);
-              const updatedStatus = this.statuses.find(s => s['internal-name'] === orderToUpdate.selectedStatusName);
-              if (updatedStatus) {
-                  orderToUpdate.order_status = updatedStatus.value;
-              }
-              orderToUpdate.isUpdating = false;
-          },
-          error: (err) => {
-              console.error(`Error updating order ${orderToUpdate.order_id}:`, err);
-              orderToUpdate.updateError = err.error?.error || 'Error al actualizar.';
-              orderToUpdate.isUpdating = false;
-          }
-      });
-    }
-
-    isStatusUnchanged(order: OrderWithState): boolean {
-        const currentStatus = this.statuses.find(s => s.value === order.order_status);
-        return currentStatus ? order.selectedStatusName === currentStatus['internal-name'] : true;
-    }
+  /**
+   * This method is called when an order card emits an update event.
+   * It triggers a reload of the entire order list to reflect all changes.
+   */
+  onOrderUpdate(): void {
+    console.log('Order updated from card, reloading all orders...');
+    window.location.reload(); //!!! to change
+  }
 }

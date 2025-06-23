@@ -1,7 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OrderResponse } from '../../../services/order.service'; // Adjust the import path as necessary
-import { OrderService, OrderStatus } from '../../../services/order.service';
+import { OrderResponse, OrderService, OrderStatus } from '../../../services/order.service';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 
@@ -11,41 +10,104 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./order-card.component.scss'],
   imports: [CommonModule],
 })
-export class OrderCardComponent {
+export class OrderCardComponent implements OnInit {
   @Input() order!: OrderResponse;
+  @Output() orderUpdated = new EventEmitter<boolean>();
 
+  // --- UI State Properties ---
+  isUpdating = false;
+  updateError: string | null = null;
   showContinueButton = false;
   showCancelButton = false;
   showConfirmDeliveryButton = false;
-  authService: AuthService;
 
+  // Use constructor property promotion for cleaner dependency injection
   constructor(
-    authService: AuthService,
-    private orderService: OrderService,
-  ) {
-    this.authService = authService;
-
-  }
-
+    public authService: AuthService,
+    private orderService: OrderService
+  ) { }
 
   ngOnInit(): void {
-    // when we load the order we process what buttons to show
-    console.log('OrderCardComponent received:', this.order);
+    // On component load, determine which action buttons to display
     this.processOrderStatus();
   }
 
-  private processOrderStatus(): void {
-    let userRole = this.authService.getCurrentUserRole(); // Assuming this function retrieves the current user's role
-    console.log('userRole', userRole);
+  /**
+   * Updates the local state of the order and re-evaluates button visibility.
+   * @param updatedOrder The fresh order data from the backend.
+   */
+  private handleSuccessfulUpdate(updatedOrder: OrderResponse): void {
+    // By using Object.assign, we update the properties of the original 'order'
+    // object. Since objects are passed by reference, the parent component's
+    // list is updated, and Angular's change detection refreshes the UI.
+    Object.assign(this.order, updatedOrder);
+    this.processOrderStatus(); // Re-check which buttons should be visible
+    this.isUpdating = false;
+  }
 
+  /**
+   * Handles errors from the API call.
+   * @param errorMessage The error message to display.
+   */
+  private handleUpdateError(errorMessage: string): void {
+    this.updateError = errorMessage;
+    this.isUpdating = false;
+  }
+
+  /**
+   * Calls the service to advance the order to its next state.
+   */
+  continueButtonClicked(): void {
+    this.isUpdating = true;
+    this.updateError = null;
+
+    this.orderService.nextOrderStatus(String(this.order.order_id)).subscribe({
+      next: (updatedOrder) => this.handleSuccessfulUpdate(updatedOrder),
+      error: (err) => this.handleUpdateError(err.error?.error || 'Error al avanzar la orden.'),
+    });
+
+    this.orderUpdated.emit(true);
+    this.disableButtons();
+  }
+
+  /**
+   * Calls the service to cancel the order.
+   */
+  cancelButtonClicked(): void {
+    this.isUpdating = true;
+    this.updateError = null;
+
+    this.orderService.cancelOrder(String(this.order.order_id)).subscribe({
+      next: (updatedOrder) => this.handleSuccessfulUpdate(updatedOrder),
+      error: (err) => this.handleUpdateError(err.error?.error || 'Error al cancelar la orden.'),
+    });
+
+    this.orderUpdated.emit(true);
+    this.disableButtons();
+  }
+  disableButtons() {
+    // Disable buttons to prevent multiple clicks while the request is processing
+    this.showContinueButton = false;
+    this.showCancelButton = false;
+    this.showConfirmDeliveryButton = false;
+    // make the unclickable and grey
+  }
+
+  /**
+   * Determines which action buttons to show based on order status and user role.
+   */
+  private processOrderStatus(): void {
+    const userRole = this.authService.getCurrentUserRole();
+    const status = this.order.order_status;
+
+    // This logic should match your backend state machine
+    // to do: handle all possible statuses and roles from backend to render here
     this.showContinueButton = false;
     this.showCancelButton = false;
     this.showConfirmDeliveryButton = false;
 
-    if (userRole == 'vendedor') {
-      console.log("check para vendedor");
-
-      switch (this.order.order_status) {
+    if (userRole === 'vendedor') {
+      switch (status) {
         case 'esperando confirmacion en tienda':
           this.showContinueButton = true;
           this.showCancelButton = true;
@@ -53,99 +115,42 @@ export class OrderCardComponent {
         case 'preparando pedido en tienda':
           this.showContinueButton = true;
           return;
+        case 'preparando pedido en bodega':
+          this.showContinueButton = true;
+          return;
         case 'pedido listo para retiro':
-          this.showConfirmDeliveryButton = true;
+          this.showContinueButton = true;
           return;
         case 'pedido enviado a domicilio':
-          this.showConfirmDeliveryButton = true;
+          this.showContinueButton = true;
           return;
       }
-    } else if (userRole == 'bodeguero') {
-      console.log("check para bodeguero");
+    }
+    else if (userRole === 'bodeguero') {
+      switch (status) {
+        case 'esperando confirmacion en bodega':
+          this.showContinueButton = true;
+          return;
+        case 'preparando pedido en bodega':
+          return;
+      }
+    }
 
-      // If the user is a warehouse worker, we don't show any buttons
-      this.showContinueButton = false;
-      this.showCancelButton = false;
-      return;
-    } else if (userRole == 'contador') {
-      console.log("check para contador");
+    else if (userRole === 'contador') {
+      switch (status) {
+        case 'transferencia por confirmar':
+          this.showContinueButton = true;
+          this.showCancelButton = true;
+          return;
+      }
 
-      // If the user is an accountant, we don't show any buttons
-      this.showContinueButton = false;
-      this.showCancelButton = false;
-      return;
     }
   }
 
-  isUpdating = false;
-  updateError: string | null = null;
-
-
-  updateStatus(newStatus: OrderStatus): void {
-    this.isUpdating = true;
-    this.updateError = null;
-
-    // this.orderService.updateOrderStatus(this.order.order_id, newStatus)
-    //   .pipe(
-    //     finalize(() => this.isUpdating = false)
-    //   )
-    //   .subscribe({
-    //     next: (updatedOrder) => {
-    //       // The order object is updated with the response from the server
-    //       //this.order = updatedOrder;
-    //     },
-    //     error: (err) => {
-    //       console.error('Failed to update order status', err);
-    //       this.updateError = 'Could not update the order. Please try again.';
-    //     }
-    //   });
-  }
-
-
-  async continueButtonClicked(): Promise<void> {
-    // spinner loading
-    this.isUpdating = true;
-    this.updateError = null;
-
-    console.log('Continue button clicked for order:', this.order.order_id);
-    let status, result = await this.orderService.nextStatus(String(this.order.order_id));
-
-    if (!status) {
-      this.updateError = 'No response received from server.';
-      console.error('No response received from server.');
-      this.isUpdating = false;
-      return;
-    }
-    console.log('Order status updated successfully:', result.message);
-
-  }
-
-  async cancelButtonClicked(): Promise<void> {
-    console.log('Cancel button clicked for order:', this.order.order_id);
-    // spinner loading
-    this.isUpdating = true;
-    this.updateError = null;
-
-    console.log('Cancel button clicked for order:', this.order.order_id);
-    let status, result = await this.orderService.cancelOrder(String(this.order.order_id));
-
-    if (!status) {
-      this.updateError = 'No response received from server.';
-      console.error('No response received from server.');
-      this.isUpdating = false;
-      return;
-    }
-    console.log('Order status updated successfully:', result.message);
-  }
-
-  confirmDeliveryButtonClicked(): void {
+  // The original component had this method, which seems to be a duplicate
+  // of the logic in continueButtonClicked. It's kept here for reference.
+  async confirmDeliveryButtonClicked(): Promise<void> {
     console.log('Confirm delivery button clicked for order:', this.order.order_id);
-    // Implement the logic to confirm the delivery of the order
-    // For example, you might want to update the order status or navigate to another page
+    this.continueButtonClicked();
   }
-
-
-
-
-
 }

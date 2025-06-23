@@ -41,9 +41,21 @@
     <div class="action-buttons">
         <ng-container *ngIf="showContinueButton">
             <button class="btn-modify" (click)="continueButtonClicked()" [disabled]="isUpdating">
+                <!-- vendedor messages -->
                 <span *ngIf="isUpdating" class="spinner-border spinner-border-sm" role="status"
                     aria-hidden="true"></span>
-                Continuar
+                <span *ngIf="this.order.order_status == 'esperando confirmacion en tienda'">Continuar</span>
+                <span *ngIf="this.order.order_status == 'preparando pedido en bodega'">Confirmar paquete de
+                    bodega</span>
+                <span *ngIf="this.order.order_status == 'preparando pedido en tienda'">Pedido listo</span>
+                <span *ngIf="this.order.order_status == 'pedido listo para retiro'">Confirmar retiro del pedido</span>
+                <span *ngIf="this.order.order_status == 'pedido enviado a domicilio'">Confirmar entrega del
+                    pedido</span>
+                <!-- bodeguero messages -->
+                <span *ngIf="this.order.order_status == 'esperando confirmacion en bodega'">Iniciar empaque del
+                    pedido</span>
+                <!-- contador messages -->
+                <span *ngIf="this.order.order_status == 'transferencia por confirmar'">Confirmar transferencia</span>
             </button>
         </ng-container>
         <ng-container *ngIf="showCancelButton">
@@ -52,7 +64,7 @@
             </button>
         </ng-container>
         <ng-container *ngIf="showConfirmDeliveryButton">
-            <button class="btn-modify" (click)="confirmDeliveryButtonClicked()" [disabled]="isUpdating">
+            <button class="btn-modify" (click)="continueButtonClicked()" [disabled]="isUpdating">
                 Confirmar entrega
             </button>
         </ng-container>

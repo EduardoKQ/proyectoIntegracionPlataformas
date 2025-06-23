@@ -12,6 +12,8 @@ from api.user.web_role_names import WebRoleNames
 from api.orders.serializer import OrderCreateSerializer, OrderListSerializer
 from api.models import Branch, Client, Inventory, Order, OrderItem, Product
 
+from api.orders.orders_state_machine import OrderStateMachine, Action
+
 
 # utils
 def orders_create(request):
@@ -271,6 +273,56 @@ def orders_update_status_by_id(request, order_code):
         return JsonResponse(
             {"message": "Estado de la orden actualizado con éxito"}, status=200
         )
+
+    except Order.DoesNotExist:
+        return JsonResponse(
+            {"error": f"No se encontro la orden con id {order_code}"}, status=404
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def u_orders_next_status(request, order_code, cancel=False):
+    print(f"DEBUG: Processing next status for order {order_code}, cancel={cancel}")
+    """
+    Process POST request to update order status to the next one.
+    """
+    try:
+        order = Order.objects.get(order_id=order_code)
+        current_status = order.order_status
+
+        # get user role
+        user_role = None
+        if hasattr(request.user, "role") and request.user.role:
+            user_role = request.user.role.role
+
+        if not user_role:
+            return JsonResponse(
+                {"error": "No tienes permiso para actualizar el estado de esta orden."},
+                status=403,
+            )
+
+        # check if branch is valid for the worker !!! todo
+
+        # Check if the next status exists for the user's role
+        osm = OrderStateMachine(order)
+        # check if the user can perform the next status action
+        action = Action.CONTINUE if not cancel else Action.CANCEL
+        if not osm.can_perform_action(user_role, action):
+            return JsonResponse(
+                {"error": "No tienes permiso para actualizar el estado de esta orden."},
+                status=403,
+            )
+
+        next_status = osm.transition(user_role, action=action)
+
+        # Update the order status
+        order.order_status = next_status
+        order.save()
+
+        # return the order
+        serializer = OrderListSerializer(order)
+        return JsonResponse(serializer.data, safe=False, status=200)
 
     except Order.DoesNotExist:
         return JsonResponse(

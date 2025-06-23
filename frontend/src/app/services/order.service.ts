@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
 
 const API_BASE_URL = 'http://localhost:8100/api';
 
@@ -53,14 +54,28 @@ export class OrderService {
   private http = inject(HttpClient);
   private orderApiUrl = `${API_BASE_URL}/orders`;
 
-  constructor() { }
+  constructor(
+    private authService: AuthService
+  ) { }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getAccessToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  }
 
   createOrder(orderData: OrderPayload): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(this.orderApiUrl, orderData);
   }
 
   getOrders(): Observable<OrderResponse[]> {
-    return this.http.get<OrderResponse[]>(this.orderApiUrl);
+    const timestamp = Date.now();
+    return this.http.get<OrderResponse[]>(`${this.orderApiUrl}?_=${timestamp}`);
   }
 
   getOrderStatuses(): Observable<OrderStatus[]> {
@@ -90,43 +105,16 @@ export class OrderService {
 
   }
 
-  async nextStatus(orderId: string): Promise<{ status: boolean, message: string }> {
-    try {
-      const result = await this.http.put<{ message: string }>(`${this.orderApiUrl}/${orderId}/next`, {}).toPromise();
-      if (!result) {
-        return { status: false, message: 'No response received from server.' };
-      }
-      return { status: true, message: result.message };
-    } catch (error: any) {
-      let message = 'An error occurred while updating order status.';
-      if (error?.error?.message) {
-        message = error.error.message;
-      } else if (error?.status && error?.statusText) {
-        message = `HTTP ${error.status}: ${error.statusText}`;
-      } else if (error?.message) {
-        message = error.message;
-      }
-      return { status: false, message };
-    }
+  nextOrderStatus(orderId: string): Observable<OrderResponse> {
+    // Remove async/await and lastValueFrom, return the Observable directly.
+    return this.http.post<OrderResponse>(`${this.orderApiUrl}/${orderId}/next`, {}, {
+      headers: this.getAuthHeaders()
+    });
   }
 
-  async cancelOrder(orderId: string): Promise<{ status: boolean, message: string }> {
-    try {
-      const result = await this.http.put<{ message: string }>(`${this.orderApiUrl}/${orderId}/cancel`, {}).toPromise();
-      if (!result) {
-        return { status: false, message: 'No response received from server.' };
-      }
-      return { status: true, message: result.message };
-    } catch (error: any) {
-      let message = 'An error occurred while updating order status.';
-      if (error?.error?.message) {
-        message = error.error.message;
-      } else if (error?.status && error?.statusText) {
-        message = `HTTP ${error.status}: ${error.statusText}`;
-      } else if (error?.message) {
-        message = error.message;
-      }
-      return { status: false, message };
-    }
+  cancelOrder(orderId: string): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${this.orderApiUrl}/${orderId}/cancel`, {}, {
+      headers: this.getAuthHeaders()
+    });
   }
 }

@@ -16,7 +16,7 @@
 
   <ul class="order-list" *ngIf="!isLoading && !error && orders.length > 0">
     <li class="order-card" *ngFor="let order of orders">
-      <app-order-card [order]="order"></app-order-card>
+      <app-order-card [order]="order" (orderUpdated)="onOrderUpdate()"></app-order-card>
     </li>
   </ul>
 </div>

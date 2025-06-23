@@ -39,6 +39,8 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = []
 
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5778"]
+
 
 # Application definition
 
@@ -174,20 +176,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # testing with all origins allowed:
 CORS_ALLOW_ALL_ORIGINS = True
 
-#transbank settings
-TRANSBANK_WEBPAY_PLUS_COMMERCE_CODE = os.getenv('TRANSBANK_WEBPAY_PLUS_COMMERCE_CODE')
-TRANSBANK_WEBPAY_PLUS_API_KEY = os.getenv('TRANSBANK_WEBPAY_PLUS_API_KEY')
-TRANSBANK_ENVIRONMENT = os.getenv('TRANSBANK_ENVIRONMENT', 'INTEGRACION')
+# transbank settings
+TRANSBANK_WEBPAY_PLUS_COMMERCE_CODE = os.getenv("TRANSBANK_WEBPAY_PLUS_COMMERCE_CODE")
+TRANSBANK_WEBPAY_PLUS_API_KEY = os.getenv("TRANSBANK_WEBPAY_PLUS_API_KEY")
+TRANSBANK_ENVIRONMENT = os.getenv("TRANSBANK_ENVIRONMENT", "INTEGRACION")
 
-WEBPAY_RETURN_URL_BASE = os.getenv('WEBPAY_RETURN_URL_BASE', 'http://localhost:8100')
-WEBPAY_RETURN_URL = f'{WEBPAY_RETURN_URL_BASE}/api/webpay/retorno/'
+WEBPAY_RETURN_URL_BASE = os.getenv("WEBPAY_RETURN_URL_BASE", "http://localhost:8100")
+WEBPAY_RETURN_URL = f"{WEBPAY_RETURN_URL_BASE}/api/webpay/retorno/"
 
-FRONTEND_URL_BASE = os.getenv('FRONTEND_URL_BASE', 'http://localhost:4200')
-FRONTEND_URL_SUCCESS = f'{FRONTEND_URL_BASE}/payment-result'
-FRONTEND_URL_FAILURE = f'{FRONTEND_URL_BASE}/payment-result'
-FRONTEND_URL_ERROR = f'{FRONTEND_URL_BASE}/payment-result'
+FRONTEND_URL_BASE = os.getenv("FRONTEND_URL_BASE", "http://localhost:4200")
+FRONTEND_URL_SUCCESS = f"{FRONTEND_URL_BASE}/payment-result"
+FRONTEND_URL_FAILURE = f"{FRONTEND_URL_BASE}/payment-result"
+FRONTEND_URL_ERROR = f"{FRONTEND_URL_BASE}/payment-result"
 
 # Maps API settings
-MAPS_API_KEY = os.getenv('MAPS_API_KEY')
+MAPS_API_KEY = os.getenv("MAPS_API_KEY")
 if not MAPS_API_KEY:
     print("ADVERTENCIA: MAPS_API_KEY no está definida.")

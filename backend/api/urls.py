@@ -59,9 +59,8 @@ urlpatterns = [
         name="inventory_get_update_quantity",
     ),
     # webpay endpoints
-    path('webpay/iniciar_pago/', iniciar_pago_webpay, name='webpay_iniciar_pago'),
-    path('webpay/retorno/', retorno_pago_webpay, name='webpay_retorno_pago'),
-
+    path("webpay/iniciar_pago/", iniciar_pago_webpay, name="webpay_iniciar_pago"),
+    path("webpay/retorno/", retorno_pago_webpay, name="webpay_retorno_pago"),
     # orders endpoints
     path("orders", order_views.orders_list_create, name="orders_list_create"),
     path(
@@ -74,9 +73,18 @@ urlpatterns = [
         order_views.orders_get_delete_by_id,
         name="orders_get_delete_by_id",
     ),
-    
+    path(
+        "orders/<str:order_code>/next",
+        order_views.orders_next_status,
+        name="orders_next_status",
+    ),
+    path(
+        "orders/<str:order_code>/cancel",
+        order_views.orders_cancel,
+        name="orders_cancel",
+    ),
     # maps endpoints
-    path('maps/', include('api.maps.urls_map')),
+    path("maps/", include("api.maps.urls_map")),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { OrderService, OrderResponse, OrderStatus } from '../../../services/order.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +26,7 @@ export class OrdenesCompraComponent implements OnInit {
 
   constructor(
     private orderService: OrderService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -49,6 +50,14 @@ export class OrdenesCompraComponent implements OnInit {
   }
 
   loadOrders(): void {
+    this.isLoading = true;
+    this.error = null;
+    console.log('Fetching orders...');
+
+    // unsubscribe from previous subscriptions if necessary
+    this.orders = []; // Reset orders to avoid stale data
+
+    console.log('Fetching orders from service...');
     this.orderService.getOrders().subscribe({
       next: (data) => {
         this.orders = data.map(order => {
@@ -97,5 +106,10 @@ export class OrdenesCompraComponent implements OnInit {
   isStatusUnchanged(order: OrderWithState): boolean {
     const currentStatus = this.statuses.find(s => s.value === order.order_status);
     return currentStatus ? order.selectedStatusName === currentStatus['internal-name'] : true;
+  }
+
+  onOrderUpdate(): void {
+    console.log('Order updated, reloading orders...');
+    window.location.reload(); //!!! to change
   }
 }
