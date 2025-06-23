@@ -1,0 +1,295 @@
+[
+    {
+        "model": "api.order",
+        "pk": 1,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 1,
+            "order_status": "pago pendiente",
+            "creation_date": "2025-06-23T10:00:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 1,
+        "fields": {
+            "order": 1,
+            "product": 1,
+            "product_code_copy": "1231",
+            "product_name_copy": "Martillo Carpintero 20oz Makawa Mk-3083",
+            "product_brand_copy": "MAKAWA",
+            "quantity": 2,
+            "transaction_price": "4990.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 2,
+        "fields": {
+            "client": 1,
+            "payment_type": "transferencia bancaria",
+            "retrieval_type": "envio a domicilio",
+            "shipping_address": "Av. Siempre Viva 742, Santiago",
+            "shipping_cost": "5000.00",
+            "pickup_branch": null,
+            "order_status": "transferencia por confirmar",
+            "creation_date": "2025-06-23T11:30:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 2,
+        "fields": {
+            "order": 2,
+            "product": 5,
+            "product_code_copy": "1235",
+            "product_name_copy": "Cemento Polpaico 25 kilos",
+            "product_brand_copy": "POLPAICO",
+            "quantity": 5,
+            "transaction_price": "3990.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 3,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 2,
+            "order_status": "esperando confirmacion en tienda",
+            "creation_date": "2025-06-22T09:15:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 3,
+        "fields": {
+            "order": 3,
+            "product": 9,
+            "product_code_copy": "1239",
+            "product_name_copy": "Casco Yako Steelpro Negro",
+            "product_brand_copy": "STEELPRO",
+            "quantity": 1,
+            "transaction_price": "24590.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 4,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 1,
+            "order_status": "esperando confirmacion en bodega",
+            "creation_date": "2025-06-22T14:00:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 4,
+        "fields": {
+            "order": 4,
+            "product": 14,
+            "product_code_copy": "1243",
+            "product_name_copy": "Tornillo Turbo screw Madera",
+            "product_brand_copy": "MAMUT",
+            "quantity": 10,
+            "transaction_price": "8590.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 5,
+        "fields": {
+            "client": 1,
+            "payment_type": "transferencia bancaria",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 1,
+            "order_status": "preparando pedido en bodega",
+            "creation_date": "2025-06-21T15:45:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 5,
+        "fields": {
+            "order": 5,
+            "product": 21,
+            "product_code_copy": "1250",
+            "product_name_copy": "Taladro Percutor",
+            "product_brand_copy": "BAUKER",
+            "quantity": 1,
+            "transaction_price": "30290.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 6,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 2,
+            "order_status": "preparando pedido en tienda",
+            "creation_date": "2025-06-21T18:00:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 6,
+        "fields": {
+            "order": 6,
+            "product": 25,
+            "product_code_copy": "1254",
+            "product_name_copy": "Sierra Circular",
+            "product_brand_copy": "BOSCH",
+            "quantity": 1,
+            "transaction_price": "11990.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 7,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "envio a domicilio",
+            "shipping_address": "Calle Falsa 123, Viña del Mar",
+            "shipping_cost": "7500.00",
+            "pickup_branch": null,
+            "order_status": "pedido enviado a domicilio",
+            "creation_date": "2025-06-20T12:00:00Z",
+            "delivery_date": "2025-06-21T18:30:00Z"
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 7,
+        "fields": {
+            "order": 7,
+            "product": 30,
+            "product_code_copy": "1259",
+            "product_name_copy": "ARENA GRUESA",
+            "product_brand_copy": "RIO MAIPO",
+            "quantity": 10,
+            "transaction_price": "940.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 8,
+        "fields": {
+            "client": 1,
+            "payment_type": "transferencia bancaria",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 1,
+            "order_status": "pedido listo para retiro",
+            "creation_date": "2025-06-20T14:20:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 8,
+        "fields": {
+            "order": 8,
+            "product": 33,
+            "product_code_copy": "1262",
+            "product_name_copy": "LADRILLO SANTIAGO S11",
+            "product_brand_copy": "Ceramica Santiago",
+            "quantity": 100,
+            "transaction_price": "854.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 9,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "retiro en tienda",
+            "shipping_address": null,
+            "shipping_cost": "0.00",
+            "pickup_branch": 2,
+            "order_status": "pedido entregado",
+            "creation_date": "2025-06-19T11:05:00Z",
+            "delivery_date": "2025-06-20T15:30:00Z"
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 9,
+        "fields": {
+            "order": 9,
+            "product": 40,
+            "product_code_copy": "1269",
+            "product_name_copy": "Esmeril angular + 2 baterias 4ah",
+            "product_brand_copy": "STANLEY",
+            "quantity": 1,
+            "transaction_price": "191992.00"
+        }
+    },
+    {
+        "model": "api.order",
+        "pk": 10,
+        "fields": {
+            "client": 1,
+            "payment_type": "pasarela de pago",
+            "retrieval_type": "envio a domicilio",
+            "shipping_address": "Calle Perdida 404, Santiago",
+            "shipping_cost": "3500.00",
+            "pickup_branch": null,
+            "order_status": "pedido cancelado",
+            "creation_date": "2025-06-18T18:10:00Z",
+            "delivery_date": null
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 10,
+        "fields": {
+            "order": 10,
+            "product": 42,
+            "product_code_copy": "1271",
+            "product_name_copy": "Taladro percutor - Atornillador 20V",
+            "product_brand_copy": "DEWALT",
+            "quantity": 1,
+            "transaction_price": "259990.00"
+        }
+    },
+    {
+        "model": "api.orderitem",
+        "pk": 11,
+        "fields": {
+            "order": 10,
+            "product": 17,
+            "product_code_copy": "1246",
+            "product_name_copy": "Huincha de medir 8 metros metal",
+            "product_brand_copy": "STANLEY",
+            "quantity": 2,
+            "transaction_price": "14290.00"
+        }
+    }
+]
