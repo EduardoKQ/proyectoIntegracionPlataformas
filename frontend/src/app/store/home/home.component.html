@@ -61,72 +61,128 @@
         <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
           <div class="product-card-featured" *ngFor="let product of featuredProducts">
             <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+
+              <div *ngIf="hasPromotionFeatured(product)" class="discount-badge-featured">
+                -{{ getDiscountPercentageFeatured(product) }}%
+              </div>
+
               <div class="product-image-container">
                 <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
               </div>
+
               <div class="product-info">
                 <h3 class="product-name-featured">{{ product.nombre }}</h3>
-                <ng-container *ngIf="product.precio">
-                  <ng-container [ngSwitch]="currentSelectedCurrency">
-                    <p *ngSwitchCase="'USD'" class="product-price-featured">
-                      <ng-container *ngIf="product.precio.precio_dolares != null; else featPriceCLPOnlyUSD">
-                        {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
-                      </ng-container>
-                      <ng-template #featPriceCLPOnlyUSD>
-                        <span *ngIf="product.precio.precio_actual != null; else featNoPrice">
-                            {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+
+                <ng-container *ngIf="product.precio; else noFeaturedPrice">
+
+                  <div *ngIf="hasPromotionFeatured(product)" class="featured-price-section with-promotion">
+                    <p class="original-price-featured">
+                      <ng-container [ngSwitch]="currentSelectedCurrency">
+                        <span *ngSwitchCase="'USD'">
+                          <ng-container *ngIf="getOriginalPriceFeatured(product)">
+                            {{ getOriginalPriceFeatured(product) | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                          <ng-container *ngIf="!getOriginalPriceFeatured(product) && product.precio.precio_actual">
+                            {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
                         </span>
-                        <ng-template #featNoPrice>N/A</ng-template>
-                      </ng-template>
-                    </p>
-                    <p *ngSwitchDefault class="product-price-featured">
-                      <ng-container *ngIf="product.precio.precio_actual != null; else featPriceUSDOnlyCLP">
-                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        <span *ngSwitchDefault>
+                          <ng-container *ngIf="getOriginalPriceFeatured(product)">
+                            {{ getOriginalPriceFeatured(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
+                          <ng-container *ngIf="!getOriginalPriceFeatured(product) && product.precio.precio_dolares">
+                            {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                        </span>
                       </ng-container>
-                      <ng-template #featPriceUSDOnlyCLP>
-                        <span *ngIf="product.precio.precio_dolares != null; else featNoPrice">
+                    </p>
+
+                    <p class="promotional-price-featured">
+                      <ng-container [ngSwitch]="currentSelectedCurrency">
+                        <span *ngSwitchCase="'USD'">
+                          <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                            {{ getCurrentPriceFeatured(product) | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                        </span>
+                        <span *ngSwitchDefault>
+                          <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                            {{ getCurrentPriceFeatured(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
+                        </span>
+                      </ng-container>
+                    </p>
+
+                    <p *ngIf="getPromotionNameFeatured(product)" class="promotion-name-featured">
+                      {{ getPromotionNameFeatured(product) }}
+                    </p>
+                  </div>
+
+                  <div *ngIf="!hasPromotionFeatured(product)" class="featured-price-section normal-price">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <p *ngSwitchCase="'USD'" class="product-price-featured">
+                        <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                          {{ getCurrentPriceFeatured(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(product) && product.precio.precio_actual">
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(product) && !product.precio.precio_actual">N/A</ng-container>
+                      </p>
+
+                      <p *ngSwitchDefault class="product-price-featured">
+                        <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                          {{ getCurrentPriceFeatured(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(product) && product.precio.precio_dolares">
                           {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
-                        </span>
-                        <ng-template #featNoPrice>N/A</ng-template>
-                      </ng-template>
-                    </p>
-                  </ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(product) && !product.precio.precio_dolares">N/A</ng-container>
+                      </p>
+                    </ng-container>
+                  </div>
                 </ng-container>
-                <p *ngIf="!product.precio" class="product-price-featured">Precio no disponible</p>
+
+                <ng-template #noFeaturedPrice>
+                  <p class="product-price-featured price-not-available">Precio no disponible</p>
+                </ng-template>
               </div>
             </a>
             <div class="add-to-cart-container">
               <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 0; else quantityControlsHome">
                 <button (click)="addToCartFromHome(product)"
                         class="btn btn-sm btn-primary add-to-cart-featured"
-                        [disabled]="currentSelectedBranch && getProductMaxStock(product.codigo_producto) === 0 && featuredProducts.length > 0">
-                  Agregar
+                        [disabled]="isProductDisabled(product.codigo_producto)">
+                  <span *ngIf="!shouldShowOutOfStock(product.codigo_producto)">Agregar</span>
+                  <span *ngIf="shouldShowOutOfStock(product.codigo_producto)" class="out-of-stock-text">Sin Stock</span>
                 </button>
               </ng-container>
               <ng-template #quantityControlsHome>
-                <div class="item-quantity-controls">
+                <div class="item-quantity-controls modern">
                   <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) - 1)"
-                          class="quantity-btn remove-btn" aria-label="Eliminar o disminuir cantidad">
+                          class="quantity-btn remove-btn"
+                          aria-label="Eliminar o disminuir cantidad"
+                          [class.delete-mode]="getQuantityInCart(product.codigo_producto) === 1">
                     <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 1; else minusIconHome">
-                        <span class="material-symbols-outlined">delete</span>
+                        <span class="material-symbols-outlined delete-icon">delete</span>
                     </ng-container>
                     <ng-template #minusIconHome>
-                        <span class="material-symbols-outlined">remove</span>
+                        <span class="material-symbols-outlined minus-icon">remove</span>
                     </ng-template>
                   </button>
-                  <span class="quantity-display">
+                  <div class="quantity-display">
                     <ng-container *ngIf="isStockMaxedOut(product.codigo_producto) && getQuantityInCart(product.codigo_producto) > 0; else showNumericQuantityHome">
-                      Cant. Máx.
+                      <span class="max-quantity-text">Máx.</span>
                     </ng-container>
                     <ng-template #showNumericQuantityHome>
-                      {{ getQuantityInCart(product.codigo_producto) }} un
+                      <span class="quantity-number">{{ getQuantityInCart(product.codigo_producto) }}</span>
+                      <span class="unit-text">un</span>
                     </ng-template>
-                  </span>
+                  </div>
                   <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) + 1)"
                           class="quantity-btn add-btn"
                           aria-label="Aumentar cantidad"
                           [disabled]="isStockMaxedOut(product.codigo_producto)">
-                    <span class="material-symbols-outlined">add</span>
+                    <span class="material-symbols-outlined add-icon">add</span>
                   </button>
                 </div>
               </ng-template>
@@ -150,6 +206,135 @@
       </div>
   </section>
   <div *ngIf="featuredProducts.length === 0" class="loading-container"> <p>Cargando productos destacados...</p> </div>
+
+  <section class="promotional-products" *ngIf="promotionalProducts.length > 0">
+    <h2>🔥 Productos en Promoción</h2>
+    <div class="carousel-outer-container">
+      <button
+        class="carousel-nav prev"
+        (click)="prevPromotionalProductsSlide()"
+        *ngIf="getPromotionalProductSlides().length > 1" aria-label="Promociones anteriores">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+
+      <div class="products-carousel-wrapper" #promotionalProductsCarouselContainer>
+        <div class="products-carousel-inner-container" #promotionalProductsInnerContainer>
+          <div class="product-card-promotional" *ngFor="let product of promotionalProducts">
+            <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+
+              <div class="discount-badge-promotional">
+                -{{ getDiscountPercentageFeatured(product) }}%
+              </div>
+
+              <div class="product-image-container">
+                <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
+              </div>
+
+              <div class="product-info">
+                <h3 class="product-name-promotional">{{ product.nombre }}</h3>
+
+                <div class="promotional-price-section">
+                  <p class="original-price-promotional">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <span *ngSwitchCase="'USD'">
+                        <ng-container *ngIf="getOriginalPriceFeatured(product)">
+                          {{ getOriginalPriceFeatured(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getOriginalPriceFeatured(product) && product.precio.precio_actual">
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                      </span>
+                      <span *ngSwitchDefault>
+                        <ng-container *ngIf="getOriginalPriceFeatured(product)">
+                          {{ getOriginalPriceFeatured(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getOriginalPriceFeatured(product) && product.precio.precio_dolares">
+                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                      </span>
+                    </ng-container>
+                  </p>
+
+                  <p class="promotional-price-main">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <span *ngSwitchCase="'USD'">
+                        <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                          {{ getCurrentPriceFeatured(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                      </span>
+                      <span *ngSwitchDefault>
+                        <ng-container *ngIf="getCurrentPriceFeatured(product)">
+                          {{ getCurrentPriceFeatured(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                      </span>
+                    </ng-container>
+                  </p>
+
+                  <p class="promotion-name-promotional">
+                    {{ getPromotionNameFeatured(product) }}
+                  </p>
+                </div>
+              </div>
+            </a>
+            <div class="add-to-cart-container">
+              <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 0; else quantityControlsPromo">
+                <button (click)="addToCartFromHome(product)"
+                        class="btn btn-sm btn-primary add-to-cart-featured"
+                        [disabled]="isProductDisabled(product.codigo_producto)">
+                  <span *ngIf="!shouldShowOutOfStock(product.codigo_producto)">Agregar</span>
+                  <span *ngIf="shouldShowOutOfStock(product.codigo_producto)" class="out-of-stock-text">Sin Stock</span>
+                </button>
+              </ng-container>
+              <ng-template #quantityControlsPromo>
+                <div class="item-quantity-controls modern">
+                  <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) - 1)"
+                          class="quantity-btn remove-btn"
+                          aria-label="Eliminar o disminuir cantidad"
+                          [class.delete-mode]="getQuantityInCart(product.codigo_producto) === 1">
+                    <ng-container *ngIf="getQuantityInCart(product.codigo_producto) === 1; else minusIconPromo">
+                        <span class="material-symbols-outlined delete-icon">delete</span>
+                    </ng-container>
+                    <ng-template #minusIconPromo>
+                        <span class="material-symbols-outlined minus-icon">remove</span>
+                    </ng-template>
+                  </button>
+                  <div class="quantity-display">
+                    <ng-container *ngIf="isStockMaxedOut(product.codigo_producto) && getQuantityInCart(product.codigo_producto) > 0; else showNumericQuantityPromo">
+                      <span class="max-quantity-text">Máx.</span>
+                    </ng-container>
+                    <ng-template #showNumericQuantityPromo>
+                      <span class="quantity-number">{{ getQuantityInCart(product.codigo_producto) }}</span>
+                      <span class="unit-text">un</span>
+                    </ng-template>
+                  </div>
+                  <button (click)="updateQuantityFromHome(product.codigo_producto, getQuantityInCart(product.codigo_producto) + 1)"
+                          class="quantity-btn add-btn"
+                          aria-label="Aumentar cantidad"
+                          [disabled]="isStockMaxedOut(product.codigo_producto)">
+                    <span class="material-symbols-outlined add-icon">add</span>
+                  </button>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        class="carousel-nav next"
+        (click)="nextPromotionalProductsSlide()"
+        *ngIf="getPromotionalProductSlides().length > 1" aria-label="Siguientes promociones">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+    <div class="carousel-indicators products" *ngIf="getPromotionalProductSlides().length > 1">
+        <span *ngFor="let slideGroup of getPromotionalProductSlides(); let i = index"
+              class="indicator-dot"
+              [class.active]="i === currentPromotionalProductsSlideIndex"
+              (click)="goToPromotionalProductsSlide(i)"></span>
+      </div>
+  </section>
+  <div *ngIf="promotionalProducts.length === 0" class="loading-container"> <p>Cargando productos en promoción...</p> </div>
 </div>
 
 <app-branch-selector-modal *ngIf="showBranchModal"

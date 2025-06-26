@@ -262,8 +262,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.authService.logout();
     this.updateLoginState();
     this.showDropdown = false;
+
     localStorage.clear();
-    this.router.navigate(['/home']);
+
+    this.router.navigate(['/home']).then(() => {
+      window.location.reload();
+    });
   }
 
   changeCurrency(currency: SupportedCurrency): void {

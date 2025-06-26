@@ -13,8 +13,22 @@ export interface ProductForCart {
   nombre: string;
   precio: {
     precio_actual: number;
+    precio_dolares?: number;
   };
   imageUrl?: string;
+  has_promotion?: boolean;
+  promotion_info?: {
+    promotion_id: number;
+    promotion_code: string;
+    promotion_name: string;
+    original_price: number;
+    promotional_price: number;
+    discount_amount: number;
+    discount_percentage: number;
+    discount_type: 'percentage' | 'fixed_amount';
+    original_price_usd?: number;
+    promotional_price_usd?: number;
+  };
 }
 
 export interface CartItem {
@@ -25,6 +39,20 @@ export interface CartItem {
   image_url?: string;
   branch_code: string;
   branch_name: string;
+  has_promotion?: boolean;
+  promotion_info?: {
+    promotion_id: number;
+    promotion_code: string;
+    promotion_name: string;
+    original_price: number;
+    promotional_price: number;
+    discount_amount: number;
+    discount_percentage: number;
+    discount_type: 'percentage' | 'fixed_amount';
+    original_price_usd?: number;
+    promotional_price_usd?: number;
+  };
+  original_price?: number;
 }
 
 export interface CartState {
@@ -157,23 +185,17 @@ export class CartService implements OnDestroy {
   }
 
   addToCart(product: ProductForCart, quantity: number, branchCodeFromComponent: string, branchNameFromComponent: string): void {
-    console.log("addToCart: Verificando login. ¿Está logueado?", this.authService.isLoggedIn());
 
     if (!this.authService.isLoggedIn()) {
-      console.log("addToCart: NO está logueado. Abriendo modal y saliendo.");
       this.openLoginModal();
       return;
     }
 
-    console.log("addToCart: SÍ está logueado. Verificando sucursal.");
 
     if (!this.currentBranch && this.deliveryModeSubject.value === 'pickup') {
-      console.log("addToCart: Sucursal requerida. Mostrando alerta.");
       alert('Por favor, selecciona una sucursal primero para agregar productos al carrito para retiro.');
       return;
     }
-
-    console.log("addToCart: Todo OK. Añadiendo al carrito.");
 
     let activeBranchCode: string;
     let activeBranchName: string;
@@ -196,7 +218,6 @@ export class CartService implements OnDestroy {
 
     const productPrice = product.precio.precio_actual;
     if (typeof productPrice !== 'number' || isNaN(productPrice)) {
-        console.error("Precio de producto inválido:", product);
         return;
     }
 
@@ -212,17 +233,28 @@ export class CartService implements OnDestroy {
         }
 
         if (stockAvailable >= finalQuantityInCart) {
+          let finalPrice = productPrice;
+          let originalPrice = productPrice;
+
+          if (product.has_promotion && product.promotion_info) {
+            finalPrice = product.promotion_info.promotional_price;
+            originalPrice = product.promotion_info.original_price;
+          }
+
           if (existingItemIndex > -1) {
             currentCart[existingItemIndex].quantity = finalQuantityInCart;
           } else {
             const newItem: CartItem = {
               product_code: product.codigo_producto,
               name: product.nombre,
-              price: productPrice,
+              price: finalPrice,
               quantity: finalQuantityInCart,
               image_url: product.imageUrl,
               branch_code: activeBranchCode,
-              branch_name: activeBranchName
+              branch_name: activeBranchName,
+              has_promotion: product.has_promotion || false,
+              promotion_info: product.promotion_info,
+              original_price: originalPrice
             };
             currentCart.push(newItem);
           }
@@ -234,7 +266,6 @@ export class CartService implements OnDestroy {
       },
       error: err => {
         alert(`Error al verificar stock para ${product.nombre}. Intente nuevamente.`);
-        console.error("Error verificando stock en addToCart:", err);
       }
     });
   }

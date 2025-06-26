@@ -85,6 +85,8 @@ urlpatterns = [
     ),
     # maps endpoints
     path("maps/", include("api.maps.urls_map")),
+    # promotions endpoints
+    path("promotions/", include("api.promotions.urls")),
 ]
 # testing only !!! later remove these endpoints
 urlpatterns += [

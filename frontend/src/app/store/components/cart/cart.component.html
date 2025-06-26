@@ -66,11 +66,30 @@
             <img [src]="item.image_url || 'assets/images/placeholder.png'" alt="{{ item.name }}" class="item-image">
             <div class="item-info">
               <h4>{{ item.name }}</h4>
+              <div *ngIf="item.has_promotion && item.promotion_info" class="promotion-info-cart">
+                <span class="promotion-badge-cart">-{{ getDiscountPercentage(item) }}%</span>
+                <span class="promotion-name-cart">{{ item.promotion_info.promotion_name }}</span>
+              </div>
             </div>
             <div class="item-quantity-controls">
                 <button (click)="decrementQuantity(item)" [disabled]="item.quantity <= 1">-</button>
                 <input type="number" [value]="item.quantity" (change)="updateQuantityFromInput($event, item)" min="1" [max]="((deliveryMode$ | async) === 'pickup' && currentSelectedBranch && getProductMaxStock(item.product_code) > 0) ? getProductMaxStock(item.product_code) : null">
                 <button (click)="incrementQuantity(item)" [disabled]="(deliveryMode$ | async) === 'pickup' && currentSelectedBranch && isStockMaxedOut(item.product_code, item.quantity)">+</button>
+            </div>
+            <div class="item-pricing">
+              <div *ngIf="item.has_promotion && item.promotion_info; else normalPricing" class="promotional-pricing-cart">
+                <div class="original-price-cart">
+                  {{ (item.original_price || 0) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}
+                </div>
+                <div class="promotional-price-cart">
+                  {{ item.price | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}
+                </div>
+              </div>
+              <ng-template #normalPricing>
+                <div class="normal-price-cart">
+                  {{ item.price | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}
+                </div>
+              </ng-template>
             </div>
             <div class="item-subtotal">
               <p>{{ (item.price * item.quantity) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</p>
@@ -115,6 +134,12 @@
         <span>Total estimado</span>
         <span>{{ (grandTotalPrice$ | async) | currency:currentSelectedCurrency:'symbol':'1.0-0':selectedLocale }}</span>
       </div>
+
+      <div *ngIf="currentSelectedCurrency === 'USD'" class="currency-note-cart">
+        <i class="material-symbols-outlined note-icon">info</i>
+        <span><strong>Nota:</strong> El pago se procesará en Pesos Chilenos (CLP) al tipo de cambio actual.</span>
+      </div>
+
       <button class="btn btn-success btn-block" (click)="proceedToCheckout()"
             [disabled]="((deliveryMode$ | async) === 'pickup' && !currentSelectedBranch) ||
                         ((deliveryMode$ | async) === 'delivery' && !(currentDeliveryAddress$ | async)) ||

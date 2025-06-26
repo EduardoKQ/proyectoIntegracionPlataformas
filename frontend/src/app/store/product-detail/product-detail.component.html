@@ -53,40 +53,136 @@
       <hr class="price-divider">
 
       <ng-container *ngIf="product.precio; else noPriceAvailable">
-        <ng-container [ngSwitch]="currentSelectedCurrency">
-          <p *ngSwitchCase="'USD'" class="product-price">
-            <ng-container *ngIf="product.precio.precio_dolares != null; else priceCLPOnlyForUSDView">
-              {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
-            </ng-container>
-            <ng-template #priceCLPOnlyForUSDView>
-              <span *ngIf="product.precio.precio_actual != null; else noPriceAtAllForUSD">
-                {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} (Precio en CLP)
-              </span>
-              <ng-template #noPriceAtAllForUSD><span class="price-not-available">Precio no disponible</span></ng-template>
-            </ng-template>
-          </p>
 
-          <p *ngSwitchDefault class="product-price">
-            <ng-container *ngIf="product.precio.precio_actual != null; else priceUSDOnlyForCLPView">
-              {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
-              <span class="vat-included">IVA incluido.</span>
+        <div *ngIf="hasPromotion()" class="price-section with-promotion">
+          <div class="promotion-badge">
+            <span class="discount-percentage">-{{ getDiscountPercentage() }}%</span>
+            <span class="promotion-name">{{ getPromotionName() }}</span>
+          </div>
+
+          <div class="price-container">
+            <p class="original-price">
+              <ng-container [ngSwitch]="currentSelectedCurrency">
+                <span *ngSwitchCase="'USD'">
+                  <ng-container *ngIf="getOriginalPrice(); else noOriginalPriceUSD">
+                    {{ getOriginalPrice() | currency:'USD':'symbol':'1.2-2' }}
+                  </ng-container>
+                  <ng-template #noOriginalPriceUSD>
+                    <span *ngIf="product.precio.precio_actual">
+                      {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} (Precio en CLP)
+                    </span>
+                  </ng-template>
+                </span>
+
+                <span *ngSwitchDefault>
+                  <ng-container *ngIf="getOriginalPrice(); else noOriginalPriceCLP">
+                    {{ getOriginalPrice() | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                  </ng-container>
+                  <ng-template #noOriginalPriceCLP>
+                    <span *ngIf="product.precio.precio_dolares">
+                      {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} (Precio en USD)
+                    </span>
+                  </ng-template>
+                </span>
+              </ng-container>
+            </p>
+
+            <p class="promotional-price">
+              <ng-container [ngSwitch]="currentSelectedCurrency">
+                <span *ngSwitchCase="'USD'">
+                  <ng-container *ngIf="getCurrentPrice(); else noPromotionalPriceUSD">
+                    {{ getCurrentPrice() | currency:'USD':'symbol':'1.2-2' }}
+                  </ng-container>
+                  <ng-template #noPromotionalPriceUSD>
+                    <span class="price-not-available">Precio promocional no disponible en USD</span>
+                  </ng-template>
+                </span>
+
+                <span *ngSwitchDefault>
+                  <ng-container *ngIf="getCurrentPrice(); else noPromotionalPriceCLP">
+                    {{ getCurrentPrice() | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                    <span class="vat-included">IVA incluido.</span>
+                  </ng-container>
+                  <ng-template #noPromotionalPriceCLP>
+                    <span class="price-not-available">Precio promocional no disponible</span>
+                  </ng-template>
+                </span>
+              </ng-container>
+            </p>
+
+            <p *ngIf="getDiscountAmount()" class="savings-amount">
+              <ng-container [ngSwitch]="currentSelectedCurrency">
+                <span *ngSwitchCase="'USD'">
+                  Ahorras {{ getDiscountAmount() | currency:'USD':'symbol':'1.2-2' }}
+                </span>
+                <span *ngSwitchDefault>
+                  Ahorras {{ getDiscountAmount() | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                </span>
+              </ng-container>
+            </p>
+          </div>
+
+          <p *ngIf="hasReferencePrice()" class="reference-price">
+            <ng-container [ngSwitch]="currentSelectedCurrency">
+              <span *ngSwitchCase="'USD'">
+                Aprox. {{ getReferencePrice() | currency:'CLP':'symbol-narrow':'1.0-0' }} CLP
+              </span>
+              <span *ngSwitchDefault>
+                <ng-container *ngIf="getReferencePrice()">
+                  Aprox. {{ getReferencePrice() | currency:'USD':'symbol':'1.2-2' }}
+                </ng-container>
+              </span>
             </ng-container>
-            <ng-template #priceUSDOnlyForCLPView>
-              <span *ngIf="product.precio.precio_dolares != null; else noPriceAtAllForCLP">
+          </p>
+        </div>
+
+        <div *ngIf="!hasPromotion()" class="price-section normal-price">
+          <ng-container [ngSwitch]="currentSelectedCurrency">
+            <p *ngSwitchCase="'USD'" class="product-price">
+              <ng-container *ngIf="getCurrentPrice(); else priceUSDFallback">
+                {{ getCurrentPrice() | currency:'USD':'symbol':'1.2-2' }}
+              </ng-container>
+              <ng-template #priceUSDFallback>
+                <span *ngIf="product.precio.precio_actual; else noPriceAtAllForUSD">
+                  {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} (Precio en CLP)
+                </span>
+                <ng-template #noPriceAtAllForUSD>
+                  <span class="price-not-available">Precio no disponible</span>
+                </ng-template>
+              </ng-template>
+            </p>
+
+            <p *ngSwitchDefault class="product-price">
+              <ng-container *ngIf="getCurrentPrice(); else priceCLPFallback">
+                {{ getCurrentPrice() | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                <span class="vat-included">IVA incluido.</span>
+              </ng-container>
+              <ng-template #priceCLPFallback>
+                <span *ngIf="product.precio.precio_dolares; else noPriceAtAllForCLP">
                   {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} (Precio en USD)
-              </span>
-              <ng-template #noPriceAtAllForCLP><span class="price-not-available">Precio no disponible</span></ng-template>
-            </ng-template>
-          </p>
-        </ng-container>
+                </span>
+                <ng-template #noPriceAtAllForCLP>
+                  <span class="price-not-available">Precio no disponible</span>
+                </ng-template>
+              </ng-template>
+            </p>
+          </ng-container>
 
-        <p *ngIf="currentSelectedCurrency === 'CLP' && product.precio.precio_dolares != null && product.precio.precio_actual != null" class="product-price-reference">
-          Aprox. {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
-        </p>
-        <p *ngIf="currentSelectedCurrency === 'USD' && product.precio.precio_actual != null && product.precio.precio_dolares != null" class="product-price-reference">
-          Aprox. {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} CLP
-        </p>
+          <p *ngIf="hasReferencePrice()" class="reference-price">
+            <ng-container [ngSwitch]="currentSelectedCurrency">
+              <span *ngSwitchCase="'USD'">
+                Aprox. {{ getReferencePrice() | currency:'CLP':'symbol-narrow':'1.0-0' }} CLP
+              </span>
+              <span *ngSwitchDefault>
+                <ng-container *ngIf="getReferencePrice()">
+                  Aprox. {{ getReferencePrice() | currency:'USD':'symbol':'1.2-2' }}
+                </ng-container>
+              </span>
+            </ng-container>
+          </p>
+        </div>
       </ng-container>
+
       <ng-template #noPriceAvailable>
         <p class="product-price price-not-available">Precio no disponible</p>
       </ng-template>
@@ -164,33 +260,87 @@
         <div class="products-carousel-inner-container" #featuredProductsInnerContainer>
           <div class="product-card-featured" *ngFor="let featuredProd of featuredProducts">
             <a [routerLink]="['/producto', featuredProd.codigo_producto]" (click)="(featuredProd.codigo_producto)" class="product-link">
+
+              <div *ngIf="hasPromotionFeatured(featuredProd)" class="discount-badge-featured">
+                -{{ getDiscountPercentageFeatured(featuredProd) }}%
+              </div>
+
               <div class="product-image-container">
                 <img [src]="featuredProd.imageUrl || 'assets/images/placeholder.png'" [alt]="featuredProd.nombre" class="product-image">
               </div>
+
               <div class="product-info">
                 <h3 class="product-name-featured">{{ featuredProd.nombre }}</h3>
+
                 <ng-container *ngIf="featuredProd.precio; else noFeaturedPrice">
-                  <ng-container [ngSwitch]="currentSelectedCurrency">
-                    <p *ngSwitchCase="'USD'" class="product-price-featured">
-                      <ng-container *ngIf="featuredProd.precio.precio_dolares != null">
-                        {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+
+                  <div *ngIf="hasPromotionFeatured(featuredProd)" class="featured-price-section with-promotion">
+                    <p class="original-price-featured">
+                      <ng-container [ngSwitch]="currentSelectedCurrency">
+                        <span *ngSwitchCase="'USD'">
+                          <ng-container *ngIf="getOriginalPriceFeatured(featuredProd)">
+                            {{ getOriginalPriceFeatured(featuredProd) | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                          <ng-container *ngIf="!getOriginalPriceFeatured(featuredProd) && featuredProd.precio.precio_actual">
+                            {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
+                        </span>
+                        <span *ngSwitchDefault>
+                          <ng-container *ngIf="getOriginalPriceFeatured(featuredProd)">
+                            {{ getOriginalPriceFeatured(featuredProd) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
+                          <ng-container *ngIf="!getOriginalPriceFeatured(featuredProd) && featuredProd.precio.precio_dolares">
+                            {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                        </span>
                       </ng-container>
-                      <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual != null">
-                        {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
-                      </ng-container>
-                       <ng-container *ngIf="featuredProd.precio.precio_dolares == null && featuredProd.precio.precio_actual == null">N/A</ng-container>
                     </p>
-                    <p *ngSwitchDefault class="product-price-featured">
-                       <ng-container *ngIf="featuredProd.precio.precio_actual != null">
-                        {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+
+                    <p class="promotional-price-featured">
+                      <ng-container [ngSwitch]="currentSelectedCurrency">
+                        <span *ngSwitchCase="'USD'">
+                          <ng-container *ngIf="getCurrentPriceFeatured(featuredProd)">
+                            {{ getCurrentPriceFeatured(featuredProd) | currency:'USD':'symbol':'1.2-2' }}
+                          </ng-container>
+                        </span>
+                        <span *ngSwitchDefault>
+                          <ng-container *ngIf="getCurrentPriceFeatured(featuredProd)">
+                            {{ getCurrentPriceFeatured(featuredProd) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                          </ng-container>
+                        </span>
                       </ng-container>
-                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares != null">
-                        {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
-                      </ng-container>
-                      <ng-container *ngIf="featuredProd.precio.precio_actual == null && featuredProd.precio.precio_dolares == null">N/A</ng-container>
                     </p>
-                  </ng-container>
+
+                    <p *ngIf="getPromotionNameFeatured(featuredProd)" class="promotion-name-featured">
+                      {{ getPromotionNameFeatured(featuredProd) }}
+                    </p>
+                  </div>
+
+                  <div *ngIf="!hasPromotionFeatured(featuredProd)" class="featured-price-section normal-price">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <p *ngSwitchCase="'USD'" class="product-price-featured">
+                        <ng-container *ngIf="getCurrentPriceFeatured(featuredProd)">
+                          {{ getCurrentPriceFeatured(featuredProd) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(featuredProd) && featuredProd.precio.precio_actual">
+                          {{ featuredProd.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(featuredProd) && !featuredProd.precio.precio_actual">N/A</ng-container>
+                      </p>
+
+                      <p *ngSwitchDefault class="product-price-featured">
+                        <ng-container *ngIf="getCurrentPriceFeatured(featuredProd)">
+                          {{ getCurrentPriceFeatured(featuredProd) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(featuredProd) && featuredProd.precio.precio_dolares">
+                          {{ featuredProd.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPriceFeatured(featuredProd) && !featuredProd.precio.precio_dolares">N/A</ng-container>
+                      </p>
+                    </ng-container>
+                  </div>
                 </ng-container>
+
                 <ng-template #noFeaturedPrice>
                   <p class="product-price-featured price-not-available">Precio no disponible</p>
                 </ng-template>

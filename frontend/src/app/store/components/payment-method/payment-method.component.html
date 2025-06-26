@@ -67,24 +67,60 @@
       <p class="summary-subtitle">Revisa los detalles.</p>
 
       <div class="summary-item">
-        <span class="label">Moneda:</span>
-        <span class="value currency-link">Peso Chileno</span>
+        <span class="label">Moneda seleccionada:</span>
+        <span class="value currency-link">
+          <ng-container *ngIf="currentSelectedCurrency === 'USD'">Dólar Americano (USD)</ng-container>
+          <ng-container *ngIf="currentSelectedCurrency === 'CLP'">Peso Chileno (CLP)</ng-container>
+        </span>
       </div>
       <div class="summary-item">
         <span class="label">Total por los items:</span>
-        <span class="value">{{ (subtotalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
+        <span class="value">
+          <ng-container [ngSwitch]="currentSelectedCurrency">
+            <ng-container *ngSwitchCase="'USD'">
+              {{ (getDisplaySubtotal() | async) | currency:'USD':'symbol':'1.2-2' }}
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+              {{ (getDisplaySubtotal() | async) | currency:'CLP':'symbol':'1.0-0' }}
+            </ng-container>
+          </ng-container>
+        </span>
       </div>
       <div class="summary-item">
         <span class="label">Costo de envío:</span>
         <span class="value">
             <ng-container *ngIf="(deliveryMode$ | async) === 'delivery'">
-              {{ (shippingCost$ | async) | currency:'CLP':'symbol':'1.0-0' }}
+              <ng-container [ngSwitch]="currentSelectedCurrency">
+                <ng-container *ngSwitchCase="'USD'">
+                  {{ (getDisplayShippingCost() | async) | currency:'USD':'symbol':'1.2-2' }}
+                </ng-container>
+                <ng-container *ngSwitchDefault>
+                  {{ (getDisplayShippingCost() | async) | currency:'CLP':'symbol':'1.0-0' }}
+                </ng-container>
+              </ng-container>
             </ng-container>
             <ng-container *ngIf="(deliveryMode$ | async) === 'pickup'">Sin costo</ng-container>
         </span>
       </div>
-      <div class="summary-item total-line"> <span class="label">Total compra:</span>
-        <span class="value total-amount">{{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
+      <div class="summary-item total-line">
+        <span class="label">Total compra:</span>
+        <span class="value total-amount">
+          <ng-container [ngSwitch]="currentSelectedCurrency">
+            <ng-container *ngSwitchCase="'USD'">
+              {{ (getDisplayTotal() | async) | currency:'USD':'symbol':'1.2-2' }}
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+              {{ (getDisplayTotal() | async) | currency:'CLP':'symbol':'1.0-0' }}
+            </ng-container>
+          </ng-container>
+        </span>
+      </div>
+
+      <div class="payment-currency-note" *ngIf="currentSelectedCurrency === 'USD'">
+        <small>
+          <strong>Nota:</strong> El pago se procesará en Pesos Chilenos (CLP) al tipo de cambio actual.
+          <br>Equivalente: {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}
+        </small>
       </div>
     </div>
     <div class="confirm-payment-section" *ngIf="(totalAmount$ | async)! > 0">
@@ -95,9 +131,25 @@
         [disabled]="!selectedPaymentMethod || isProcessingPayment">
         <span *ngIf="!selectedPaymentMethod && !isProcessingPayment">Selecciona un método</span>
         <span *ngIf="selectedPaymentMethod === 'webpay' && isProcessingPayment">Procesando...</span>
-        <span *ngIf="selectedPaymentMethod === 'webpay' && !isProcessingPayment">Pagar {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }} con Webpay</span>
+        <span *ngIf="selectedPaymentMethod === 'webpay' && !isProcessingPayment">
+          Pagar con Webpay
+          <ng-container *ngIf="currentSelectedCurrency === 'USD'">
+            ({{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }})
+          </ng-container>
+          <ng-container *ngIf="currentSelectedCurrency === 'CLP'">
+            {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}
+          </ng-container>
+        </span>
         <span *ngIf="selectedPaymentMethod === 'transferencia' && isProcessingPayment">Procesando...</span>
-        <span *ngIf="selectedPaymentMethod === 'transferencia' && !isProcessingPayment">Confirmar Pedido por {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}</span>
+        <span *ngIf="selectedPaymentMethod === 'transferencia' && !isProcessingPayment">
+          Confirmar Pedido por
+          <ng-container *ngIf="currentSelectedCurrency === 'USD'">
+            ({{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }})
+          </ng-container>
+          <ng-container *ngIf="currentSelectedCurrency === 'CLP'">
+            {{ (totalAmount$ | async) | currency:'CLP':'symbol':'1.0-0' }}
+          </ng-container>
+        </span>
       </button>
     </div>
   </div>

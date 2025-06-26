@@ -93,6 +93,10 @@
              *ngFor="let product of paginatedProducts"
              [class.out-of-stock]="currentSelectedBranch && getProductMaxStock(product.codigo_producto) === 0">
           <a [routerLink]="['/producto', product.codigo_producto]" class="product-link">
+            <div *ngIf="hasPromotion(product)" class="discount-badge-catalog">
+              -{{ getDiscountPercentage(product) }}%
+            </div>
+
             <div class="product-image-container">
               <img [src]="product.imageUrl || 'assets/images/placeholder.png'" [alt]="product.nombre" class="product-image">
             </div>
@@ -105,37 +109,80 @@
                 </span>
               </p>
               <p class="product-brand">Marca: {{ product.marca }}</p>
-              <p class="product-price">
-                <ng-container *ngIf="product.precio; else noPriceInCard">
-                  <ng-container [ngSwitch]="currentSelectedCurrency">
-                    <span *ngSwitchCase="'USD'">
-                      <ng-container *ngIf="product.precio.precio_dolares != null; else catPriceCLPOnlyUSD">
-                        {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
-                      </ng-container>
-                      <ng-template #catPriceCLPOnlyUSD>
-                        <span *ngIf="product.precio.precio_actual != null; else catNoPrice">
+
+              <ng-container *ngIf="product.precio; else noPriceInCard">
+
+                <div *ngIf="hasPromotion(product)" class="catalog-price-section with-promotion">
+                  <p class="original-price-catalog">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <span *ngSwitchCase="'USD'">
+                        <ng-container *ngIf="getOriginalPrice(product)">
+                          {{ getOriginalPrice(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getOriginalPrice(product) && product.precio.precio_actual">
+                          {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                      </span>
+                      <span *ngSwitchDefault>
+                        <ng-container *ngIf="getOriginalPrice(product)">
+                          {{ getOriginalPrice(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getOriginalPrice(product) && product.precio.precio_dolares">
+                          {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                      </span>
+                    </ng-container>
+                  </p>
+
+                  <p class="promotional-price-catalog">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <span *ngSwitchCase="'USD'">
+                        <ng-container *ngIf="getCurrentPrice(product)">
+                          {{ getCurrentPrice(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                      </span>
+                      <span *ngSwitchDefault>
+                        <ng-container *ngIf="getCurrentPrice(product)">
+                          {{ getCurrentPrice(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                      </span>
+                    </ng-container>
+                  </p>
+
+                  <p *ngIf="getPromotionName(product)" class="promotion-name-catalog">
+                    {{ getPromotionName(product) }}
+                  </p>
+                </div>
+
+                <div *ngIf="!hasPromotion(product)" class="catalog-price-section normal-price">
+                  <p class="product-price">
+                    <ng-container [ngSwitch]="currentSelectedCurrency">
+                      <span *ngSwitchCase="'USD'">
+                        <ng-container *ngIf="getCurrentPrice(product)">
+                          {{ getCurrentPrice(product) | currency:'USD':'symbol':'1.2-2' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPrice(product) && product.precio.precio_actual">
                           {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }} <small>(CLP)</small>
-                        </span>
-                        <ng-template #catNoPrice>N/A</ng-template>
-                      </ng-template>
-                    </span>
-                    <span *ngSwitchDefault>
-                      <ng-container *ngIf="product.precio.precio_actual != null; else catPriceUSDOnlyCLP">
-                        {{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}
-                      </ng-container>
-                      <ng-template #catPriceUSDOnlyCLP>
-                        <span *ngIf="product.precio.precio_dolares != null; else catNoPrice">
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPrice(product) && !product.precio.precio_actual">N/A</ng-container>
+                      </span>
+                      <span *ngSwitchDefault>
+                        <ng-container *ngIf="getCurrentPrice(product)">
+                          {{ getCurrentPrice(product) | currency:'CLP':'symbol-narrow':'1.0-0' }}
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPrice(product) && product.precio.precio_dolares">
                           {{ product.precio.precio_dolares | currency:'USD':'symbol':'1.2-2' }} <small>(USD)</small>
-                        </span>
-                        <ng-template #catNoPrice>N/A</ng-template>
-                      </ng-template>
-                    </span>
-                  </ng-container>
-                </ng-container>
-                <ng-template #noPriceInCard>
-                  <span class="current-price">Precio no disponible</span>
-                </ng-template>
-              </p>
+                        </ng-container>
+                        <ng-container *ngIf="!getCurrentPrice(product) && !product.precio.precio_dolares">N/A</ng-container>
+                      </span>
+                    </ng-container>
+                  </p>
+                </div>
+              </ng-container>
+
+              <ng-template #noPriceInCard>
+                <p class="product-price price-not-available">Precio no disponible</p>
+              </ng-template>
             </div>
           </a>
           <div class="add-to-cart-container">

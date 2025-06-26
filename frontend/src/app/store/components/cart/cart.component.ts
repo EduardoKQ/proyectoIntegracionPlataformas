@@ -212,4 +212,22 @@ export class CartComponent implements OnInit, OnDestroy {
     if (currentMode === 'delivery' && currentShippingCost === null && !this.isCalculatingShipping) { alert('Verifica la dirección para calcular el envío.'); return; }
     this.router.navigate(['/payment-method']);
   }
+
+  getDiscountPercentage(item: CartItem): number {
+    if (!item.has_promotion || !item.promotion_info) {
+      return 0;
+    }
+    return Math.round(item.promotion_info.discount_percentage);
+  }
+
+  hasPromotion(item: CartItem): boolean {
+    return item.has_promotion || false;
+  }
+
+  getPromotionName(item: CartItem): string {
+    if (!item.has_promotion || !item.promotion_info) {
+      return '';
+    }
+    return item.promotion_info.promotion_name;
+  }
 }

@@ -223,13 +223,6 @@ h1 {
       min-height: calc(1.4em * 2);
     }
 
-    &.price {
-      color: $accent-color;
-      font-size: $font-size-price;
-      font-weight: 700;
-      margin-top: auto;
-      padding-top: ($spacing * 0.5);
-    }
 
     strong {
       color: $secondary-color;
@@ -241,6 +234,49 @@ h1 {
       font-size: calc(#{$font-size-text} - 1.5px);
       display: block;
       margin-top: ($spacing * 0.5);
+    }
+  }
+}
+
+.price-container {
+  margin-top: 8px;
+
+  .price-with-discount {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .price-original {
+      color: #666;
+      font-size: 0.9rem;
+      text-decoration: line-through;
+      margin: 0;
+    }
+
+    .price-discounted {
+      color: #e74c3c;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .discount-badge {
+      background-color: #e74c3c;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+
+  .price-normal {
+    .price {
+      color: #e74c3c;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
     }
   }
 }
@@ -318,10 +354,6 @@ h1 {
   .product-info {
     h3 {
       font-size: $font-size-title - 0.1rem;
-    }
-    p.price {
-      text-align: right;
-      margin-top: $spacing * 0.5;
     }
   }
 

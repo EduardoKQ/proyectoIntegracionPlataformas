@@ -343,6 +343,20 @@ $color-fondo-detalle-banco: #f0f2f5;
   }
 }
 
+.payment-currency-note {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+
+  small {
+    color: #856404;
+    line-height: 1.4;
+    display: block;
+  }
+}
+
 @media (max-width: 850px) {
   .checkout-page-container {
     flex-direction: column;

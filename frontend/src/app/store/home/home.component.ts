@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, Renderer2, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subscription, interval, Subject, fromEvent } from 'rxjs';
-import { takeUntil, debounceTime } from 'rxjs/operators';
+import { Subscription, interval, Subject, fromEvent, forkJoin, of, Observable } from 'rxjs';
+import { takeUntil, debounceTime, switchMap, map, catchError } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { ProductService } from '../../services/product.service';
 import { ApiProduct } from '../../services/product.interfaces';
@@ -11,12 +11,30 @@ import { CartService, CartItem, ProductForCart } from '../../services/cart.servi
 import { Branch } from '../../services/branch.service';
 import { SelectedBranchService } from '../../services/selected-branch.service';
 import { InventoryService } from '../../services/inventory.service';
+import { PromotionsService } from '../../services/promotions.service';
+import { Promotion } from '../../services/promotions.interfaces';
 import { BranchSelectorModalComponent } from '../../features/shared/components/branch-selector-modal/branch-selector-modal.component';
 
 interface CarouselSlideItem {
   imageSrc: string;
   imageAlt: string;
   routePath: string;
+}
+
+interface ProductWithPromotion extends ApiProduct {
+  has_promotion: boolean;
+  promotion_info?: {
+    promotion_id: number;
+    promotion_code: string;
+    promotion_name: string;
+    original_price: number;
+    promotional_price: number;
+    discount_amount: number;
+    discount_percentage: number;
+    discount_type: 'percentage' | 'fixed_amount';
+    original_price_usd?: number;
+    promotional_price_usd?: number;
+  };
 }
 
 @Component({
@@ -39,6 +57,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private cartService = inject(CartService);
   private selectedBranchService = inject(SelectedBranchService);
   private inventoryService = inject(InventoryService);
+  private promotionsService = inject(PromotionsService);
 
   slides: CarouselSlideItem[] = [
     { imageSrc: 'assets/image-store/ban.png', imageAlt: 'imagen 1', routePath: '/catalogo' },
@@ -60,14 +79,19 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     { nombre: 'Medicion', imagen: 'assets/image-store/cat4.png', ruta: 'cat-equ-med' }
   ];
 
-  featuredProducts: ApiProduct[] = [];
+  featuredProducts: ProductWithPromotion[] = [];
+  promotionalProducts: ProductWithPromotion[] = [];
   currentFeaturedProductsSlideIndex = 0;
+  currentPromotionalProductsSlideIndex = 0;
   private featuredProductsIntervalId?: Subscription;
+  private promotionalProductsIntervalId?: Subscription;
   productsPerSlide = 5;
   private destroy$ = new Subject<void>();
 
   @ViewChild('productsCarouselContainer') featuredWrapperRef!: ElementRef<HTMLDivElement>;
   @ViewChild('featuredProductsInnerContainer') featuredInnerContainerRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('promotionalProductsCarouselContainer') promotionalWrapperRef!: ElementRef<HTMLDivElement>;
+  @ViewChild('promotionalProductsInnerContainer') promotionalInnerContainerRef!: ElementRef<HTMLDivElement>;
 
   private windowResizeSubscription?: Subscription;
   public currentSelectedCurrency: SupportedCurrency = 'CLP';
@@ -78,7 +102,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   currentSelectedBranch: Branch | null = null;
   private selectedBranchSubscription!: Subscription;
   showBranchModal = false;
-  private productToAddAfterBranchSelection: ApiProduct | null = null;
+  private productToAddAfterBranchSelection: ProductWithPromotion | null = null;
   productStockMap: Map<string, number> = new Map();
 
   constructor() {}
@@ -86,6 +110,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.startAutoAdvance();
     this.loadProductsForFeaturedCarousel();
+    this.loadPromotionalProducts();
 
     this.currencySubscription = this.currencyService.selectedCurrency$
       .pipe(takeUntil(this.destroy$))
@@ -137,6 +162,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.clearAutoAdvance();
     this.featuredProductsIntervalId?.unsubscribe();
+    this.promotionalProductsIntervalId?.unsubscribe();
     this.windowResizeSubscription?.unsubscribe();
     this.currencySubscription?.unsubscribe();
     this.cartSubscription?.unsubscribe();
@@ -146,18 +172,32 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateProductStockForFeaturedView(): void {
-    if (!this.currentSelectedBranch || this.featuredProducts.length === 0) {
+    if (!this.currentSelectedBranch) {
       return;
     }
     const branchCode = this.currentSelectedBranch.branch_code;
+
     this.featuredProducts.forEach(p => {
       if (!this.productStockMap.has(p.codigo_producto)) {
         this.inventoryService.getProductStockInBranch(branchCode, p.codigo_producto)
           .subscribe(
-            item => { this.productStockMap.set(p.codigo_producto, item.quantity); },
+            item => { this.productStockMap.set(p.codigo_producto, item ? item.quantity : 0); },
             err => {
               this.productStockMap.set(p.codigo_producto, 0);
               console.error(`Error obteniendo stock para ${p.codigo_producto} en ${branchCode}`, err);
+            }
+          );
+      }
+    });
+
+    this.promotionalProducts.forEach(p => {
+      if (!this.productStockMap.has(p.codigo_producto)) {
+        this.inventoryService.getProductStockInBranch(branchCode, p.codigo_producto)
+          .subscribe(
+            item => { this.productStockMap.set(p.codigo_producto, item ? item.quantity : 0); },
+            err => {
+              this.productStockMap.set(p.codigo_producto, 0);
+              console.error(`Error obteniendo stock para producto promocional ${p.codigo_producto} en ${branchCode}`, err);
             }
           );
       }
@@ -174,6 +214,28 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     const maxStock = this.productStockMap.get(productCode);
     if (maxStock === undefined) return false;
     return currentInCart >= maxStock;
+  }
+  isProductDisabled(productCode: string): boolean {
+    if (!this.authService.isLoggedIn()) {
+      return false;
+    }
+
+    if (!this.currentSelectedBranch) {
+      return false;
+    }
+
+    const stockValue = this.productStockMap.get(productCode);
+    if (stockValue === undefined) return false;
+
+    return stockValue === 0;
+  }
+
+  shouldShowOutOfStock(productCode: string): boolean {
+    if (!this.authService.isLoggedIn()) return false;
+    if (!this.currentSelectedBranch) return false;
+
+    const stockValue = this.productStockMap.get(productCode);
+    return stockValue === 0;
   }
 
   handleBranchSelectedFromModal(selectedBranch: Branch): void {
@@ -199,7 +261,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     return item ? item.quantity : 0;
   }
 
-  addToCartFromHome(product: ApiProduct): void {
+  addToCartFromHome(product: ProductWithPromotion): void {
     if (!this.authService.isLoggedIn()) {
       this.cartService.openLoginModal();
       return;
@@ -213,7 +275,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     this.proceedToAddToCartHome(product, this.currentSelectedBranch);
   }
 
-  private proceedToAddToCartHome(product: ApiProduct, branch: Branch): void {
+  private proceedToAddToCartHome(product: ProductWithPromotion, branch: Branch): void {
     const quantityDesired = 1;
     this.inventoryService.getProductStockInBranch(branch.branch_code, product.codigo_producto)
       .subscribe({
@@ -222,8 +284,20 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
           const quantityAlreadyInCart = this.getQuantityInCart(product.codigo_producto);
           const totalQuantityAfterAdd = quantityAlreadyInCart + quantityDesired;
           if (inventoryItem && inventoryItem.quantity >= totalQuantityAfterAdd) {
+            const productForCart: ProductForCart = {
+              codigo_producto: product.codigo_producto,
+              nombre: product.nombre,
+              precio: {
+                precio_actual: product.precio.precio_actual,
+                precio_dolares: product.precio.precio_dolares
+              },
+              imageUrl: product.imageUrl,
+              has_promotion: product.has_promotion,
+              promotion_info: product.promotion_info
+            };
+
             this.cartService.addToCart(
-              product as ProductForCart,
+              productForCart,
               quantityDesired,
               branch.branch_code,
               branch.name
@@ -341,39 +415,56 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   loadProductsForFeaturedCarousel(): void {
     this.productService.getProducts()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(products => {
-        if (products && products.length > 0) {
-          const totalFeatured = Math.min(products.length, 15);
-          this.featuredProducts = this.getRandomProducts(products, totalFeatured);
+      .pipe(
+        switchMap(products => {
+          if (products && products.length > 0) {
+            const totalFeatured = Math.min(products.length, 15);
+            const randomProducts = this.getRandomProducts(products, totalFeatured);
+            const processedProducts = randomProducts.map(product =>
+              this.processProductWithPromotions(product)
+            );
+
+            return forkJoin(processedProducts);
+          } else {
+            return of([]);
+          }
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (productsWithPromotions) => {
+          this.featuredProducts = productsWithPromotions;
           this.productsPerSlide = this.calculateProductsPerScreen();
           this.updateProductStockForFeaturedView();
-        } else {
+
+          Promise.resolve().then(() => {
+            if (this.featuredProducts.length > 0 && this.featuredWrapperRef && this.featuredInnerContainerRef) {
+              this.currentFeaturedProductsSlideIndex = 0;
+              this.updateFeaturedCarouselPosition(false);
+              this.startFeaturedProductsAutoplay();
+            } else if (this.featuredProductsIntervalId) {
+              this.featuredProductsIntervalId.unsubscribe();
+              this.featuredProductsIntervalId = undefined;
+              if (this.featuredInnerContainerRef?.nativeElement) {
+                this.renderer.setStyle(this.featuredInnerContainerRef.nativeElement, 'transform', 'translateX(0px)');
+              }
+            }
+          });
+        },
+        error: (error) => {
+          console.error('Error loading featured products with promotions:', error);
           this.featuredProducts = [];
         }
-        Promise.resolve().then(() => {
-          if (this.featuredProducts.length > 0 && this.featuredWrapperRef && this.featuredInnerContainerRef) {
-            this.currentFeaturedProductsSlideIndex = 0;
-            this.updateFeaturedCarouselPosition(false);
-            this.startFeaturedProductsAutoplay();
-          } else if (this.featuredProductsIntervalId) {
-            this.featuredProductsIntervalId.unsubscribe();
-            this.featuredProductsIntervalId = undefined;
-            if (this.featuredInnerContainerRef?.nativeElement) {
-              this.renderer.setStyle(this.featuredInnerContainerRef.nativeElement, 'transform', 'translateX(0px)');
-            }
-          }
-        });
       });
   }
 
-  getRandomProducts(products: ApiProduct[], count: number): ApiProduct[] {
+  getRandomProducts<T extends ApiProduct | ProductWithPromotion>(products: T[], count: number): T[] {
     const shuffled = [...products].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
   }
 
-  getFeaturedProductSlides(): ApiProduct[][] {
-    const slidesArray: ApiProduct[][] = [];
+  getFeaturedProductSlides(): ProductWithPromotion[][] {
+    const slidesArray: ProductWithPromotion[][] = [];
     if (!this.featuredProducts || this.featuredProducts.length === 0 || this.productsPerSlide <= 0) {
       return slidesArray;
     }
@@ -474,11 +565,292 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   logout(): void {
+    this.cartItems = [];
+    this.currentSelectedBranch = null;
+    this.productStockMap.clear();
+    this.featuredProducts = [];
+    this.promotionalProducts = [];
     this.authService.logout();
-    this.router.navigate(['/login']);
+    localStorage.clear();
+    this.router.navigate(['/login']).then(() => {
+      window.location.reload();
+    });
   }
 
   navigateToCarouselItem(path: string): void {
     this.router.navigate([path]);
+  }
+
+  private processProductWithPromotions(product: ApiProduct): Observable<ProductWithPromotion> {
+    return this.promotionsService.getPromotionsWithDetails().pipe(
+      map(activePromotions => {
+        const promotionsByProduct = new Map<string, Promotion>();
+        const promotionsByCategory = new Map<string, Promotion>();
+        const promotionsBySubcategory = new Map<string, Promotion>();
+
+        if (Array.isArray(activePromotions)) {
+          for (const promotion of activePromotions) {
+            if (!this.promotionsService.isPromotionActive(promotion)) {
+              continue;
+            }
+
+            if (promotion.products && Array.isArray(promotion.products)) {
+              for (const promotionProduct of promotion.products) {
+                if (promotionProduct.product_code) {
+                  promotionsByProduct.set(promotionProduct.product_code, promotion);
+                }
+              }
+            }
+            if (promotion.categories && Array.isArray(promotion.categories)) {
+              for (const category of promotion.categories) {
+                if (category.name) {
+                  promotionsByCategory.set(category.name, promotion);
+                }
+              }
+            }
+            if (promotion.subcategories && Array.isArray(promotion.subcategories)) {
+              for (const subcategory of promotion.subcategories) {
+                if (subcategory.name) {
+                  promotionsBySubcategory.set(subcategory.name, promotion);
+                }
+              }
+            }
+          }
+        }
+
+        let applicablePromotion: Promotion | undefined;
+        if (promotionsByProduct.has(product.codigo_producto)) {
+          applicablePromotion = promotionsByProduct.get(product.codigo_producto);
+        }
+        else if (product.subcategoria && promotionsBySubcategory.has(product.subcategoria)) {
+          applicablePromotion = promotionsBySubcategory.get(product.subcategoria);
+        }
+        else if (product.categoria && promotionsByCategory.has(product.categoria)) {
+          applicablePromotion = promotionsByCategory.get(product.categoria);
+        }
+
+        let productWithPromotion: ProductWithPromotion = {
+          ...product,
+          has_promotion: false
+        };
+
+        if (applicablePromotion) {
+          const originalPrice = product.precio.precio_actual;
+          const promotionalPrice = this.promotionsService.calculateDiscountedPrice(
+            originalPrice,
+            applicablePromotion.discount_type,
+            applicablePromotion.discount_value
+          );
+          const discountPercentage = this.promotionsService.calculateDiscountPercentage(
+            originalPrice,
+            promotionalPrice
+          );
+
+          let originalPriceUsd: number | undefined;
+          let promotionalPriceUsd: number | undefined;
+
+          if (product.precio.precio_dolares != null) {
+            originalPriceUsd = product.precio.precio_dolares;
+            promotionalPriceUsd = this.promotionsService.calculateDiscountedPrice(
+              originalPriceUsd,
+              applicablePromotion.discount_type,
+              applicablePromotion.discount_value
+            );
+          }
+
+          productWithPromotion.has_promotion = true;
+          productWithPromotion.promotion_info = {
+            promotion_id: applicablePromotion.id,
+            promotion_code: applicablePromotion.promotion_code,
+            promotion_name: applicablePromotion.name,
+            original_price: originalPrice,
+            promotional_price: promotionalPrice,
+            discount_amount: originalPrice - promotionalPrice,
+            discount_percentage: discountPercentage,
+            discount_type: applicablePromotion.discount_type,
+            original_price_usd: originalPriceUsd,
+            promotional_price_usd: promotionalPriceUsd
+          };
+        }
+
+        return productWithPromotion;
+      }),
+      catchError(error => {
+        console.error('Error al procesar promociones:', error);
+        return of({
+          ...product,
+          has_promotion: false
+        } as ProductWithPromotion);
+      })
+    );
+  }
+
+  loadPromotionalProducts(): void {
+    this.productService.getProducts()
+      .pipe(
+        switchMap(products => {
+          if (products && products.length > 0) {
+            const processedProducts = products.map(product =>
+              this.processProductWithPromotions(product)
+            );
+
+            return forkJoin(processedProducts);
+          } else {
+            return of([]);
+          }
+        }),
+        map(productsWithPromotions => {
+          return productsWithPromotions.filter(product => product.has_promotion);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (promotionalProducts) => {
+          this.promotionalProducts = this.getRandomProducts(promotionalProducts, 12);
+
+          Promise.resolve().then(() => {
+            if (this.promotionalProducts.length > 0 && this.promotionalWrapperRef && this.promotionalInnerContainerRef) {
+              this.currentPromotionalProductsSlideIndex = 0;
+              this.updatePromotionalCarouselPosition(false);
+              this.startPromotionalProductsAutoplay();
+            }
+          });
+        },
+        error: (error) => {
+          console.error('Error loading promotional products:', error);
+          this.promotionalProducts = [];
+        }
+      });
+  }
+
+  hasPromotionFeatured(product: ProductWithPromotion): boolean {
+    return product.has_promotion || false;
+  }
+
+  getCurrentPriceFeatured(product: ProductWithPromotion): number | null {
+    if (!product?.precio) return null;
+
+    if (this.hasPromotionFeatured(product) && product.promotion_info) {
+      if (this.currentSelectedCurrency === 'USD') {
+        return product.promotion_info.promotional_price_usd || product.promotion_info.promotional_price;
+      } else {
+        return product.promotion_info.promotional_price;
+      }
+    }
+
+    if (this.currentSelectedCurrency === 'USD') {
+      return product.precio.precio_dolares || null;
+    } else {
+      return product.precio.precio_actual;
+    }
+  }
+
+  getOriginalPriceFeatured(product: ProductWithPromotion): number | null {
+    if (!product?.precio || !this.hasPromotionFeatured(product) || !product.promotion_info) {
+      return null;
+    }
+
+    if (this.currentSelectedCurrency === 'USD') {
+      return product.promotion_info.original_price_usd || product.promotion_info.original_price;
+    } else {
+      return product.promotion_info.original_price;
+    }
+  }
+
+  getDiscountPercentageFeatured(product: ProductWithPromotion): number {
+    if (!this.hasPromotionFeatured(product) || !product.promotion_info) {
+      return 0;
+    }
+    return Math.round(product.promotion_info.discount_percentage);
+  }
+
+  getPromotionNameFeatured(product: ProductWithPromotion): string {
+    if (!this.hasPromotionFeatured(product) || !product.promotion_info) {
+      return '';
+    }
+    return product.promotion_info.promotion_name;
+  }
+
+  getPromotionalProductSlides(): ProductWithPromotion[][] {
+    const slidesArray: ProductWithPromotion[][] = [];
+    if (!this.promotionalProducts || this.promotionalProducts.length === 0 || this.productsPerSlide <= 0) {
+      return slidesArray;
+    }
+    for (let i = 0; i < this.promotionalProducts.length; i += this.productsPerSlide) {
+      slidesArray.push(this.promotionalProducts.slice(i, i + this.productsPerSlide));
+    }
+    return slidesArray;
+  }
+
+  updatePromotionalCarouselPosition(resetAutoplay: boolean = true): void {
+    if (!this.promotionalInnerContainerRef?.nativeElement || !this.promotionalWrapperRef?.nativeElement) {
+      return;
+    }
+    const totalSlides = this.getPromotionalProductSlides().length;
+    if (totalSlides === 0) {
+      this.currentPromotionalProductsSlideIndex = 0;
+    } else if (this.currentPromotionalProductsSlideIndex >= totalSlides) {
+      this.currentPromotionalProductsSlideIndex = totalSlides - 1;
+    } else if (this.currentPromotionalProductsSlideIndex < 0) {
+      this.currentPromotionalProductsSlideIndex = 0;
+    }
+
+    const cardElement = this.promotionalInnerContainerRef.nativeElement.querySelector('.product-card-promotional');
+    if (!cardElement) {
+      console.warn('Promotional product card element not found for width calculation.');
+      return;
+    }
+    const cardWidth = (cardElement as HTMLElement).offsetWidth;
+    const gap = parseFloat(getComputedStyle(this.promotionalInnerContainerRef.nativeElement).gap || '0');
+    const totalCardWidthWithGap = cardWidth + gap;
+    const productsPerScreen = this.calculateProductsPerScreen();
+    if (productsPerScreen <= 0) return;
+
+    const translationDistance = this.currentPromotionalProductsSlideIndex * productsPerScreen * totalCardWidthWithGap;
+    this.renderer.setStyle(this.promotionalInnerContainerRef.nativeElement, 'transform', `translateX(-${translationDistance}px)`);
+
+    if (resetAutoplay) {
+      this.resetPromotionalProductsInterval();
+    }
+  }
+
+  startPromotionalProductsAutoplay(): void {
+    if (this.promotionalProductsIntervalId) {
+      this.promotionalProductsIntervalId.unsubscribe();
+    }
+    const totalSlides = this.getPromotionalProductSlides().length;
+    if (totalSlides > 1) {
+      this.promotionalProductsIntervalId = interval(7000)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.nextPromotionalProductsSlide(true);
+        });
+    }
+  }
+
+  nextPromotionalProductsSlide(isAuto: boolean = false): void {
+    const totalSlides = this.getPromotionalProductSlides().length;
+    if (totalSlides <= 1) return;
+    this.currentPromotionalProductsSlideIndex = (this.currentPromotionalProductsSlideIndex + 1) % totalSlides;
+    this.updatePromotionalCarouselPosition(!isAuto);
+  }
+
+  prevPromotionalProductsSlide(isAuto: boolean = false): void {
+    const totalSlides = this.getPromotionalProductSlides().length;
+    if (totalSlides <= 1) return;
+    this.currentPromotionalProductsSlideIndex = (this.currentPromotionalProductsSlideIndex - 1 + totalSlides) % totalSlides;
+    this.updatePromotionalCarouselPosition(!isAuto);
+  }
+
+  goToPromotionalProductsSlide(index: number): void {
+    const totalSlides = this.getPromotionalProductSlides().length;
+    if (index >= 0 && index < totalSlides) {
+      this.currentPromotionalProductsSlideIndex = index;
+      this.updatePromotionalCarouselPosition();
+    }
+  }
+
+  resetPromotionalProductsInterval(): void {
+    this.startPromotionalProductsAutoplay();
   }
 }

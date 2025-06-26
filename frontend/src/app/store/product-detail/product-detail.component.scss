@@ -314,6 +314,21 @@
     padding: 0 8px;
     text-align: left;
     height: auto;
+    position: relative;
+
+    .discount-badge-featured {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: #e53935;
+      color: white;
+      font-size: 0.8em;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 12px;
+      z-index: 5;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
 
     .product-link {
       display: flex;
@@ -373,11 +388,53 @@
       min-height: 2.2em;
     }
 
+    .featured-price-section {
+      &.with-promotion {
+        .original-price-featured {
+          font-size: 0.85em;
+          color: #888;
+          text-decoration: line-through;
+          margin: 0 0 4px 0;
+          font-weight: normal;
+        }
+
+        .promotional-price-featured {
+          font-size: 1em;
+          font-weight: bold;
+          color: #e53935;
+          margin: 0 0 4px 0;
+        }
+
+        .promotion-name-featured {
+          font-size: 0.75em;
+          color: #4caf50;
+          font-weight: 600;
+          margin: 0;
+          text-transform: uppercase;
+        }
+      }
+
+      &.normal-price {
+        .product-price-featured {
+          font-size: 1em;
+          font-weight: bold;
+          color: #F57C00;
+          margin: 0 0 8px 0;
+        }
+      }
+    }
+
     .product-price-featured {
       font-size: 1em;
       font-weight: bold;
       color: #F57C00;
       margin: 0 0 8px 0;
+
+      &.price-not-available {
+        color: #888;
+        font-style: italic;
+        font-weight: normal;
+      }
     }
   }
 
@@ -435,6 +492,134 @@
 
       &.active {
         background-color: #F57C00;
+      }
+    }
+  }
+}
+
+.price-section {
+  margin: 20px 0;
+
+  &.with-promotion {
+    .promotion-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+
+      .discount-percentage {
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .promotion-name {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+    }
+
+    .price-container {
+      .original-price {
+        font-size: 1.1rem;
+        color: #888;
+        text-decoration: line-through;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+
+      .promotional-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #e74c3c;
+        margin-bottom: 10px;
+        line-height: 1.2;
+
+        .vat-included {
+          font-size: 0.8rem;
+          color: #666;
+          font-weight: normal;
+          display: block;
+          margin-top: 2px;
+        }
+      }
+
+      .savings-amount {
+        font-size: 1.1rem;
+        color: #27ae60;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+    }
+
+    .reference-price {
+      font-size: 0.9rem;
+      color: #666;
+      font-style: italic;
+      margin-top: 8px;
+    }
+  }
+
+  &.normal-price {
+    .product-price {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.2;
+
+      .vat-included {
+        font-size: 0.8rem;
+        color: #666;
+        font-weight: normal;
+        display: block;
+        margin-top: 2px;
+      }
+
+      .price-not-available {
+        color: #888;
+        font-size: 1.2rem;
+        font-weight: normal;
+      }
+    }
+
+    .reference-price {
+      font-size: 0.9rem;
+      color: #666;
+      font-style: italic;
+      margin-top: 8px;
+    }
+  }
+}
+
+.price-not-available {
+  color: #888 !important;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .price-section {
+    &.with-promotion {
+      .promotion-badge {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+      }
+
+      .price-container {
+        .promotional-price {
+          font-size: 1.6rem;
+        }
+      }
+    }
+
+    &.normal-price {
+      .product-price {
+        font-size: 1.6rem;
       }
     }
   }

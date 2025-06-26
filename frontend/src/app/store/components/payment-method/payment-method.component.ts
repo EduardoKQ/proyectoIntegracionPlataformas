@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, LOCALE_ID } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, Observable, map } from 'rxjs';
 import { CartService, CartItem } from '../../../services/cart.service';
@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { DeliveryAddress } from '../../../features/shared/components/address-modal/address-modal.component';
 import { Branch } from '../../../services/branch.service';
 import { OrderService, OrderPayload, OrderItemPayload, OrderResponse } from '../../../services/order.service';
+import { CurrencyService, SupportedCurrency } from '../../../services/Currency.Service';
 
 export interface BankDetailsObject {
   bankName: string;
@@ -22,18 +23,24 @@ export interface BankDetailsObject {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './payment-method.component.html',
-  styleUrls: ['./payment-method.component.scss']
+  styleUrls: ['./payment-method.component.scss'],
+  providers: [{ provide: LOCALE_ID, useValue: 'es-CL' }]
 })
 export class PaymentMethodComponent implements OnInit, OnDestroy {
   public cartService = inject(CartService);
   private webpayService = inject(WebpayService);
   private orderService = inject(OrderService);
+  private currencyService = inject(CurrencyService);
   private router = inject(Router);
 
   subtotalAmount$: Observable<number>;
   shippingCost$: Observable<number | null>;
   totalAmount$: Observable<number>;
   deliveryMode$: Observable<'pickup' | 'delivery'>;
+  cartItems$: Observable<CartItem[]>;
+
+  currentSelectedCurrency: SupportedCurrency = 'CLP';
+  selectedLocale: string = 'es-CL';
 
   selectedPaymentMethod: 'webpay' | 'transferencia' | null = null;
   isProcessingPayment: boolean = false;
@@ -47,6 +54,7 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     this.shippingCost$ = this.cartService.shippingCost$;
     this.totalAmount$ = this.cartService.getGrandTotal();
     this.deliveryMode$ = this.cartService.deliveryMode$;
+    this.cartItems$ = this.cartService.cartItems$;
   }
 
   ngOnInit(): void {
@@ -66,6 +74,13 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
       this.router.navigate(['/cart']);
       return;
     }
+
+    this.subscriptions.add(
+      this.currencyService.selectedCurrency$.subscribe(currency => {
+        this.currentSelectedCurrency = currency;
+        this.selectedLocale = currency === 'USD' ? 'en-US' : 'es-CL';
+      })
+    );
   }
 
   selectPaymentMethod(method: 'webpay' | 'transferencia'): void {
@@ -85,11 +100,13 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     this.isProcessingPayment = true;
     this.paymentError = null;
 
-    const subtotal = this.cartService.getCurrentProductSubtotal();
-    const shippingCost = this.cartService.getCurrentShippingCost();
-    const amountToPay = subtotal + (shippingCost || 0);
+    const subtotalCLP = this.getSubtotalInCLP();
+    const shippingCostCLP = this.getShippingCostInCLP();
+    const totalAmountCLP = subtotalCLP + shippingCostCLP;
 
-    if (amountToPay <= 0) {
+    const amountToPayWebpay = Math.round(totalAmountCLP);
+
+    if (amountToPayWebpay <= 0) {
       this.paymentError = "El monto a pagar debe ser mayor a cero.";
       this.isProcessingPayment = false;
       return;
@@ -109,32 +126,30 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
     const orderItemsPayload: OrderItemPayload[] = cartItems.map(item => ({
       product_code: item.product_code,
       quantity: item.quantity,
-      // not needed
-      // transaction_price: item.price
+      has_promotion: item.has_promotion,
+      promotion_info: item.promotion_info
     }));
 
     const orderPayload: OrderPayload = {
       payment_type: this.selectedPaymentMethod === 'webpay' ? 'pasarela de pago' : 'transferencia bancaria',
       retrieval_type: deliveryMode === 'delivery' ? 'envio a domicilio' : 'retiro en tienda',
       shipping_address: deliveryAddress ? deliveryAddress.fullAddress : null,
-      shipping_cost: shippingCost? shippingCost : 0,
+      shipping_cost: shippingCostCLP,
       branch_code: currentBranch.branch_code,
       items: orderItemsPayload
     };
 
     this.orderService.createOrder(orderPayload).subscribe({
       next: (createdOrder: OrderResponse) => {
-        console.log('Orden creada exitosamente en backend:', createdOrder);
         const buyOrderForPayment = createdOrder.order_id ? `${createdOrder.order_id}` : this.generateFrontendOrderNumber();
         this.saveOrderToLocalStorage(buyOrderForPayment);
         if (this.selectedPaymentMethod === 'webpay') {
-          this.proceedToWebpay(buyOrderForPayment, amountToPay);
+          this.proceedToWebpay(buyOrderForPayment, amountToPayWebpay);
         } else if (this.selectedPaymentMethod === 'transferencia') {
-          this.handleTransferPayment(buyOrderForPayment, amountToPay, createdOrder);
+          this.handleTransferPayment(buyOrderForPayment, amountToPayWebpay, createdOrder);
         }
       },
       error: (err) => {
-        console.error('Error al crear la orden en el backend:', err);
         this.paymentError = err.error?.error || err.error?.errors?.detail || err.message || "No se pudo crear tu pedido en el sistema. Intenta nuevamente.";
         this.isProcessingPayment = false;
       }
@@ -142,7 +157,6 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
   }
   saveOrderToLocalStorage(buyOrderForPayment: string) {
     localStorage.setItem('webpay_order_id_pending', buyOrderForPayment);
-    console.log('Orden guardada en localStorage con ID:', buyOrderForPayment);
   }
 
   private handleTransferPayment(orderNumber: string, amountToPay: number, createdOrder: OrderResponse): void {
@@ -173,7 +187,6 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
         this.isProcessingPayment = false;
         this.paymentError = error.message || 'Error de comunicación con Webpay.';
         localStorage.removeItem('webpay_order_id_pending');
-        console.error('Error Webpay Init:', error);
       }
     );
   }
@@ -197,5 +210,29 @@ export class PaymentMethodComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+  }
+
+  private getSubtotalInCLP(): number {
+    const cartItems = this.cartService.getCurrentCartItems();
+    return cartItems.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+    }, 0);
+  }
+
+  private getShippingCostInCLP(): number {
+    const shippingCost = this.cartService.getCurrentShippingCost();
+    return shippingCost || 0;
+  }
+
+  getDisplaySubtotal(): Observable<number> {
+    return this.cartService.getProductSubtotal();
+  }
+
+  getDisplayShippingCost(): Observable<number | null> {
+    return this.cartService.shippingCost$;
+  }
+
+  getDisplayTotal(): Observable<number> {
+    return this.cartService.getGrandTotal();
   }
 }

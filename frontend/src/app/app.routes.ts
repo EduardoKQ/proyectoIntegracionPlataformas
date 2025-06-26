@@ -15,6 +15,8 @@ import { ProductDetailComponent } from './store/product-detail/product-detail.co
 import { CartComponent } from './store/components/cart/cart.component';
 import { PaymentMethodComponent } from './store/components/payment-method/payment-method.component';
 import { PaymentResultComponent } from './store/components/payment-result/payment-result.component';
+import { PromotionsComponent } from './pages/promotions/promotions.component';
+import { PromotionsEditComponent } from './pages/promotions-edit/promotions-edit.component';
 // Bodeguero
 import { ProductListComponentB } from './pages/bodeguero/product-list-b/product-list-b.component';
 import { ProductEditComponentB } from './pages/bodeguero/product-edit-b/product-edit-b.component';
@@ -56,6 +58,10 @@ export const routes: Routes = [
       { path: 'categories', component: CategoriesComponent },
       { path: 'orders', component: OrdersComponent },
       { path: 'edit/:codigo', component: ProductEditComponent },
+      { path: 'promotions', component: PromotionsComponent },
+      { path: 'promotions-edit/:code', component: PromotionsEditComponent },
+      { path: 'promotions-create', component: PromotionsEditComponent },
+      { path: 'promotions-view/:code', component: PromotionsEditComponent },
     ]
   },
 

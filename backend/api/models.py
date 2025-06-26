@@ -120,15 +120,102 @@ class Product(models.Model):
         blank=True,
     )
 
+    def get_current_promotion(self):
+        """Obtiene la promoción activa más ventajosa para este producto"""
+        from django.utils import timezone
+        from api.promotions.models import Promotion, PromotionProduct, PromotionCategory, PromotionSubcategory
+        from decimal import Decimal
+        
+        now = timezone.now()
+        best_promotion = None
+        best_discount = Decimal('0')
+        product_promotions = Promotion.objects.filter(
+            promotion_products__product=self,
+            status='active',
+            start_date__lte=now,
+            end_date__gte=now
+        )
+        
+        if self.subcategory and self.subcategory.category:
+            category_promotions = Promotion.objects.filter(
+                promotion_categories__category=self.subcategory.category,
+                status='active',
+                start_date__lte=now,
+                end_date__gte=now
+            )
+            product_promotions = product_promotions.union(category_promotions)
+        
+        if self.subcategory:
+            subcategory_promotions = Promotion.objects.filter(
+                promotion_subcategories__subcategory=self.subcategory,
+                status='active',
+                start_date__lte=now,
+                end_date__gte=now
+            )
+            product_promotions = product_promotions.union(subcategory_promotions)
+        
+        for promotion in product_promotions:
+            discount_amount = self._calculate_discount_amount(promotion)
+            if discount_amount > best_discount:
+                best_discount = discount_amount
+                best_promotion = promotion
+        
+        return best_promotion
 
-# !!! not used yet
-# class PriceHistory(models.Model):
-#     price_history_id = models.AutoField(primary_key=True)
-#     product = models.ForeignKey(
-#         Product, on_delete=models.DO_NOTHING, related_name="price_history"
-#     )
-#     price = models.DecimalField(max_digits=10, decimal_places=2)
-#     date = models.DateField()
+    def _calculate_discount_amount(self, promotion):
+        """Calcula el monto del descuento para una promoción específica"""
+        from decimal import Decimal
+        
+        if promotion.discount_type == 'percentage':
+            discount = self.current_price * (promotion.discount_value / Decimal('100'))
+            if promotion.max_discount_percentage:
+                max_discount = self.current_price * (promotion.max_discount_percentage / Decimal('100'))
+                discount = min(discount, max_discount)
+            return discount
+        else:
+            return min(promotion.discount_value, self.current_price)
+
+    def get_promotional_price(self):
+        """Obtiene el precio promocional si existe una promoción activa"""
+        promotion = self.get_current_promotion()
+        if promotion:
+            discount = self._calculate_discount_amount(promotion)
+            return self.current_price - discount
+        return self.current_price
+
+    def get_discount_percentage(self):
+        """Obtiene el porcentaje de descuento aplicado"""
+        from decimal import Decimal
+        
+        promotion = self.get_current_promotion()
+        if not promotion:
+            return Decimal('0')
+        
+        discount_amount = self._calculate_discount_amount(promotion)
+        if self.current_price > 0:
+            return (discount_amount / self.current_price) * Decimal('100')
+        return Decimal('0')
+
+    def has_active_promotion(self):
+        """Verifica si el producto tiene una promoción activa"""
+        return self.get_current_promotion() is not None
+
+    def get_promotion_info(self):
+        """Obtiene información completa de la promoción activa"""
+        promotion = self.get_current_promotion()
+        if not promotion:
+            return None
+        
+        return {
+            'promotion_id': promotion.id,
+            'promotion_code': promotion.promotion_code,
+            'promotion_name': promotion.name,
+            'original_price': self.current_price,
+            'promotional_price': self.get_promotional_price(),
+            'discount_amount': self._calculate_discount_amount(promotion),
+            'discount_percentage': self.get_discount_percentage(),
+            'discount_type': promotion.discount_type
+        }
 
 
 class Subcategory(models.Model):
@@ -185,6 +272,54 @@ class Order(models.Model):
     order_status = models.CharField(max_length=50, default=OrderStatus.PAYMMENT_PENDING)
     creation_date = models.DateTimeField(auto_now_add=True)
     delivery_date = models.DateTimeField(null=True, blank=True)
+    
+    def get_subtotal_original(self):
+        """Obtiene el subtotal original (sin descuentos)"""
+        from decimal import Decimal
+        total = Decimal('0')
+        for item in self.order_items.all():
+            total += item.get_total_original_price()
+        return total
+    
+    def get_total_discount_amount(self):
+        """Obtiene el monto total de descuentos aplicados"""
+        from decimal import Decimal
+        total = Decimal('0')
+        for item in self.order_items.all():
+            total += item.get_total_discount_amount()
+        return total
+    
+    def get_subtotal_with_discounts(self):
+        """Obtiene el subtotal con descuentos aplicados"""
+        from decimal import Decimal
+        total = Decimal('0')
+        for item in self.order_items.all():
+            total += item.get_total_final_price()
+        return total
+    
+    def get_total_final(self):
+        """Obtiene el total final incluyendo costos de envío"""
+        subtotal = self.get_subtotal_with_discounts()
+        shipping = self.shipping_cost or 0
+        return subtotal + shipping
+    
+    def has_promotional_items(self):
+        """Verifica si la orden tiene items con promociones aplicadas"""
+        return self.order_items.filter(promotion_applied=True).exists()
+    
+    def get_order_summary(self):
+        """Obtiene un resumen completo de la orden con información de descuentos"""
+        return {
+            'order_id': self.order_id,
+            'subtotal_original': self.get_subtotal_original(),
+            'total_discount_amount': self.get_total_discount_amount(),
+            'subtotal_with_discounts': self.get_subtotal_with_discounts(),
+            'shipping_cost': self.shipping_cost or 0,
+            'total_final': self.get_total_final(),
+            'has_promotions': self.has_promotional_items(),
+            'creation_date': self.creation_date,
+            'order_status': self.order_status
+        }
 
 
 class OrderItem(models.Model):
@@ -206,3 +341,25 @@ class OrderItem(models.Model):
 
     quantity = models.PositiveIntegerField()
     transaction_price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Campos para manejar promociones
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    promotion_applied = models.BooleanField(default=False)
+    promotion_code = models.CharField(max_length=50, null=True, blank=True)
+    promotion_name = models.CharField(max_length=200, null=True, blank=True)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    def get_total_original_price(self):
+        """Obtiene el precio total original (sin descuento)"""
+        if self.original_price:
+            return self.original_price * self.quantity
+        return self.transaction_price * self.quantity
+    
+    def get_total_discount_amount(self):
+        """Obtiene el monto total de descuento"""
+        return self.discount_amount * self.quantity
+    
+    def get_total_final_price(self):
+        """Obtiene el precio final total (con descuento aplicado)"""
+        return self.transaction_price * self.quantity

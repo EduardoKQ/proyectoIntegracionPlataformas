@@ -1,42 +1,90 @@
-<h1>Lista de Productos</h1>
-
-<div *ngIf="errorMessage" class="error-message">
-  <p>{{ errorMessage }}</p>
-  <button (click)="refreshProducts()" class="btn-secondary btn-sm">Reintentar</button>
+<h1>Catálogo de Productos</h1>
+<div class="product-list-actions">
+  <a routerLink="/product/add" class="btn-add-product">
+    <span class="material-symbols-outlined">add</span>
+    Agregar Producto
+  </a>
+  <button (click)="refreshProducts()" class="btn-refresh">
+    <span class="material-symbols-outlined">refresh</span>
+    Actualizar
+  </button>
 </div>
 
 <div *ngIf="isLoading" class="loading-indicator">
-  <p>Cargando productos y stock...</p>
+  <p>Cargando productos...</p>
 </div>
 
+<div *ngIf="errorMessage" class="error-message">
+  <p>{{ errorMessage }}</p>
+  <button (click)="refreshProducts()" class="btn-secondary">Reintentar</button>
+</div>
 <div class="product-list-container" *ngIf="!isLoading && !errorMessage">
   <div *ngIf="productsWithStock$ | async as products">
-    <div *ngIf="products.length > 0; else noProductsFound">
-      <div class="product-card" *ngFor="let product of products">
-        <div class="product-image-container" *ngIf="product.imageUrl">
-          <img [src]="product.imageUrl" [alt]="product.nombre" class="product-image">
+    <div *ngIf="products.length > 0; else emptyState">
+      <div class="product-card" *ngFor="let product of products; trackBy: trackByProductCode">
+        <div class="product-image-container" *ngIf="hasValidImage(product)">
+          <img [src]="product.imageUrl" [alt]="getProductImageAlt(product)" class="product-image">
         </div>
+
         <div class="product-info">
           <h3>{{ product.nombre }}</h3>
-          <p class="description" *ngIf="product.descripcion">{{ product.descripcion }}</p>
+          <p class="description" *ngIf="hasDescription(product)">{{ product.descripcion }}</p>
           <p><strong>Marca:</strong> {{ product.marca }}</p>
-          <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
-          <p><strong>Stock Total:</strong> {{ product.stock_total }} unidades</p>
-          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
-          <p class="product-codes"><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
+          <p *ngIf="hasBrandCode(product)"><strong>Ref. Marca:</strong> {{ getProductBrandCode(product) }}</p>
+          <p><strong>Categoría:</strong> {{ product.categoria }}
+            <span *ngIf="getProductSubcategory(product)"> | {{ getProductSubcategory(product) }}</span>
+          </p>
+          <p class="stock-info">
+            <strong>Stock:</strong>
+            <span [class]="getStockStatusClass(product)">
+              {{ getFormattedStock(product) }}
+            </span>
+          </p>
+          <div class="price-container">
+            <div *ngIf="hasDiscount(product)" class="price-with-discount">
+              <span class="price-original">{{ getOriginalPrice(product) }}</span>
+              <span class="price-discounted">{{ getCurrentPrice(product) }}</span>
+              <span class="discount-badge">-{{ getDiscountPercentage(product) }}%</span>
+            </div>
+            <div *ngIf="!hasDiscount(product)" class="price-normal">
+              <span class="price">{{ getCurrentPrice(product) }}</span>
+            </div>
+          </div>
+          <p class="product-codes" *ngIf="product.codigo_producto && product.codigo_producto !== 'N/A'">
+            <small><strong>Código:</strong> {{ product.codigo_producto }}</small>
+          </p>
         </div>
+
         <div class="product-actions">
-          <button [routerLink]="['/product/edit', product.codigo_producto]" class="btn-icon btn-edit" title="Editar Producto">
+          <button
+            class="btn-icon btn-edit"
+            (click)="editProduct(product)"
+            title="Editar producto"
+            [disabled]="product.codigo_producto === 'N/A'">
             <span class="material-symbols-outlined">edit</span>
+          </button>
+
+          <button
+            class="btn-icon"
+            (click)="viewProductDetails(product)"
+            title="Ver detalles"
+            [disabled]="product.codigo_producto === 'N/A'">
+            <span class="material-symbols-outlined">visibility</span>
           </button>
         </div>
       </div>
     </div>
-    <ng-template #noProductsFound>
+
+    <ng-template #emptyState>
       <div class="empty-state">
-        <span class="material-symbols-outlined empty-icon">inventory_2</span>
-        <p>No hay productos disponibles para mostrar en este momento.</p>
-        </div>
+        <div class="empty-icon">📦</div>
+        <p>No hay productos disponibles</p>
+        <p>Agrega productos para comenzar a gestionar tu inventario.</p>
+        <a routerLink="/product/add" class="btn-add-product">
+          <span class="material-symbols-outlined">add</span>
+          Agregar Producto
+        </a>
+      </div>
     </ng-template>
   </div>
 </div>

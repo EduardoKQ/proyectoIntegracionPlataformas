@@ -62,12 +62,16 @@ def iniciar_pago_webpay(request):
                 return JsonResponse({'error': 'No se proporcionó un order_id válido.'}, status=400)
             
             # check that amount_to_pay is the same as the order amount
-            def get_total_amount(obj: Order) -> float:
+            def get_total_amount(obj: Order) -> int:
                 items_total = sum(item.quantity * item.transaction_price for item in obj.order_items.all())
                 shipping_cost = obj.shipping_cost if obj.shipping_cost is not None else 0.00
                 total = float(items_total) + float(shipping_cost)
-                return round(total, 2)
+                # Redondear a entero para Webpay (no acepta decimales)
+                return round(total)
+            
             order_total_amount = get_total_amount(order)
+            print(f"[INFO] Comparando montos: Frontend={amount_to_pay}, Backend={order_total_amount}")
+            
             if amount_to_pay != order_total_amount:
                 print(f"[ERROR] Monto proporcionado {amount_to_pay} no coincide con el monto de la orden {order_total_amount}.")
                 return JsonResponse({'error': f'Monto proporcionado {amount_to_pay} no coincide con el monto de la orden: {order_total_amount}.'}, status=400)

@@ -5,6 +5,8 @@ from api.orders.interfaces import OrderType, OrderPaymentMethod
 class OrderItemCreateSerializer(serializers.Serializer):
     product_code = serializers.CharField(max_length=50)
     quantity = serializers.IntegerField(min_value=1)
+    has_promotion = serializers.BooleanField(default=False, required=False)
+    promotion_info = serializers.DictField(required=False, allow_null=True)
 
     def validate_product_code(self, value):
         if not Product.objects.filter(product_code=value).exists():
@@ -76,19 +78,50 @@ class OrderCreateSerializer(serializers.Serializer):
 
 # --- New Serializers for Listing Orders ---
 class OrderItemListSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product_name_copy') # Or source='product.name' if you want live data
+    product_name = serializers.CharField(source='product_name_copy')
     product_brand = serializers.CharField(source='product_brand_copy')
     product_code = serializers.CharField(source='product_code_copy')
+    total_original_price = serializers.SerializerMethodField()
+    total_discount_amount = serializers.SerializerMethodField()
+    total_final_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['product_code', 'product_name', 'product_brand', 'quantity', 'transaction_price']
+        fields = [
+            'product_code', 
+            'product_name', 
+            'product_brand', 
+            'quantity', 
+            'transaction_price',
+            'original_price',
+            'promotion_applied',
+            'promotion_code',
+            'promotion_name',
+            'discount_amount',
+            'discount_percentage',
+            'total_original_price',
+            'total_discount_amount',
+            'total_final_price'
+        ]
+    
+    def get_total_original_price(self, obj):
+        return float(obj.get_total_original_price())
+    
+    def get_total_discount_amount(self, obj):
+        return float(obj.get_total_discount_amount())
+    
+    def get_total_final_price(self, obj):
+        return float(obj.get_total_final_price())
 
 class OrderListSerializer(serializers.ModelSerializer):
     order_items = OrderItemListSerializer(many=True, read_only=True)
     pickup_branch_name = serializers.CharField(source='pickup_branch.name', allow_null=True, read_only=True)
     client_email = serializers.EmailField(source='client.user_account.email', read_only=True)
-    total_amount = serializers.SerializerMethodField()
+    subtotal_original = serializers.SerializerMethodField()
+    total_discount_amount = serializers.SerializerMethodField()
+    subtotal_with_discounts = serializers.SerializerMethodField()
+    total_final = serializers.SerializerMethodField()
+    has_promotions = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
@@ -98,24 +131,35 @@ class OrderListSerializer(serializers.ModelSerializer):
             'payment_type', 
             'retrieval_type', 
             'shipping_address', 
-            'pickup_branch_name', # Using name instead of code for display
+            'pickup_branch_name',
             'order_status', 
             'creation_date', 
             'delivery_date',
             'shipping_cost',
-            'total_amount',
+            'subtotal_original',
+            'total_discount_amount',
+            'subtotal_with_discounts',
+            'total_final',
+            'has_promotions',
             'order_items'
         ]
 
-    def get_total_amount(self, obj: Order) -> float:
-        """
-        Calculate the total amount for the order.
-        Sum of (item.quantity * item.transaction_price) for all items + order.shipping_cost.
-        """
-        items_total = sum(item.quantity * item.transaction_price for item in obj.order_items.all())
-        
-        shipping_cost = obj.shipping_cost if obj.shipping_cost is not None else 0.00
-        
-        total = float(items_total) + float(shipping_cost)
-        return round(total, 2)
-# --- End New Serializers ---
+    def get_subtotal_original(self, obj: Order) -> float:
+        """Obtiene el subtotal original (sin descuentos)"""
+        return float(obj.get_subtotal_original())
+    
+    def get_total_discount_amount(self, obj: Order) -> float:
+        """Obtiene el monto total de descuentos"""
+        return float(obj.get_total_discount_amount())
+    
+    def get_subtotal_with_discounts(self, obj: Order) -> float:
+        """Obtiene el subtotal con descuentos aplicados"""
+        return float(obj.get_subtotal_with_discounts())
+    
+    def get_total_final(self, obj: Order) -> float:
+        """Obtiene el total final incluyendo envío"""
+        return float(obj.get_total_final())
+    
+    def get_has_promotions(self, obj: Order) -> bool:
+        """Verifica si la orden tiene promociones aplicadas"""
+        return obj.has_promotional_items()

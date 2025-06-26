@@ -21,7 +21,18 @@
           <p><strong>Marca:</strong> {{ product.marca }}</p>
           <p><strong>Categoría:</strong> {{ product.categoria }} <span *ngIf="product.subcategoria && product.subcategoria !== 'Ninguna'">| {{ product.subcategoria }}</span></p>
           <p><strong>Stock Total:</strong> {{ product.stock_total }} unidades</p>
-          <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p> <p><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
+          <div class="price-section">
+            <div *ngIf="product.has_promotion && product.promotion_info; else regularPrice" class="promotion-price">
+              <span class="discount-badge">-{{ product.promotion_info.discount_percentage | number:'1.0-0' }}%</span>
+              <div class="price-container">
+                <span class="original-price">{{ product.promotion_info.original_price | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+                <span class="promotional-price">{{ product.promotion_info.promotional_price | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            </div>
+            <ng-template #regularPrice>
+              <p class="price">{{ product.precio.precio_actual | currency:'CLP':'symbol-narrow':'1.0-0' }}</p>
+            </ng-template>
+          </div> <p><small>Código: {{ product.codigo_producto }} / Ref. Marca: {{ product.codigo_marca }}</small></p>
         </div>
         <div class="product-actions">
           </div>

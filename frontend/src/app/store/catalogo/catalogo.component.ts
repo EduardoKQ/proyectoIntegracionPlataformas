@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, AbstractControl, FormControl } from '@angular/forms';
-import { Subject, combineLatest, distinctUntilChanged, Subscription } from 'rxjs';
-import { takeUntil, debounceTime, tap } from 'rxjs/operators';
+import { Subject, combineLatest, distinctUntilChanged, Subscription, forkJoin, of, Observable } from 'rxjs';
+import { takeUntil, debounceTime, tap, switchMap, map, catchError } from 'rxjs/operators';
 import { ProductService } from '../../services/product.service';
 import { ApiProduct } from '../../services/product.interfaces';
 import { CategorySubcategoryService, Category as ApiCategory } from '../../services/category.service';
@@ -12,11 +12,29 @@ import { CartService, CartItem, ProductForCart } from '../../services/cart.servi
 import { Branch } from '../../services/branch.service';
 import { SelectedBranchService } from '../../services/selected-branch.service';
 import { InventoryService, InventoryItem } from '../../services/inventory.service';
+import { PromotionsService } from '../../services/promotions.service';
+import { Promotion } from '../../services/promotions.interfaces';
 import { BranchSelectorModalComponent } from '../../features/shared/components/branch-selector-modal/branch-selector-modal.component';
 import { AuthService } from '../../services/auth.service';
 interface BrandFilter {
   name: string;
   selected: boolean;
+}
+
+interface ProductWithPromotion extends ApiProduct {
+  has_promotion: boolean;
+  promotion_info?: {
+    promotion_id: number;
+    promotion_code: string;
+    promotion_name: string;
+    original_price: number;
+    promotional_price: number;
+    discount_amount: number;
+    discount_percentage: number;
+    discount_type: 'percentage' | 'fixed_amount';
+    original_price_usd?: number;
+    promotional_price_usd?: number;
+  };
 }
 
 type SortOrder = 'default' | 'priceAsc' | 'priceDesc' | 'nameAsc' | 'nameDesc';
@@ -43,6 +61,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   private cartService = inject(CartService);
   private selectedBranchService = inject(SelectedBranchService);
   private inventoryService = inject(InventoryService);
+  private promotionsService = inject(PromotionsService);
   private authService = inject(AuthService);
 
   private destroy$ = new Subject<void>();
@@ -51,10 +70,10 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   private cartSubscription!: Subscription;
   private selectedBranchSubscription!: Subscription;
 
-  allProductsMasterList: ApiProduct[] = [];
-  productsFilteredByUrlParams: ApiProduct[] = [];
-  productsToDisplay: ApiProduct[] = [];
-  paginatedProducts: ApiProduct[] = [];
+  allProductsMasterList: ProductWithPromotion[] = [];
+  productsFilteredByUrlParams: ProductWithPromotion[] = [];
+  productsToDisplay: ProductWithPromotion[] = [];
+  paginatedProducts: ProductWithPromotion[] = [];
 
   isLoading = true;
   catalogTitle = 'Catálogo de Productos';
@@ -83,7 +102,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   currentSelectedBranch: Branch | null = null;
   showBranchModal = false;
-  private productToAddAfterBranchSelection: ApiProduct | null = null;
+  productToAddAfterBranchSelection: ProductWithPromotion | null = null;
   productStockMap: Map<string, number> = new Map();
 
   constructor() {}
@@ -158,16 +177,36 @@ export class CatalogoComponent implements OnInit, OnDestroy {
       this.productService.getProducts(),
       this.categorySubcategoryService.getCategories(),
     ]).pipe(
+      switchMap(([products, categories]) => {
+        this.availableCategoriesForFilter = [...categories];
+        this.rebuildCategoryFilters(this.availableCategoriesForFilter);
+
+        if (products && products.length > 0) {
+          const processedProducts = products.map(product =>
+            this.processProductWithPromotions(product)
+          );
+          return forkJoin(processedProducts).pipe(
+            map(productsWithPromotions => ({ productsWithPromotions, categories }))
+          );
+        } else {
+          return of({ productsWithPromotions: [], categories });
+        }
+      }),
       takeUntil(this.destroy$)
-    ).subscribe(([products, categories]) => {
-      this.allProductsMasterList = [...products];
-      this.availableCategoriesForFilter = [...categories];
-      this.rebuildCategoryFilters(this.availableCategoriesForFilter);
-      this.route.queryParams.pipe(
-        takeUntil(this.destroy$)
-      ).subscribe(queryParams => {
-        this.handleRouteParamsAndUpdateForm(queryParams);
-      });
+    ).subscribe({
+      next: ({ productsWithPromotions }) => {
+        this.allProductsMasterList = [...productsWithPromotions];
+        this.route.queryParams.pipe(
+          takeUntil(this.destroy$)
+        ).subscribe(queryParams => {
+          this.handleRouteParamsAndUpdateForm(queryParams);
+        });
+      },
+      error: (error) => {
+        console.error('Error loading catalog data with promotions:', error);
+        this.allProductsMasterList = [];
+        this.isLoading = false;
+      }
     });
   }
 
@@ -238,7 +277,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     }
     this.currentlySelectedCategoryForDisplay = targetCategoryForDisplay;
 
-    let tempProducts = [...this.allProductsMasterList];
+    let tempProducts: ProductWithPromotion[] = [...this.allProductsMasterList];
     if (searchQuery) {
       this.activeSearchTerm = searchQuery;
       this.catalogTitle = `Resultados para: "${searchQuery}"`;
@@ -258,7 +297,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         return subcategoriesArray?.controls.some(sc => sc.value.id === subId && sc.value.selected);
       });
 
-      const productsToShow = new Set<ApiProduct>();
+      const productsToShow = new Set<ProductWithPromotion>();
       this.allProductsMasterList.forEach(product => {
         const productCatId = this.getCategoryIdByName(product.categoria);
         const productSubId = this.getSubcategoryIdByName(product.subcategoria, product.categoria);
@@ -404,30 +443,25 @@ export class CatalogoComponent implements OnInit, OnDestroy {
 
   setupFilterFormChangesSubscription(): void {
     this.filterForm.valueChanges.pipe(
-      debounceTime(400),
+      debounceTime(100),
       distinctUntilChanged((prev, curr) => {
-        const prevSelectedBrands = prev.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name).sort().join(',');
-        const currSelectedBrands = curr.brands.filter((b: BrandFilter) => b.selected).map((b: BrandFilter) => b.name).sort().join(',');
-        const prevSelectedCatSubs = prev.categories.map((cat: any) => {
-          const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).sort().join(',');
-          return `<span class="math-inline">\{cat\.id\}\:</span>{cat.selected ? 'T' : 'F'}:${selectedSubs}`;
-        }).sort().join(';');
-        const currSelectedCatSubs = curr.categories.map((cat: any) => {
-          const selectedSubs = (cat.subcategories || []).filter((sub: any) => sub.selected).map((sub: any) => sub.id).sort().join(',');
-          return `<span class="math-inline">\{cat\.id\}\:</span>{cat.selected ? 'T' : 'F'}:${selectedSubs}`;
-        }).sort().join(';');
-        return prevSelectedBrands === currSelectedBrands && prevSelectedCatSubs === currSelectedCatSubs && prev.sortOrder === curr.sortOrder;
+        return JSON.stringify(prev) === JSON.stringify(curr);
       }),
       tap(values => {
         this.currentSortOrder = values.sortOrder as SortOrder;
       }),
       takeUntil(this.destroy$)
     ).subscribe(formValues => {
+      console.log('Form values changed:', formValues);
+
       if (this.isLoading) {
+        console.log('Skipping filter update - still loading');
         return;
       }
 
       const newQueryParams = this.getFilterQueryParams(formValues);
+      console.log('Generated query params:', newQueryParams);
+
       Object.keys(newQueryParams).forEach(key => {
         if (newQueryParams[key] === undefined || newQueryParams[key] === null || newQueryParams[key].length === 0) {
           delete newQueryParams[key];
@@ -467,12 +501,16 @@ export class CatalogoComponent implements OnInit, OnDestroy {
         }
       }
 
+      console.log('Params changed:', paramsChanged, 'Current:', currentUrlParams, 'New:', mergedQueryParams);
+
       if (paramsChanged) {
+        console.log('Navigating with new params:', mergedQueryParams);
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: mergedQueryParams,
         });
       } else if (!this.isLoading && this.allProductsMasterList.length > 0) {
+        console.log('Applying filters directly without navigation');
         const currencySensitiveSort = this.currentSortOrder === 'priceAsc' || this.currentSortOrder === 'priceDesc';
         if (!currencySensitiveSort) {
           this.applyAllFiltersAndSort(false);
@@ -707,25 +745,36 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     const categoryGroup = this.categoriesFormArray.at(categoryIndex) as FormGroup;
     return categoryGroup.get('subcategories') as FormArray;
   }
-
   onCategorySelectionChange(categoryControl: AbstractControl, categoryIndex: number): void {
+    console.log('onCategorySelectionChange called:', categoryIndex, categoryControl.value);
+
     const currentCategoryGroup = categoryControl as FormGroup;
-    const isCurrentlySelected = currentCategoryGroup.get('selected')?.value;
+    const selectedControl = currentCategoryGroup.get('selected');
+
+    if (!selectedControl) return;
+
+    const isCurrentlySelected = selectedControl.value;
+    console.log('Category selected state:', isCurrentlySelected);
 
     if (isCurrentlySelected) {
       this.currentlySelectedCategoryForDisplay = currentCategoryGroup;
+
       this.categoriesFormArray.controls.forEach((ctrl, i) => {
         if (i !== categoryIndex) {
           const otherCategoryGroup = ctrl as FormGroup;
-          if (otherCategoryGroup.get('selected')?.value) {
-            otherCategoryGroup.get('selected')?.setValue(false, { emitEvent: false });
+          const otherSelectedControl = otherCategoryGroup.get('selected');
+
+          if (otherSelectedControl && otherSelectedControl.value) {
+            otherSelectedControl.setValue(false, { emitEvent: false });
           }
+
           const otherSubcategoriesArray = otherCategoryGroup.get('subcategories') as FormArray;
           if (otherSubcategoriesArray) {
             otherSubcategoriesArray.controls.forEach(subCtrl => {
               const subcategoryFormGroup = subCtrl as FormGroup;
-              if (subcategoryFormGroup.get('selected')?.value) {
-                subcategoryFormGroup.get('selected')?.setValue(false, { emitEvent: false });
+              const subSelectedControl = subcategoryFormGroup.get('selected');
+              if (subSelectedControl && subSelectedControl.value) {
+                subSelectedControl.setValue(false, { emitEvent: false });
               }
             });
           }
@@ -733,43 +782,89 @@ export class CatalogoComponent implements OnInit, OnDestroy {
       });
     } else {
       this.currentlySelectedCategoryForDisplay = null;
+
       const subcategoriesArray = currentCategoryGroup.get('subcategories') as FormArray;
       if (subcategoriesArray) {
         subcategoriesArray.controls.forEach(subCtrl => {
           const subcategoryFormGroup = subCtrl as FormGroup;
-          if (subcategoryFormGroup.get('selected')?.value) {
-            subcategoryFormGroup.get('selected')?.setValue(false, { emitEvent: false });
+          const subSelectedControl = subcategoryFormGroup.get('selected');
+          if (subSelectedControl && subSelectedControl.value) {
+            subSelectedControl.setValue(false, { emitEvent: false });
           }
         });
       }
     }
-    this.filterForm.updateValueAndValidity();
-  }
 
+    this.filterForm.markAsDirty();
+    this.filterForm.updateValueAndValidity();
+
+    this.debugFilterState();
+  }
   onSubcategorySelectionChange(subcategoryControl: AbstractControl, categoryIndex: number): void {
     const subcategoryGroup = subcategoryControl as FormGroup;
-    const isSelected = subcategoryGroup.get('selected')?.value;
+    const subcategorySelectedControl = subcategoryGroup.get('selected');
     const categoryGroup = this.categoriesFormArray.at(categoryIndex) as FormGroup;
     const categorySelectedControl = categoryGroup.get('selected') as FormControl;
     const subcategoriesArray = categoryGroup.get('subcategories') as FormArray;
 
+    if (!subcategorySelectedControl || !categorySelectedControl) return;
+
+    const isSelected = subcategorySelectedControl.value;
+
     if (isSelected) {
       if (!categorySelectedControl.value) {
-        categorySelectedControl.setValue(true, { emitEvent: true });
-      } else {
-        this.filterForm.updateValueAndValidity();
+        categorySelectedControl.setValue(true, { emitEvent: false });
+        this.currentlySelectedCategoryForDisplay = categoryGroup;
+
+        this.categoriesFormArray.controls.forEach((ctrl, i) => {
+          if (i !== categoryIndex) {
+            const otherCategoryGroup = ctrl as FormGroup;
+            const otherSelectedControl = otherCategoryGroup.get('selected');
+
+            if (otherSelectedControl && otherSelectedControl.value) {
+              otherSelectedControl.setValue(false, { emitEvent: false });
+            }
+
+            const otherSubcategoriesArray = otherCategoryGroup.get('subcategories') as FormArray;
+            if (otherSubcategoriesArray) {
+              otherSubcategoriesArray.controls.forEach(subCtrl => {
+                const subcatFormGroup = subCtrl as FormGroup;
+                const subSelectedControl = subcatFormGroup.get('selected');
+                if (subSelectedControl && subSelectedControl.value) {
+                  subSelectedControl.setValue(false, { emitEvent: false });
+                }
+              });
+            }
+          }
+        });
       }
     } else {
       const anyOtherSubSelected = subcategoriesArray.controls
         .filter(subCtrl => subCtrl !== subcategoryControl)
-        .some(subCtrl => (subCtrl as FormGroup).get('selected')?.value);
+        .some(subCtrl => {
+          const subGroup = subCtrl as FormGroup;
+          const subSelectedControl = subGroup.get('selected');
+          return subSelectedControl && subSelectedControl.value;
+        });
 
       if (!anyOtherSubSelected && categorySelectedControl.value) {
-        categorySelectedControl.setValue(false, { emitEvent: true });
-      } else {
-        this.filterForm.updateValueAndValidity();
+        categorySelectedControl.setValue(false, { emitEvent: false });
+        this.currentlySelectedCategoryForDisplay = null;
       }
     }
+
+    this.filterForm.markAsDirty();
+    this.filterForm.updateValueAndValidity();
+  }
+
+  private debugFilterState(): void {
+    console.log('=== DEBUG FILTER STATE ===');
+    console.log('currentlySelectedCategoryForDisplay:', this.currentlySelectedCategoryForDisplay?.value);
+    console.log('categoriesFormArray values:', this.categoriesFormArray.value);
+    console.log('filterForm valid:', this.filterForm.valid);
+    console.log('filterForm dirty:', this.filterForm.dirty);
+    console.log('productsToDisplay length:', this.productsToDisplay.length);
+    console.log('==============================');
   }
 
   private updateProductStockForVisibleItems(): void {
@@ -825,7 +920,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     return item ? item.quantity : 0;
   }
 
-  addToCart(product: ApiProduct): void {
+  addToCart(product: ProductWithPromotion): void {
     if (!this.currentSelectedBranch) {
       this.productToAddAfterBranchSelection = product;
       this.showBranchModal = true;
@@ -834,7 +929,7 @@ export class CatalogoComponent implements OnInit, OnDestroy {
     this.proceedToAddToCart(product, this.currentSelectedBranch);
   }
 
-  private proceedToAddToCart(product: ApiProduct, branch: Branch): void {
+  private proceedToAddToCart(product: ProductWithPromotion, branch: Branch): void {
     const quantityDesired = 1;
     this.inventoryService.getProductStockInBranch(branch.branch_code, product.codigo_producto)
       .subscribe({
@@ -843,8 +938,20 @@ export class CatalogoComponent implements OnInit, OnDestroy {
           const quantityAlreadyInCart = this.getQuantityInCart(product.codigo_producto);
           const totalQuantityAfterAdd = quantityAlreadyInCart + quantityDesired;
           if (inventoryItem && inventoryItem.quantity >= totalQuantityAfterAdd) {
+            const productForCart: ProductForCart = {
+              codigo_producto: product.codigo_producto,
+              nombre: product.nombre,
+              precio: {
+                precio_actual: product.precio.precio_actual,
+                precio_dolares: product.precio.precio_dolares
+              },
+              imageUrl: product.imageUrl,
+              has_promotion: product.has_promotion,
+              promotion_info: product.promotion_info
+            };
+
             this.cartService.addToCart(
-              product as ProductForCart,
+              productForCart,
               quantityDesired,
               branch.branch_code,
               branch.name
@@ -890,5 +997,157 @@ export class CatalogoComponent implements OnInit, OnDestroy {
           console.error(`Error al verificar stock para actualizar la cantidad de ${productCode}. Intente nuevamente.`, err);
         }
       });
+  }
+
+  private processProductWithPromotions(product: ApiProduct): Observable<ProductWithPromotion> {
+    return this.promotionsService.getPromotionsWithDetails().pipe(
+      map(activePromotions => {
+        const promotionsByProduct = new Map<string, Promotion>();
+        const promotionsByCategory = new Map<string, Promotion>();
+        const promotionsBySubcategory = new Map<string, Promotion>();
+
+        if (Array.isArray(activePromotions)) {
+          for (const promotion of activePromotions) {
+            if (!this.promotionsService.isPromotionActive(promotion)) {
+              continue;
+            }
+
+            if (promotion.products && Array.isArray(promotion.products)) {
+              for (const promotionProduct of promotion.products) {
+                if (promotionProduct.product_code) {
+                  promotionsByProduct.set(promotionProduct.product_code, promotion);
+                }
+              }
+            }
+            if (promotion.categories && Array.isArray(promotion.categories)) {
+              for (const category of promotion.categories) {
+                if (category.name) {
+                  promotionsByCategory.set(category.name, promotion);
+                }
+              }
+            }
+            if (promotion.subcategories && Array.isArray(promotion.subcategories)) {
+              for (const subcategory of promotion.subcategories) {
+                if (subcategory.name) {
+                  promotionsBySubcategory.set(subcategory.name, promotion);
+                }
+              }
+            }
+          }
+        }
+
+        let applicablePromotion: Promotion | undefined;
+        if (promotionsByProduct.has(product.codigo_producto)) {
+          applicablePromotion = promotionsByProduct.get(product.codigo_producto);
+        }
+        else if (product.subcategoria && promotionsBySubcategory.has(product.subcategoria)) {
+          applicablePromotion = promotionsBySubcategory.get(product.subcategoria);
+        }
+        else if (product.categoria && promotionsByCategory.has(product.categoria)) {
+          applicablePromotion = promotionsByCategory.get(product.categoria);
+        }
+
+        let productWithPromotion: ProductWithPromotion = {
+          ...product,
+          has_promotion: false
+        };
+
+        if (applicablePromotion) {
+          const originalPrice = product.precio.precio_actual;
+          const promotionalPrice = this.promotionsService.calculateDiscountedPrice(
+            originalPrice,
+            applicablePromotion.discount_type,
+            applicablePromotion.discount_value
+          );
+          const discountPercentage = this.promotionsService.calculateDiscountPercentage(
+            originalPrice,
+            promotionalPrice
+          );
+
+          let originalPriceUsd: number | undefined;
+          let promotionalPriceUsd: number | undefined;
+
+          if (product.precio.precio_dolares != null) {
+            originalPriceUsd = product.precio.precio_dolares;
+            promotionalPriceUsd = this.promotionsService.calculateDiscountedPrice(
+              originalPriceUsd,
+              applicablePromotion.discount_type,
+              applicablePromotion.discount_value
+            );
+          }
+
+          productWithPromotion.has_promotion = true;
+          productWithPromotion.promotion_info = {
+            promotion_id: applicablePromotion.id,
+            promotion_code: applicablePromotion.promotion_code,
+            promotion_name: applicablePromotion.name,
+            original_price: originalPrice,
+            promotional_price: promotionalPrice,
+            discount_amount: originalPrice - promotionalPrice,
+            discount_percentage: discountPercentage,
+            discount_type: applicablePromotion.discount_type,
+            original_price_usd: originalPriceUsd,
+            promotional_price_usd: promotionalPriceUsd
+          };
+        }
+
+        return productWithPromotion;
+      }),
+      catchError(error => {
+        console.error('Error al procesar promociones:', error);
+        return of({
+          ...product,
+          has_promotion: false
+        } as ProductWithPromotion);
+      })
+    );
+  }
+
+  hasPromotion(product: ProductWithPromotion): boolean {
+    return product.has_promotion || false;
+  }
+
+  getCurrentPrice(product: ProductWithPromotion): number | null {
+    if (!product?.precio) return null;
+
+    if (this.hasPromotion(product) && product.promotion_info) {
+      if (this.currentSelectedCurrency === 'USD') {
+        return product.promotion_info.promotional_price_usd || product.promotion_info.promotional_price;
+      } else {
+        return product.promotion_info.promotional_price;
+      }
+    }
+
+    if (this.currentSelectedCurrency === 'USD') {
+      return product.precio.precio_dolares || null;
+    } else {
+      return product.precio.precio_actual;
+    }
+  }
+
+  getOriginalPrice(product: ProductWithPromotion): number | null {
+    if (!product?.precio || !this.hasPromotion(product) || !product.promotion_info) {
+      return null;
+    }
+
+    if (this.currentSelectedCurrency === 'USD') {
+      return product.promotion_info.original_price_usd || product.promotion_info.original_price;
+    } else {
+      return product.promotion_info.original_price;
+    }
+  }
+
+  getDiscountPercentage(product: ProductWithPromotion): number {
+    if (!this.hasPromotion(product) || !product.promotion_info) {
+      return 0;
+    }
+    return Math.round(product.promotion_info.discount_percentage);
+  }
+
+  getPromotionName(product: ProductWithPromotion): string {
+    if (!this.hasPromotion(product) || !product.promotion_info) {
+      return '';
+    }
+    return product.promotion_info.promotion_name;
   }
 }

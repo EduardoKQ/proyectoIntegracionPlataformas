@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { ApiProduct, CreateProductPayload, UpdateProductPayload } from './product.interfaces';
+import { ProductWithPromotion } from './promotions.interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,6 @@ export class ProductService {
   getProducts(): Observable<ApiProduct[]> {
     return this.http.get<ApiProduct[]>(this.productsApiUrl)
       .pipe(
-        tap(data => console.log('Productos recibidos:', data)),
         catchError(this.handleError)
       );
   }
@@ -25,7 +25,6 @@ export class ProductService {
     const url = `${this.productsApiUrl}/${productCode}`;
     return this.http.get<ApiProduct>(url)
       .pipe(
-        tap(data => console.log(`Producto ${productCode} recibido:`, data)),
         catchError(this.handleError)
       );
   }
@@ -33,7 +32,6 @@ export class ProductService {
   createProduct(productData: CreateProductPayload): Observable<ApiProduct> {
     return this.http.post<ApiProduct>(this.productsApiUrl, productData)
       .pipe(
-        tap((newProduct) => console.log('Producto creado:', newProduct)),
         catchError(this.handleError)
       );
   }
@@ -42,7 +40,6 @@ export class ProductService {
     const url = `${this.productsApiUrl}/${productCode}`;
     return this.http.put<ApiProduct>(url, productData)
       .pipe(
-        tap((updatedProduct) => console.log(`Producto ${productCode} actualizado:`, updatedProduct)),
         catchError(this.handleError)
       );
   }
@@ -51,7 +48,30 @@ export class ProductService {
     const url = `${this.productsApiUrl}/${productCode}`;
     return this.http.delete<void>(url)
       .pipe(
-        tap(() => console.log(`Producto ${productCode} eliminado.`)),
+        catchError(this.handleError)
+      );
+  }
+
+  getProductsWithPromotions(): Observable<ProductWithPromotion[]> {
+    const url = `${this.productsApiUrl}/with-promotions`;
+    return this.http.get<ProductWithPromotion[]>(url)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  getProductWithPromotions(productCode: string): Observable<ProductWithPromotion> {
+    const url = `${this.productsApiUrl}/${productCode}/with-promotions`;
+    return this.http.get<ProductWithPromotion>(url)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  getProductsOnSale(): Observable<ProductWithPromotion[]> {
+    const url = `${this.productsApiUrl}/on-sale`;
+    return this.http.get<ProductWithPromotion[]>(url)
+      .pipe(
         catchError(this.handleError)
       );
   }

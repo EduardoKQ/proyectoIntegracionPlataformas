@@ -2,12 +2,26 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { OrderWithDiscounts, OrderItemWithDiscount } from './promotions.interfaces';
 
 const API_BASE_URL = 'http://localhost:8100/api';
 
 export interface OrderItemPayload {
   product_code: string;
   quantity: number;
+  has_promotion?: boolean;
+  promotion_info?: {
+    promotion_id: number;
+    promotion_code: string;
+    promotion_name: string;
+    original_price: number;
+    promotional_price: number;
+    discount_amount: number;
+    discount_percentage: number;
+    discount_type: 'percentage' | 'fixed_amount';
+    original_price_usd?: number;
+    promotional_price_usd?: number;
+  };
 }
 
 export interface OrderPayload {
@@ -25,6 +39,12 @@ export interface OrderItemResponse {
   product_brand: string;
   quantity: number;
   transaction_price: string;
+  original_price?: string;
+  promotion_applied?: boolean;
+  promotion_code?: string;
+  promotion_name?: string;
+  discount_amount?: string;
+  discount_percentage?: string;
 }
 
 export interface OrderResponse {
@@ -40,6 +60,11 @@ export interface OrderResponse {
   delivery_date: string | null;
   order_items: OrderItemResponse[];
   total_amount?: string;
+  subtotal_original?: number;
+  total_discount_amount?: number;
+  subtotal_with_discounts?: number;
+  total_final?: number;
+  has_promotions?: boolean;
 }
 
 export interface OrderStatus {
@@ -106,7 +131,6 @@ export class OrderService {
   }
 
   nextOrderStatus(orderId: string): Observable<OrderResponse> {
-    // Remove async/await and lastValueFrom, return the Observable directly.
     return this.http.post<OrderResponse>(`${this.orderApiUrl}/${orderId}/next`, {}, {
       headers: this.getAuthHeaders()
     });
@@ -114,6 +138,17 @@ export class OrderService {
 
   cancelOrder(orderId: string): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(`${this.orderApiUrl}/${orderId}/cancel`, {}, {
+      headers: this.getAuthHeaders()
+    });
+  }
+  getOrderWithDiscounts(orderId: number): Observable<OrderWithDiscounts> {
+    return this.http.get<OrderWithDiscounts>(`${this.orderApiUrl}/${orderId}/with-discounts`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getOrdersWithDiscounts(): Observable<OrderWithDiscounts[]> {
+    return this.http.get<OrderWithDiscounts[]>(`${this.orderApiUrl}/with-discounts`, {
       headers: this.getAuthHeaders()
     });
   }

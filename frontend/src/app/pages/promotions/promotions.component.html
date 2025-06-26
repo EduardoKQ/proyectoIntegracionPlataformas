@@ -1,0 +1,169 @@
+<div class="promotions-page">
+  <div class="page-header">
+    <h1>Gestión de Promociones</h1>
+    <button class="btn-primary" (click)="createPromotion()">
+      <span class="icon">+</span>
+      Nueva Promoción
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <p>{{ errorMessage }}</p>
+    <button (click)="refreshPromotions()">Reintentar</button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-indicator">
+    <p>Cargando promociones...</p>
+  </div>
+
+  <div class="promotions-container" *ngIf="!isLoading && !errorMessage">
+    <div *ngIf="promotions$ | async as promotions">
+      <div *ngIf="promotions.length > 0; else noPromotionsFound">
+
+        <div class="promotions-stats">
+          <div class="stat-card">
+            <div class="stat-number">{{ promotions.length }}</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-card active">
+            <div class="stat-number">{{ getActivePromotionsCount(promotions) }}</div>
+            <div class="stat-label">Activas</div>
+          </div>
+          <div class="stat-card scheduled">
+            <div class="stat-number">{{ getScheduledPromotionsCount(promotions) }}</div>
+            <div class="stat-label">Programadas</div>
+          </div>
+          <div class="stat-card expired">
+            <div class="stat-number">{{ getExpiredPromotionsCount(promotions) }}</div>
+            <div class="stat-label">Expiradas</div>
+          </div>
+        </div>
+
+        <div class="promotion-list">
+          <div
+            class="promotion-card"
+            *ngFor="let promotion of promotions; trackBy: trackByPromotionId"
+            [class]="getStatusClass(promotion)"
+          >
+            <div class="promotion-header">
+              <div class="promotion-title">
+                <h3>{{ promotion.name }}</h3>
+                <span class="promotion-status" [class]="getStatusClass(promotion)">
+                  {{ getStatusText(promotion) }}
+                </span>
+                <span *ngIf="isPromotionActive(promotion) && getDaysRemaining(promotion) <= 7"
+                      class="days-remaining urgent">
+                  {{ getDaysRemainingText(promotion) }}
+                </span>
+              </div>
+              <div class="promotion-actions">
+                <button
+                  class="btn-icon"
+                  (click)="editPromotion(promotion)"
+                  title="Editar"
+                >
+                  <span class="material-symbols-outlined">
+                  edit
+                  </span>
+                </button>
+                <button
+                  class="btn-icon danger"
+                  (click)="confirmDeletePromotion(promotion)"
+                  title="Eliminar"
+                >
+                  <span class="material-symbols-outlined">
+                  delete_forever
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div class="promotion-content">
+              <div class="promotion-info">
+                <p class="description" *ngIf="promotion.description">
+                  {{ promotion.description }}
+                </p>
+
+                <div class="promotion-details">
+                  <div class="detail-item">
+                    <span class="label">Descuento:</span>
+                    <span class="value discount">{{ getDiscountDisplay(promotion) }}</span>
+                  </div>
+
+                  <div class="detail-item">
+                    <span class="label">Vigencia:</span>
+                    <span class="value">
+                      {{ getDateDisplay(promotion.start_date) }} -
+                      {{ getDateDisplay(promotion.end_date) }}
+                    </span>
+                  </div>
+
+                  <div class="detail-item" *ngIf="getTotalApplicableItems(promotion) > 0">
+                    <span class="label">Aplica a:</span>
+                    <span class="value">{{ getApplicableItemsText(promotion) }}</span>
+                  </div>
+
+                  <div class="detail-item">
+                    <span class="label">Código:</span>
+                    <span class="value code">{{ promotion.promotion_code }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="promotion-discount">
+                <div class="discount-badge">
+                  <div class="discount-value">{{ getDiscountDisplay(promotion) }}</div>
+                  <div class="discount-type">{{ promotion.discount_type === 'percentage' ? 'PORCENTAJE' : 'MONTO FIJO' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="promotion-footer">
+              <div class="dates-info">
+                <small>
+                  <span *ngIf="promotion.created_at">
+                    Creada: {{ getDateDisplay(promotion.created_at) }}
+                  </span>
+                  <span *ngIf="promotion.updated_at && promotion.updated_at !== promotion.created_at">
+                    | Actualizada: {{ getDateDisplay(promotion.updated_at) }}
+                  </span>
+                </small>
+              </div>
+              <div class="progress-bar" *ngIf="isPromotionActive(promotion)">
+                <div class="progress-fill" [style.width.%]="promotion.progress"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ng-template #noPromotionsFound>
+        <div class="no-promotions">
+          <div class="no-promotions-icon">
+            🎁
+          </div>
+          <h3>No hay promociones disponibles</h3>
+          <p>Crea tu primera promoción para comenzar a ofrecer descuentos a tus clientes.</p>
+          <button class="btn-primary" (click)="createPromotion()">
+            <span class="icon">+</span>
+            Crear Primera Promoción
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+  <div class="modal-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirmar Eliminación</h3>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar la promoción <strong>"{{ promotionToDelete?.name }}"</strong>?</p>
+        <p class="warning">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn-danger" (click)="deletePromotion()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,344 @@
+<div class="promotions-edit-container">
+  <div class="page-header">
+    <div class="header-content">
+      <button class="back-button" (click)="onCancel()">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div class="header-info">
+        <h1>{{ isEditMode ? 'Editar Promoción' : 'Nueva Promoción' }}</h1>
+        <p>{{ isEditMode ? 'Modifica los datos de la promoción' : 'Completa los datos para crear una nueva promoción' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <div class="message success-message" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <div class="message error-message" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="promotionForm" (ngSubmit)="onSubmit()" class="promotion-form" *ngIf="!isLoading">
+
+    <div class="form-section">
+      <h2>
+        <i class="fas fa-info-circle"></i>
+        Información Básica
+      </h2>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="promotion_code">Código de Promoción *</label>
+          <input
+            id="promotion_code"
+            type="text"
+            formControlName="promotion_code"
+            placeholder="Ej: SUMMER2024"
+            [class.error]="promotionCodeControl?.invalid && promotionCodeControl?.touched"
+          >
+          <div class="error-text" *ngIf="promotionCodeControl?.invalid && promotionCodeControl?.touched">
+            <span *ngIf="promotionCodeControl?.errors?.['required']">El código es requerido</span>
+            <span *ngIf="promotionCodeControl?.errors?.['minlength']">Mínimo 3 caracteres</span>
+            <span *ngIf="promotionCodeControl?.errors?.['maxlength']">Máximo 20 caracteres</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Nombre de la Promoción *</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="Ej: Descuento de Verano"
+            [class.error]="nameControl?.invalid && nameControl?.touched"
+          >
+          <div class="error-text" *ngIf="nameControl?.invalid && nameControl?.touched">
+            <span *ngIf="nameControl?.errors?.['required']">El nombre es requerido</span>
+            <span *ngIf="nameControl?.errors?.['minlength']">Mínimo 3 caracteres</span>
+            <span *ngIf="nameControl?.errors?.['maxlength']">Máximo 100 caracteres</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripción</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          placeholder="Describe los detalles de la promoción..."
+          rows="3"
+          [class.error]="descriptionControl?.invalid && descriptionControl?.touched"
+        ></textarea>
+        <div class="error-text" *ngIf="descriptionControl?.invalid && descriptionControl?.touched">
+          <span *ngIf="descriptionControl?.errors?.['maxlength']">Máximo 500 caracteres</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Estado</label>
+        <select id="status" formControlName="status">
+          <option value="active">Activo</option>
+          <option value="inactive">Inactivo</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>
+        <i class="fas fa-percent"></i>
+        Configuración del Descuento
+      </h2>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="discount_type">Tipo de Descuento *</label>
+          <select id="discount_type" formControlName="discount_type">
+            <option value="percentage">Porcentaje (%)</option>
+            <option value="fixed_amount">Monto Fijo ($)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="discount_value">Valor del Descuento *</label>
+          <input
+            id="discount_value"
+            type="number"
+            formControlName="discount_value"
+            min="0.01"
+            step="0.01"
+            placeholder="0.00"
+            [class.error]="discountValueControl?.invalid && discountValueControl?.touched"
+          >
+          <div class="error-text" *ngIf="discountValueControl?.invalid && discountValueControl?.touched">
+            <span *ngIf="discountValueControl?.errors?.['required']">El valor es requerido</span>
+            <span *ngIf="discountValueControl?.errors?.['min']">Debe ser mayor a 0</span>
+          </div>
+          <div class="error-text" *ngIf="promotionForm.errors?.['maxPercentage']">
+            El descuento porcentual no puede ser mayor a 100%
+          </div>
+        </div>
+      </div>
+
+      <div class="discount-preview" *ngIf="getDiscountDisplay()">
+        <i class="fas fa-eye"></i>
+        <span>{{ getDiscountDisplay() }}</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>
+        <i class="fas fa-calendar-alt"></i>
+        Período de Vigencia
+      </h2>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="start_date">Fecha de Inicio *</label>
+          <input
+            id="start_date"
+            type="datetime-local"
+            formControlName="start_date"
+            [class.error]="startDateControl?.invalid && startDateControl?.touched"
+          >
+          <div class="error-text" *ngIf="startDateControl?.invalid && startDateControl?.touched">
+            <span *ngIf="startDateControl?.errors?.['required']">La fecha de inicio es requerida</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="end_date">Fecha de Fin *</label>
+          <input
+            id="end_date"
+            type="datetime-local"
+            formControlName="end_date"
+            [class.error]="endDateControl?.invalid && endDateControl?.touched"
+          >
+          <div class="error-text" *ngIf="endDateControl?.invalid && endDateControl?.touched">
+            <span *ngIf="endDateControl?.errors?.['required']">La fecha de fin es requerida</span>
+          </div>
+          <div class="error-text" *ngIf="promotionForm.errors?.['dateRange']">
+            La fecha de fin debe ser posterior a la fecha de inicio
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>
+        <i class="fas fa-bullseye"></i>
+        Aplicar promocion a Productos
+      </h2>
+      <p class="section-description">
+        Selecciona productos específicos, categorías completas o subcategorías (opcional).
+        <strong>Al seleccionar una categoría o subcategoría, se incluirán automáticamente todos sus productos.</strong>
+      </p>
+
+      <div class="selector-section">
+        <div class="selector-header" (click)="toggleSelector()">
+          <div class="selector-title">
+            <i class="fas fa-list-check"></i>
+            <span>Seleccionar Elementos</span>
+            <span class="count" *ngIf="getSelectedItemsCount() > 0">
+              ({{ getSelectedItemsCount() }} seleccionados)
+            </span>
+            <span class="product-count" *ngIf="getSelectedProductsCount() > 0">
+              → {{ getSelectedProductsCount() }} productos
+            </span>
+          </div>
+          <i class="fas fa-chevron-down" [class.rotated]="showSelector"></i>
+        </div>
+
+        <div class="selector-content" *ngIf="showSelector">
+          <div class="filter-controls">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input
+                type="text"
+                [(ngModel)]="searchTerm"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onSearchChange()"
+                placeholder="Buscar productos, categorías o subcategorías..."
+              >
+            </div>
+
+            <div class="filter-tabs">
+              <button
+                type="button"
+                class="filter-tab"
+                [class.active]="filterType === 'all'"
+                data-filter="all"
+                (click)="filterType = 'all'; onFilterTypeChange()"
+              >
+                <i class="fas fa-th-large"></i>
+                <span>Todos</span>
+                <span class="count-badge" *ngIf="selectableItems.length > 0">
+                  {{ selectableItems.length }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="filter-tab"
+                [class.active]="filterType === 'category'"
+                data-filter="category"
+                (click)="filterType = 'category'; onFilterTypeChange()"
+              >
+                <i class="fas fa-folder"></i>
+                <span>Categorías</span>
+                <span class="count-badge" *ngIf="availableCategories.length > 0">
+                  {{ availableCategories.length }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="filter-tab"
+                [class.active]="filterType === 'subcategory'"
+                data-filter="subcategory"
+                (click)="filterType = 'subcategory'; onFilterTypeChange()"
+              >
+                <i class="fas fa-layer-group"></i>
+                <span>Subcategorías</span>
+                <span class="count-badge" *ngIf="availableSubcategories.length > 0">
+                  {{ availableSubcategories.length }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="filter-tab"
+                [class.active]="filterType === 'product'"
+                data-filter="product"
+                (click)="filterType = 'product'; onFilterTypeChange()"
+              >
+                <i class="fas fa-box"></i>
+                <span>Productos</span>
+                <span class="count-badge" *ngIf="availableProducts.length > 0">
+                  {{ availableProducts.length }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="items-list">
+            <div
+              class="item"
+              *ngFor="let item of filteredItems"
+              [class.selected]="item.selected"
+              [class.category-item]="item.type === 'category'"
+              [class.subcategory-item]="item.type === 'subcategory'"
+              [class.product-item]="item.type === 'product'"
+              (click)="toggleItemSelection(item)"
+            >
+              <div class="checkbox-container">
+                <input
+                  type="checkbox"
+                  [checked]="item.selected"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleItemSelection(item)"
+                >
+              </div>
+
+              <div class="item-icon">
+                <i [class]="getTypeIcon(item.type)"></i>
+              </div>
+
+              <div class="item-info">
+                <div class="item-header">
+                  <span class="item-name">{{ item.name }}</span>
+                  <span class="item-badge" [class]="'badge-' + item.type">
+                    {{ getTypeBadge(item.type) }}
+                  </span>
+                </div>
+
+                <div class="item-details">
+                  <span *ngIf="item.type === 'product' && item.code" class="item-code">
+                    {{ item.code }}
+                  </span>
+                  <span *ngIf="item.type === 'product' && item.price" class="item-price">
+                    ${{ item.price | number:'1.0-0' }}
+                  </span>
+                  <span *ngIf="item.type === 'product' && item.parentCategory" class="item-category">
+                    {{ item.parentCategory }}
+                  </span>
+
+                  <span *ngIf="item.type !== 'product' && item.productCount" class="product-count">
+                    <i class="fas fa-box"></i>
+                    {{ item.productCount }} productos
+                  </span>
+                  <span *ngIf="item.type === 'subcategory' && item.parentCategory" class="parent-category">
+                    en {{ item.parentCategory }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="no-items" *ngIf="filteredItems.length === 0">
+              <i class="fas fa-search"></i>
+              <p>No se encontraron elementos que coincidan con tu búsqueda</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isSaving">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="promotionForm.invalid || isSaving">
+        <i class="fas fa-save" *ngIf="!isSaving"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="isSaving"></i>
+        {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar Promoción' : 'Crear Promoción') }}
+      </button>
+    </div>
+  </form>
+</div>

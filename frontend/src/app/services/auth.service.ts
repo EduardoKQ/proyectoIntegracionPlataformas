@@ -157,7 +157,14 @@ export class AuthService {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userData');
-    console.log('Datos de autenticación limpiados.');
+    localStorage.removeItem('selectedBranchCode');
+    localStorage.removeItem('cart_items');
+    localStorage.removeItem('shipping_info');
+    localStorage.removeItem('webpay_payment_status');
+    localStorage.removeItem('webpay_order_id_pending');
+    localStorage.removeItem('selectedCurrency');
+
+    console.log('Datos de autenticación y sesión limpiados completamente.');
   }
 
   logout(): void {

@@ -81,6 +81,38 @@ def orders_create(request):
             ### create the order items
             for item in data["items"]:
                 product = get_object_or_404(Product, product_code=item["product_code"])
+                
+                frontend_promotion_info = item.get('promotion_info')
+                has_promotion_from_frontend = item.get('has_promotion', False)
+                
+                if has_promotion_from_frontend and frontend_promotion_info:
+                    original_price = frontend_promotion_info.get('original_price', product.current_price)
+                    transaction_price = frontend_promotion_info.get('promotional_price', product.current_price)
+                    promotion_applied = True
+                    promotion_code = frontend_promotion_info.get('promotion_code', '')
+                    promotion_name = frontend_promotion_info.get('promotion_name', '')
+                    discount_amount = frontend_promotion_info.get('discount_amount', 0)
+                    discount_percentage = frontend_promotion_info.get('discount_percentage', 0)
+                else:
+                    promotion_info = product.get_promotion_info()
+                    
+                    if promotion_info:
+                        original_price = promotion_info['original_price']
+                        transaction_price = promotion_info['promotional_price']
+                        promotion_applied = True
+                        promotion_code = promotion_info['promotion_code']
+                        promotion_name = promotion_info['promotion_name']
+                        discount_amount = promotion_info['discount_amount']
+                        discount_percentage = promotion_info['discount_percentage']
+                    else:
+                        original_price = None
+                        transaction_price = product.current_price
+                        promotion_applied = False
+                        promotion_code = None
+                        promotion_name = None
+                        discount_amount = 0
+                        discount_percentage = 0
+                
                 order_item = OrderItem(
                     order=order,
                     product=product,
@@ -89,7 +121,14 @@ def orders_create(request):
                     product_code_copy=product.product_code,
                     product_name_copy=product.name,
                     product_brand_copy=product.brand,
-                    transaction_price=product.current_price,
+                    transaction_price=transaction_price,
+                    # campos de promoción
+                    original_price=original_price,
+                    promotion_applied=promotion_applied,
+                    promotion_code=promotion_code,
+                    promotion_name=promotion_name,
+                    discount_amount=discount_amount,
+                    discount_percentage=discount_percentage,
                 )
                 order_items_to_create.append(order_item)
                 # update the inventory
@@ -113,7 +152,7 @@ def orders_create(request):
     try:
         # serialize the request data and check if it is valid
         data = json.loads(request.body)
-        print(f"DEBUG: Received order creation data: {data}")  # Debugging line
+        print(f"DEBUG: Received order creation data: {data}") 
         serializer = OrderCreateSerializer(data=data)
         if not serializer.is_valid():
             # return 400 with the errors
