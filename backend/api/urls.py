@@ -4,6 +4,7 @@ from .user import views as user_views
 from .products import views as product_views
 from .inventory import views as inventory_views
 from .orders import views as order_views
+from .promotions import views as promotion_views
 from rest_framework_simplejwt.views import TokenRefreshView
 from .webpay.views_webpay import iniciar_pago_webpay, retorno_pago_webpay
 
@@ -39,6 +40,11 @@ urlpatterns = [
         product_views.subcategory_get_update_delete,
         name="subcategory_get_update_delete",
     ),
+    # promotions endpoints
+    path("promotions/", promotion_views.promotion_list_create, name="promotion_list_create"),
+    path("promotions/active/", promotion_views.active_promotions, name="active_promotions"),
+    path("promotions/<int:promotion_id>/", promotion_views.promotion_detail_by_id, name="promotion_detail_by_id"),
+    path("promotions/<str:promotion_code>/", promotion_views.promotion_detail, name="promotion_detail"),
     # branches endpoints
     path("branches", inventory_views.branch_list_create, name="branch_list_create"),
     path(

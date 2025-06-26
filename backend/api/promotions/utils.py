@@ -4,13 +4,21 @@ from .models import Promotion, PromotionProduct, PromotionCategory, PromotionSub
 from .serializers import PromotionCreateSerializer, PromotionDetailSerializer, PromotionListSerializer
 from api.models import Product, Category, Subcategory
 from decimal import Decimal
+import json
+
+def get_request_data(request):
+    """Helper function to get JSON data from request"""
+    try:
+        return json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {}
 
 def process_promotion_list_get(request):
     """Obtener lista de promociones"""
     try:
-        status_filter = request.query_params.get("status", None)
-        active_only = request.query_params.get("active_only", "false").lower() == "true"
-        include_details = request.query_params.get("include_details", "false").lower() == "true"
+        status_filter = request.GET.get("status", None)
+        active_only = request.GET.get("active_only", "false").lower() == "true"
+        include_details = request.GET.get("include_details", "false").lower() == "true"
         promotions = Promotion.objects.all()
         if status_filter:
             promotions = promotions.filter(status=status_filter)
@@ -34,8 +42,16 @@ def process_promotion_list_get(request):
 def process_promotion_create_post(request):
     """Crear nueva promoción"""
     try:
-        serializer = PromotionCreateSerializer(data=request.data)
+        
+        # Obtener datos JSON del request
+        data = get_request_data(request)
+        print(f"DEBUG - Datos recibidos en backend: {data}")
+        print(f"DEBUG - Tipo de promotion_code: {type(data.get('promotion_code', 'NOT_FOUND'))}")
+        print(f"DEBUG - Valor de promotion_code: {data.get('promotion_code', 'NOT_FOUND')}")
+        
+        serializer = PromotionCreateSerializer(data=data)
         if not serializer.is_valid():
+            print(f"DEBUG - Errores de validación: {serializer.errors}")
             return JsonResponse(serializer.errors, status=400)
         
         product_ids = serializer.validated_data.pop('product_ids', [])
@@ -91,15 +107,19 @@ def process_promotion_update_put(request, promotion_code):
     try:
         promotion = Promotion.objects.get(promotion_code=promotion_code)
         
-        if 'promotion_code' in request.data and request.data['promotion_code'] != promotion_code:
-            new_code = request.data['promotion_code']
+        data = get_request_data(request)
+        if not data:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+        
+        if 'promotion_code' in data and data['promotion_code'] != promotion_code:
+            new_code = data['promotion_code']
             if Promotion.objects.filter(promotion_code=new_code).exclude(id=promotion.id).exists():
                 return JsonResponse(
                     {"error": f"El código de promoción '{new_code}' ya está en uso"}, 
                     status=400
                 )
         
-        serializer = PromotionCreateSerializer(promotion, data=request.data, partial=True)
+        serializer = PromotionCreateSerializer(promotion, data=data, partial=True)
         
         if not serializer.is_valid():
             return JsonResponse(serializer.errors, status=400)
@@ -183,20 +203,24 @@ def process_promotion_update_put_by_id(request, promotion_id):
     try:
         promotion = Promotion.objects.get(id=promotion_id)
         
-        if 'promotion_code' in request.data:
-            new_code = request.data['promotion_code']
+        data = get_request_data(request)
+        if not data:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+        
+        if 'promotion_code' in data:
+            new_code = data['promotion_code']
             if Promotion.objects.filter(promotion_code=new_code).exclude(id=promotion.id).exists():
                 return JsonResponse(
                     {"error": f"El código de promoción '{new_code}' ya está en uso"}, 
                     status=400
                 )
         
-        serializer = PromotionCreateSerializer(promotion, data=request.data, partial=True)
+        serializer = PromotionCreateSerializer(promotion, data=data, partial=True)
         if serializer.is_valid():
             promotion = serializer.save()
-            product_ids = request.data.get('product_ids')
-            category_ids = request.data.get('category_ids')  
-            subcategory_ids = request.data.get('subcategory_ids')
+            product_ids = data.get('product_ids')
+            category_ids = data.get('category_ids')  
+            subcategory_ids = data.get('subcategory_ids')
             
             if product_ids is not None:
                 PromotionProduct.objects.filter(promotion=promotion).delete()

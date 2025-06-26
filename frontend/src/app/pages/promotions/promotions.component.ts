@@ -35,7 +35,7 @@ export class PromotionsComponent implements OnInit, OnDestroy {
   public errorMessage: string | null = null;
 
   public showDeleteConfirmation = false;
-  public promotionToDelete: { id: string, name: string } | null = null;
+  public promotionToDelete: { id: number, name: string } | null = null;
 
   ngOnInit(): void {
     this.loadPromotions();
@@ -218,7 +218,7 @@ export class PromotionsComponent implements OnInit, OnDestroy {
 
   confirmDeletePromotion(promotion: ProcessedPromotion): void {
     this.promotionToDelete = {
-      id: promotion.promotion_code,
+      id: promotion.id,
       name: promotion.name
     };
     this.showDeleteConfirmation = true;
@@ -232,7 +232,7 @@ export class PromotionsComponent implements OnInit, OnDestroy {
   deletePromotion(): void {
     if (!this.promotionToDelete) return;
 
-    this.promotionService.deletePromotion(Number(this.promotionToDelete.id))
+    this.promotionService.deletePromotion(this.promotionToDelete.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -258,9 +258,9 @@ export class PromotionsComponent implements OnInit, OnDestroy {
       start_date: promotion.start_date,
       end_date: promotion.end_date,
       status: newStatus,
-      product_codes: promotion.products?.map(p => p.product_code) || [],
-      category_codes: promotion.categories?.map(c => c.category_code) || [],
-      subcategory_codes: promotion.subcategories?.map(s => s.subcategory_code) || []
+      product_ids: promotion.products?.map(p => p.product_code) || [],
+      category_ids: promotion.categories?.map(c => c.category_code) || [],
+      subcategory_ids: promotion.subcategories?.map(s => s.subcategory_code) || []
     };
 
     this.promotionService.updatePromotion(Number(promotion.promotion_code), updatedPromotion)

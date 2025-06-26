@@ -56,7 +56,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # our apps
     "api",
-    "api.promotions",
+    # "api.promotions",  # Temporarily commented to avoid migration conflicts
 ]
 
 MIDDLEWARE = [

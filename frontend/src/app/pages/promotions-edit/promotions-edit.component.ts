@@ -475,6 +475,24 @@ export class PromotionsEditComponent implements OnInit, OnDestroy {
     return date.toISOString().slice(0, 16);
   }
 
+  // Convertir fecha del input datetime-local a ISO string completo para el backend
+  formatDateForBackend(dateString: string): string {
+    if (!dateString) return dateString;
+
+    // Si ya es un ISO string completo, retornarlo tal como está
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      return dateString;
+    }
+
+    // Si es del formato datetime-local (YYYY-MM-DDTHH:MM), agregar segundos y zona horaria
+    if (dateString.includes('T') && !dateString.includes('Z')) {
+      return new Date(dateString).toISOString();
+    }
+
+    // Fallback: intentar crear una fecha y convertir a ISO
+    return new Date(dateString).toISOString();
+  }
+
   getDiscountDisplay(): string {
     const type = this.promotionForm.get('discount_type')?.value;
     const value = this.promotionForm.get('discount_value')?.value;
@@ -509,11 +527,55 @@ export class PromotionsEditComponent implements OnInit, OnDestroy {
     this.successMessage = null;
 
     const formData = this.promotionForm.value as CreatePromotionRequest;
+
+    // Convertir fechas del input datetime-local a formato ISO completo
+    if (formData.start_date) {
+      formData.start_date = this.formatDateForBackend(formData.start_date);
+    }
+    if (formData.end_date) {
+      formData.end_date = this.formatDateForBackend(formData.end_date);
+    }
+
+    // Limpiar campos opcionales vacíos
+    if (formData.description === '') {
+      delete formData.description;
+    }
+    if (formData.max_discount_percentage === null || formData.max_discount_percentage === 0) {
+      delete formData.max_discount_percentage;
+    }
+
+    // Limpiar arrays vacíos
+    if (formData.product_ids && formData.product_ids.length === 0) {
+      delete formData.product_ids;
+    }
+    if (formData.category_ids && formData.category_ids.length === 0) {
+      delete formData.category_ids;
+    }
+    if (formData.subcategory_ids && formData.subcategory_ids.length === 0) {
+      delete formData.subcategory_ids;
+    }
+
     console.log('Datos a enviar:', formData);
+    console.log('Tipo de promotion_code:', typeof formData.promotion_code);
+    console.log('promotion_code es array?', Array.isArray(formData.promotion_code));
+    console.log('promotion_code value:', formData.promotion_code);
+
+    // Verificar que todos los campos string sean realmente strings
+    const cleanedData = { ...formData };
+    if (Array.isArray(cleanedData.promotion_code)) {
+      console.error('ERROR: promotion_code es un array!', cleanedData.promotion_code);
+      cleanedData.promotion_code = cleanedData.promotion_code[0] || '';
+    }
+    if (Array.isArray(cleanedData.name)) {
+      console.error('ERROR: name es un array!', cleanedData.name);
+      cleanedData.name = cleanedData.name[0] || '';
+    }
+
+    console.log('Datos limpios a enviar:', cleanedData);
 
     const request = this.isEditMode && this.promotionData
-      ? this.promotionsService.updatePromotion(this.promotionData.id, formData)
-      : this.promotionsService.createPromotion(formData);
+      ? this.promotionsService.updatePromotion(this.promotionData.id, cleanedData)
+      : this.promotionsService.createPromotion(cleanedData);
 
     request.pipe(
       takeUntil(this.destroy$),

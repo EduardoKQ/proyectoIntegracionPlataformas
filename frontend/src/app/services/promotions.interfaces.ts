@@ -26,9 +26,9 @@ export interface CreatePromotionRequest {
   start_date: string;
   end_date: string;
   status?: 'active' | 'inactive';
-  product_codes?: string[];
-  category_codes?: string[];
-  subcategory_codes?: string[];
+  product_ids?: string[];
+  category_ids?: string[];
+  subcategory_ids?: string[];
 }
 
 export interface UpdatePromotionRequest {
@@ -40,9 +40,9 @@ export interface UpdatePromotionRequest {
   start_date?: string;
   end_date?: string;
   status?: 'active' | 'inactive' | 'expired';
-  product_codes?: string[];
-  category_codes?: string[];
-  subcategory_codes?: string[];
+  product_ids?: string[];
+  category_ids?: string[];
+  subcategory_ids?: string[];
 }
 
 export interface PromotionProduct {

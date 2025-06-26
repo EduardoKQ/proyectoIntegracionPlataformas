@@ -56,8 +56,10 @@ def promotion_detail(request, promotion_code):
 @api_view(["GET"])
 def active_promotions(request):
     """Obtener solo promociones activas (público)"""
-    request.query_params = request.query_params.copy()
-    request.query_params['active_only'] = 'true'
+    # Crear una copia mutable de los parámetros GET
+    mutable_params = request.GET.copy()
+    mutable_params['active_only'] = 'true'
+    request.GET = mutable_params
     return process_promotion_list_get(request)
 
 @api_view(["GET", "PUT", "DELETE"])

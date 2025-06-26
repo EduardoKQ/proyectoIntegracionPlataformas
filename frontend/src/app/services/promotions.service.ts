@@ -15,7 +15,7 @@ import {
 })
 export class PromotionsService {
   private apiUrl = 'http://localhost:8100/api';
-  private promotionsApiUrl = `${this.apiUrl}/promotions`;
+  private promotionsApiUrl = `${this.apiUrl}/promotions/`;
   constructor(private http: HttpClient) { }
 
   getPromotions(): Observable<Promotion[]> {
@@ -26,7 +26,7 @@ export class PromotionsService {
   }
 
   getPromotionById(id: number): Observable<Promotion> {
-    const url = `${this.promotionsApiUrl}/${id}/`;
+    const url = `${this.promotionsApiUrl}${id}/`;
     return this.http.get<Promotion>(url)
       .pipe(
         catchError(this.handleError)
@@ -34,7 +34,7 @@ export class PromotionsService {
   }
 
   getPromotionByCode(code: string): Observable<Promotion> {
-    const url = `${this.promotionsApiUrl}/code/${code}`;
+    const url = `${this.promotionsApiUrl}code/${code}`;
     return this.http.get<Promotion>(url)
       .pipe(
         catchError(this.handleError)
@@ -42,6 +42,9 @@ export class PromotionsService {
   }
 
   createPromotion(promotionData: CreatePromotionRequest): Observable<Promotion> {
+    console.log('PromotionsService - Datos a enviar:', JSON.stringify(promotionData, null, 2));
+    console.log('PromotionsService - Tipo de promotion_code:', typeof promotionData.promotion_code);
+    console.log('PromotionsService - promotion_code value:', promotionData.promotion_code);
     return this.http.post<Promotion>(this.promotionsApiUrl, promotionData)
       .pipe(
         catchError(this.handleError)
@@ -49,7 +52,7 @@ export class PromotionsService {
   }
 
   updatePromotion(id: number, promotionData: UpdatePromotionRequest): Observable<Promotion> {
-    const url = `${this.promotionsApiUrl}/${id}/`;
+    const url = `${this.promotionsApiUrl}${id}/`;
     return this.http.put<Promotion>(url, promotionData)
       .pipe(
         catchError(this.handleError)
@@ -57,7 +60,7 @@ export class PromotionsService {
   }
 
   deletePromotion(id: number): Observable<void> {
-    const url = `${this.promotionsApiUrl}/${id}/`;
+    const url = `${this.promotionsApiUrl}${id}/`;
     return this.http.delete<void>(url)
       .pipe(
         catchError(this.handleError)
@@ -65,7 +68,7 @@ export class PromotionsService {
   }
 
   getActivePromotions(): Observable<Promotion[]> {
-    const url = `${this.promotionsApiUrl}/active/?include_details=true`;
+    const url = `${this.promotionsApiUrl}active/?include_details=true`;
     return this.http.get<Promotion[]>(url)
       .pipe(
         catchError(this.handleError)
@@ -73,7 +76,7 @@ export class PromotionsService {
   }
 
   activatePromotion(id: number): Observable<Promotion> {
-    const url = `${this.promotionsApiUrl}/${id}/activate/`;
+    const url = `${this.promotionsApiUrl}${id}/activate/`;
     return this.http.patch<Promotion>(url, {})
       .pipe(
         catchError(this.handleError)
@@ -81,7 +84,7 @@ export class PromotionsService {
   }
 
   deactivatePromotion(id: number): Observable<Promotion> {
-    const url = `${this.promotionsApiUrl}/${id}/deactivate/`;
+    const url = `${this.promotionsApiUrl}${id}/deactivate/`;
     return this.http.patch<Promotion>(url, {})
       .pipe(
         catchError(this.handleError)
@@ -113,32 +116,32 @@ export class PromotionsService {
   }
 
   addProductsToPromotion(promotionId: number, productCodes: string[]): Observable<any> {
-    const url = `${this.promotionsApiUrl}/${promotionId}/products`;
-    return this.http.post(url, { product_codes: productCodes })
+    const url = `${this.promotionsApiUrl}${promotionId}/products`;
+    return this.http.post(url, { product_ids: productCodes })
       .pipe(
         catchError(this.handleError)
       );
   }
 
   removeProductsFromPromotion(promotionId: number, productCodes: string[]): Observable<any> {
-    const url = `${this.promotionsApiUrl}/${promotionId}/products`;
-    return this.http.delete(url, { body: { product_codes: productCodes } })
+    const url = `${this.promotionsApiUrl}${promotionId}/products`;
+    return this.http.delete(url, { body: { product_ids: productCodes } })
       .pipe(
         catchError(this.handleError)
       );
   }
 
   addCategoriesToPromotion(promotionId: number, categoryCodes: string[]): Observable<any> {
-    const url = `${this.promotionsApiUrl}/${promotionId}/categories`;
-    return this.http.post(url, { category_codes: categoryCodes })
+    const url = `${this.promotionsApiUrl}${promotionId}/categories`;
+    return this.http.post(url, { category_ids: categoryCodes })
       .pipe(
         catchError(this.handleError)
       );
   }
 
   removeCategoriesFromPromotion(promotionId: number, categoryCodes: string[]): Observable<any> {
-    const url = `${this.promotionsApiUrl}/${promotionId}/categories`;
-    return this.http.delete(url, { body: { category_codes: categoryCodes } })
+    const url = `${this.promotionsApiUrl}${promotionId}/categories`;
+    return this.http.delete(url, { body: { category_ids: categoryCodes } })
       .pipe(
         catchError(this.handleError)
       );
@@ -208,7 +211,8 @@ export class PromotionsService {
     } else {
       switch (error.status) {
         case 400:
-          errorMessage = 'Solicitud incorrecta. Verifica los datos enviados.';
+          console.error('Error 400 details:', error.error);
+          errorMessage = error.error?.error || error.error?.message || 'Solicitud incorrecta. Verifica los datos enviados.';
           break;
         case 401:
           errorMessage = 'No autorizado. Inicia sesión nuevamente.';

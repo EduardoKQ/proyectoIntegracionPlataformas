@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('api', '0005_remove_promotionproduct_promotion_and_more'),
+        ('api', '0004_promotion_promotioncategory_promotionproduct_and_more'),
     ]
 
     operations = [
